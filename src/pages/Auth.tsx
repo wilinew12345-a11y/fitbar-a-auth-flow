@@ -1,71 +1,447 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import SignUpForm from '@/components/auth/SignUpForm';
-import LoginForm from '@/components/auth/LoginForm';
-import ForgotPasswordForm from '@/components/auth/ForgotPasswordForm';
-import { Dumbbell } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "@/hooks/use-toast";
+import FitBarcaLogo from "@/components/FitBarcaLogo";
+import AuthBackground from "@/components/AuthBackground";
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
+import { z } from "zod";
 
-type AuthMode = 'login' | 'signup' | 'forgot';
+const signUpSchema = z.object({
+  firstName: z.string().trim().min(1, "First name is required").max(50, "First name too long"),
+  lastName: z.string().trim().min(1, "Last name is required").max(50, "Last name too long"),
+  email: z.string().trim().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+const loginSchema = z.object({
+  email: z.string().trim().email("Invalid email address"),
+  password: z.string().min(1, "Password is required"),
+});
 
 const Auth = () => {
-  const [searchParams] = useSearchParams();
-  const initialMode = searchParams.get('mode') as AuthMode || 'login';
-  const [mode, setMode] = useState<AuthMode>(initialMode);
-  const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const [isLogin, setIsLogin] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (!loading && user) {
-      navigate('/');
-    }
-  }, [user, loading, navigate]);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        navigate("/");
+      }
+    });
 
-  if (loading) {
-    return (
-      <div className="min-h-screen gradient-barca flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-foreground border-t-transparent" />
-      </div>
-    );
-  }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        navigate("/");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const handleSignUp = async () => {
+    try {
+      const validatedData = signUpSchema.parse(formData);
+      setIsLoading(true);
+
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { data, error } = await supabase.auth.signUp({
+        email: validatedData.email,
+        password: validatedData.password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            first_name: validatedData.firstName,
+            last_name: validatedData.lastName,
+          },
+        },
+      });
+
+      if (error) {
+        if (error.message.includes("already registered")) {
+          toast({
+            title: "User already registered",
+            description: "Please login with your existing account.",
+            variant: "destructive",
+          });
+          setIsLogin(true);
+        } else {
+          toast({
+            title: "Sign up failed",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+        return;
+      }
+
+      if (data.user) {
+        toast({
+          title: "Welcome to FitBarça!",
+          description: "Your account has been created successfully.",
+        });
+        navigate("/");
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            newErrors[err.path[0] as string] = err.message;
+          }
+        });
+        setErrors(newErrors);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogin = async () => {
+    try {
+      const validatedData = loginSchema.parse(formData);
+      setIsLoading(true);
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: validatedData.email,
+        password: validatedData.password,
+      });
+
+      if (error) {
+        toast({
+          title: "Login failed",
+          description: "Invalid email or password. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data.user) {
+        toast({
+          title: "Welcome back!",
+          description: "You have logged in successfully.",
+        });
+        navigate("/");
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            newErrors[err.path[0] as string] = err.message;
+          }
+        });
+        setErrors(newErrors);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!formData.email) {
+      setErrors({ email: "Please enter your email address" });
+      return;
+    }
+
+    try {
+      loginSchema.shape.email.parse(formData.email);
+    } catch {
+      setErrors({ email: "Please enter a valid email address" });
+      return;
+    }
+
+    setIsLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
+      redirectTo: `${window.location.origin}/auth`,
+    });
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Password reset email sent",
+        description: "Check your inbox for the reset link.",
+      });
+    }
+    setIsLoading(false);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors({});
+    if (isLogin) {
+      handleLogin();
+    } else {
+      handleSignUp();
+    }
+  };
 
   return (
-    <div className="min-h-screen gradient-barca flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-center pt-12 pb-6">
-        <div className="flex items-center gap-3">
-          <div className="bg-primary-foreground/20 p-3 rounded-xl backdrop-blur-sm">
-            <Dumbbell className="h-10 w-10 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="text-4xl font-extrabold text-primary-foreground tracking-tight">
-              Fit<span className="text-barca-gold">Barça</span>
-            </h1>
-            <p className="text-primary-foreground/70 text-sm font-medium">
-              Train Like a Champion
-            </p>
-          </div>
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <AuthBackground />
+      
+      {/* Back Button */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => navigate("/")}
+        className="absolute top-4 left-4 gap-2"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back
+      </Button>
+      
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8 animate-slide-up">
+          <FitBarcaLogo size="lg" />
+          <p className="mt-4 text-muted-foreground">
+            {isLogin ? "Welcome back, champion" : "Begin your fitness journey"}
+          </p>
         </div>
-      </div>
 
-      {/* Auth Card */}
-      <div className="flex-1 flex items-start justify-center px-4 pb-12">
-        <div className="w-full max-w-md">
-          <div className="bg-card rounded-2xl shadow-2xl p-8 animate-pulse-glow">
-            {mode === 'signup' && (
-              <SignUpForm onSwitchToLogin={() => setMode('login')} />
-            )}
-            {mode === 'login' && (
-              <LoginForm 
-                onSwitchToSignup={() => setMode('signup')}
-                onForgotPassword={() => setMode('forgot')}
-              />
-            )}
-            {mode === 'forgot' && (
-              <ForgotPasswordForm onBackToLogin={() => setMode('login')} />
-            )}
+        {/* Auth Card */}
+        <div className="bg-gradient-card rounded-2xl p-8 shadow-card border border-border/50 animate-slide-up-delay-1">
+          {/* Toggle Tabs */}
+          <div className="flex bg-muted rounded-lg p-1 mb-6">
+            <button
+              type="button"
+              onClick={() => {
+                setIsLogin(true);
+                setErrors({});
+              }}
+              className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all duration-200 ${
+                isLogin
+                  ? "bg-primary text-primary-foreground shadow-md"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Login
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsLogin(false);
+                setErrors({});
+              }}
+              className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all duration-200 ${
+                !isLogin
+                  ? "bg-accent text-accent-foreground shadow-md"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Sign Up
+            </button>
           </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Sign Up Only Fields */}
+            {!isLogin && (
+              <div className="grid grid-cols-2 gap-4 animate-slide-up">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName" className="text-sm text-muted-foreground">
+                    First Name
+                  </Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="firstName"
+                      name="firstName"
+                      placeholder="John"
+                      value={formData.firstName}
+                      onChange={handleInputChange}
+                      className="pl-10"
+                    />
+                  </div>
+                  {errors.firstName && (
+                    <p className="text-xs text-destructive">{errors.firstName}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName" className="text-sm text-muted-foreground">
+                    Last Name
+                  </Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="lastName"
+                      name="lastName"
+                      placeholder="Doe"
+                      value={formData.lastName}
+                      onChange={handleInputChange}
+                      className="pl-10"
+                    />
+                  </div>
+                  {errors.lastName && (
+                    <p className="text-xs text-destructive">{errors.lastName}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Email */}
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm text-muted-foreground">
+                Email
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="pl-10"
+                />
+              </div>
+              {errors.email && (
+                <p className="text-xs text-destructive">{errors.email}</p>
+              )}
+            </div>
+
+            {/* Password */}
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-sm text-muted-foreground">
+                Password
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className="pl-10 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {errors.password && (
+                <p className="text-xs text-destructive">{errors.password}</p>
+              )}
+            </div>
+
+            {/* Confirm Password (Sign Up Only) */}
+            {!isLogin && (
+              <div className="space-y-2 animate-slide-up">
+                <Label htmlFor="confirmPassword" className="text-sm text-muted-foreground">
+                  Confirm Password
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    className="pl-10 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {errors.confirmPassword && (
+                  <p className="text-xs text-destructive">{errors.confirmPassword}</p>
+                )}
+              </div>
+            )}
+
+            {/* Forgot Password Link */}
+            {isLogin && (
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-sm text-primary hover:text-primary/80 transition-colors"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              variant={isLogin ? "barca-blue" : "barca-crimson"}
+              size="xl"
+              className="w-full mt-6"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <>
+                  {isLogin ? "Login" : "Create Account"}
+                  <ArrowRight className="h-5 w-5" />
+                </>
+              )}
+            </Button>
+          </form>
         </div>
+
+        {/* Bottom Text */}
+        <p className="text-center text-sm text-muted-foreground mt-6 animate-slide-up-delay-2">
+          {isLogin ? "New to FitBarça? " : "Already have an account? "}
+          <button
+            type="button"
+            onClick={() => {
+              setIsLogin(!isLogin);
+              setErrors({});
+            }}
+            className="text-barca-gold hover:underline font-medium"
+          >
+            {isLogin ? "Create an account" : "Login here"}
+          </button>
+        </p>
       </div>
     </div>
   );
