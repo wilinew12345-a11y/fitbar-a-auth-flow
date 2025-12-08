@@ -219,7 +219,7 @@ const Auth = () => {
         variant="ghost"
         size="sm"
         onClick={() => navigate("/")}
-        className="absolute top-4 left-4 gap-2"
+        className="absolute top-4 left-4 gap-2 text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/20"
       >
         <ArrowLeft className="h-4 w-4" />
         Back
@@ -229,15 +229,15 @@ const Auth = () => {
         {/* Logo */}
         <div className="text-center mb-8 animate-slide-up">
           <FitBarcaLogo size="lg" />
-          <p className="mt-4 text-muted-foreground">
+          <p className="mt-6 text-muted-foreground">
             {isLogin ? "Welcome back, champion" : "Begin your fitness journey"}
           </p>
         </div>
 
         {/* Auth Card */}
-        <div className="bg-gradient-card rounded-2xl p-8 shadow-card border border-border/50 animate-slide-up-delay-1">
+        <div className="bg-sidebar/80 backdrop-blur-sm rounded-2xl p-8 border border-sidebar-border animate-slide-up-delay-1">
           {/* Toggle Tabs */}
-          <div className="flex bg-muted rounded-lg p-1 mb-6">
+          <div className="flex bg-sidebar rounded-lg p-1 mb-6 border border-sidebar-border">
             <button
               type="button"
               onClick={() => {
@@ -246,8 +246,8 @@ const Auth = () => {
               }}
               className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all duration-200 ${
                 isLogin
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-sidebar-foreground"
               }`}
             >
               Login
@@ -260,20 +260,20 @@ const Auth = () => {
               }}
               className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all duration-200 ${
                 !isLogin
-                  ? "bg-accent text-accent-foreground shadow-md"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-sidebar-foreground"
               }`}
             >
               Sign Up
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* Sign Up Only Fields */}
             {!isLogin && (
               <div className="grid grid-cols-2 gap-4 animate-slide-up">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName" className="text-sm text-muted-foreground">
+                  <Label htmlFor="firstName" className="text-sm text-sidebar-foreground">
                     First Name
                   </Label>
                   <div className="relative">
@@ -292,7 +292,7 @@ const Auth = () => {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName" className="text-sm text-muted-foreground">
+                  <Label htmlFor="lastName" className="text-sm text-sidebar-foreground">
                     Last Name
                   </Label>
                   <div className="relative">
@@ -315,7 +315,7 @@ const Auth = () => {
 
             {/* Email */}
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm text-muted-foreground">
+              <Label htmlFor="email" className="text-sm text-sidebar-foreground">
                 Email
               </Label>
               <div className="relative">
@@ -337,7 +337,7 @@ const Auth = () => {
 
             {/* Password */}
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm text-muted-foreground">
+              <Label htmlFor="password" className="text-sm text-sidebar-foreground">
                 Password
               </Label>
               <div className="relative">
@@ -354,7 +354,7 @@ const Auth = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-sidebar-foreground transition-colors"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -367,7 +367,7 @@ const Auth = () => {
             {/* Confirm Password (Sign Up Only) */}
             {!isLogin && (
               <div className="space-y-2 animate-slide-up">
-                <Label htmlFor="confirmPassword" className="text-sm text-muted-foreground">
+                <Label htmlFor="confirmPassword" className="text-sm text-sidebar-foreground">
                   Confirm Password
                 </Label>
                 <div className="relative">
@@ -384,7 +384,7 @@ const Auth = () => {
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-sidebar-foreground transition-colors"
                   >
                     {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -401,7 +401,7 @@ const Auth = () => {
                 <button
                   type="button"
                   onClick={handleForgotPassword}
-                  className="text-sm text-primary hover:text-primary/80 transition-colors"
+                  className="text-sm text-accent hover:text-accent/80 transition-colors"
                 >
                   Forgot password?
                 </button>
@@ -411,7 +411,7 @@ const Auth = () => {
             {/* Submit Button */}
             <Button
               type="submit"
-              variant={isLogin ? "barca-blue" : "barca-crimson"}
+              variant="barca-blue"
               size="xl"
               className="w-full mt-6"
               disabled={isLoading}

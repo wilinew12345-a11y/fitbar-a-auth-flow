@@ -1,22 +1,15 @@
 const AuthBackground = () => {
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden">
-      {/* Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-muted" />
+    <div className="fixed inset-0 -z-10 overflow-hidden bg-sidebar">
+      {/* Gradient overlays */}
+      <div className="absolute inset-0 bg-gradient-to-br from-sidebar via-sidebar to-transparent" />
       
-      {/* Animated Blobs */}
-      <div className="absolute top-1/4 -left-32 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-barca-gold/5 rounded-full blur-3xl" />
+      {/* Colored glow effects */}
+      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[150px]" />
+      <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-accent/20 rounded-full blur-[150px]" />
       
-      {/* Subtle Grid Pattern */}
-      <div 
-        className="absolute inset-0 opacity-[0.02]"
-        style={{
-          backgroundImage: `linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)`,
-          backgroundSize: '50px 50px'
-        }}
-      />
+      {/* Top dark gradient */}
+      <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-sidebar via-sidebar/90 to-transparent" />
     </div>
   );
 };
