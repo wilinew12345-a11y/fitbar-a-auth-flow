@@ -46,13 +46,13 @@ const Auth = () => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
-        navigate("/");
+        navigate("/weekly-setup");
       }
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        navigate("/");
+        navigate("/weekly-setup");
       }
     });
 
@@ -109,7 +109,7 @@ const Auth = () => {
           title: "Welcome to FitBarça!",
           description: "Your account has been created successfully.",
         });
-        navigate("/");
+        navigate("/weekly-setup");
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -150,7 +150,7 @@ const Auth = () => {
           title: "Welcome back!",
           description: "You have logged in successfully.",
         });
-        navigate("/");
+        navigate("/weekly-setup");
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
