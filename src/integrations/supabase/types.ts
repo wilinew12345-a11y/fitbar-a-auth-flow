@@ -38,6 +38,54 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_workout_schedule: {
+        Row: {
+          created_at: string
+          friday: string
+          id: string
+          monday: string
+          planned_workouts_count: number
+          saturday: string
+          skipped_setup: boolean
+          sunday: string
+          thursday: string
+          tuesday: string
+          updated_at: string
+          user_id: string
+          wednesday: string
+        }
+        Insert: {
+          created_at?: string
+          friday?: string
+          id?: string
+          monday?: string
+          planned_workouts_count?: number
+          saturday?: string
+          skipped_setup?: boolean
+          sunday?: string
+          thursday?: string
+          tuesday?: string
+          updated_at?: string
+          user_id: string
+          wednesday?: string
+        }
+        Update: {
+          created_at?: string
+          friday?: string
+          id?: string
+          monday?: string
+          planned_workouts_count?: number
+          saturday?: string
+          skipped_setup?: boolean
+          sunday?: string
+          thursday?: string
+          tuesday?: string
+          updated_at?: string
+          user_id?: string
+          wednesday?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
