@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import WeeklyWorkoutAssignment from "./pages/WeeklyWorkoutAssignment";
 import WorkoutPlanning from "./pages/WorkoutPlanning";
+import WeeklyWorkoutPlan from "./pages/WeeklyWorkoutPlan";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,6 +22,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/weekly-setup" element={<WeeklyWorkoutAssignment />} />
+          <Route path="/weekly-plan" element={<WeeklyWorkoutPlan />} />
           <Route path="/workout-planning" element={<WorkoutPlanning />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
