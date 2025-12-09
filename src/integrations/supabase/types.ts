@@ -38,6 +38,33 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_schedules: {
+        Row: {
+          created_at: string
+          day_of_week: string
+          id: string
+          updated_at: string
+          user_id: string
+          workout_types: string[]
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: string
+          id?: string
+          updated_at?: string
+          user_id: string
+          workout_types?: string[]
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          workout_types?: string[]
+        }
+        Relationships: []
+      }
       weekly_workout_schedule: {
         Row: {
           created_at: string
