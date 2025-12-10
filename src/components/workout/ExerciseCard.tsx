@@ -86,9 +86,13 @@ export const ExerciseCard = ({
         </span>
 
         {/* Compact Inputs Row */}
-        <div className="flex items-center gap-1 flex-1 min-w-0">
+        <div 
+          className="flex items-center gap-1 flex-1 min-w-0"
+          onPointerDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+        >
           <div className="relative flex-1 min-w-0">
-            <Dumbbell className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-white/40" />
+            <Dumbbell className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-white/40 pointer-events-none" />
             <Input
               type="number"
               value={localValues.weight}
@@ -98,7 +102,7 @@ export const ExerciseCard = ({
             />
           </div>
           <div className="relative flex-1 min-w-0">
-            <Hash className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-white/40" />
+            <Hash className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-white/40 pointer-events-none" />
             <Input
               type="number"
               value={localValues.sets}
@@ -108,7 +112,7 @@ export const ExerciseCard = ({
             />
           </div>
           <div className="relative flex-1 min-w-0">
-            <RotateCcw className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-white/40" />
+            <RotateCcw className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-white/40 pointer-events-none" />
             <Input
               type="number"
               value={localValues.reps}
