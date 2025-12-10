@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      exercises: {
+        Row: {
+          body_part: string
+          created_at: string
+          id: string
+          image_url: string | null
+          name: string
+          reps: number | null
+          sets: number | null
+          user_id: string
+          weight: number | null
+        }
+        Insert: {
+          body_part: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name: string
+          reps?: number | null
+          sets?: number | null
+          user_id?: string
+          weight?: number | null
+        }
+        Update: {
+          body_part?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+          reps?: number | null
+          sets?: number | null
+          user_id?: string
+          weight?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
