@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import FitBarcaLogo from "@/components/FitBarcaLogo";
-import { Plus, Trash2, Pencil, X, Loader2, RotateCcw } from "lucide-react";
+import { Plus, Trash2, Pencil, X, Loader2, RotateCcw, ArrowRight } from "lucide-react";
 
 // Days of week in Hebrew
 const DAYS_OF_WEEK = [
@@ -237,9 +237,17 @@ const WeeklyWorkoutAssignment = () => {
   return (
     <div className="min-h-screen gradient-barca p-4 overflow-auto" dir="rtl">
       <div className="max-w-2xl mx-auto py-6">
-        {/* Logo */}
-        <div className="text-center mb-8 animate-slide-up">
+        {/* Header with Back Button */}
+        <div className="flex items-center justify-between mb-8 animate-slide-up">
           <FitBarcaLogo size="md" />
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/dashboard')}
+            className="text-white/70 hover:text-white hover:bg-white/10"
+          >
+            <ArrowRight className="h-5 w-5 ml-2" />
+            חזרה
+          </Button>
         </div>
 
         {/* Builder Card */}
