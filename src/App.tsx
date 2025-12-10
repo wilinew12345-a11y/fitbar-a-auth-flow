@@ -10,6 +10,7 @@ import WorkoutLog from "./pages/WorkoutLog";
 import WeeklyWorkoutAssignment from "./pages/WeeklyWorkoutAssignment";
 import WorkoutPlanning from "./pages/WorkoutPlanning";
 import WeeklyWorkoutPlan from "./pages/WeeklyWorkoutPlan";
+import ProgressGraph from "./pages/ProgressGraph";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/weekly-setup" element={<WeeklyWorkoutAssignment />} />
           <Route path="/weekly-plan" element={<WeeklyWorkoutPlan />} />
           <Route path="/workout-planning" element={<WorkoutPlanning />} />
+          <Route path="/progress" element={<ProgressGraph />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
