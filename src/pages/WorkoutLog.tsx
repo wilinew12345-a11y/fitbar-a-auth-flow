@@ -265,23 +265,23 @@ const WorkoutLog = () => {
         {/* Add New Exercise Card */}
         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 md:p-6 mb-6 border border-white/20">
           <h2 className="text-lg font-semibold text-white mb-4">הוסף תרגיל חדש</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
               <Label className="text-white/80 text-sm">שם התרגיל</Label>
               <Input
                 value={newExercise.name}
                 onChange={(e) => setNewExercise({ ...newExercise, name: e.target.value })}
                 placeholder="לדוגמה: לחיצת חזה"
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/40 h-10"
               />
             </div>
-            <div>
+            <div className="space-y-2">
               <Label className="text-white/80 text-sm">קטגוריה</Label>
               <Select
                 value={newExercise.body_part}
                 onValueChange={(value) => setNewExercise({ ...newExercise, body_part: value })}
               >
-                <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                <SelectTrigger className="bg-white/10 border-white/20 text-white h-10">
                   <SelectValue placeholder="בחר קטגוריה" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#1a2a4a] border-white/20">
@@ -297,10 +297,11 @@ const WorkoutLog = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-end">
+            <div className="space-y-2">
+              <Label className="text-white/80 text-sm invisible">פעולה</Label>
               <Button
                 onClick={handleAddExercise}
-                className="w-full bg-[#a50044] hover:bg-[#8a0039] text-white"
+                className="w-full bg-[#a50044] hover:bg-[#8a0039] text-white h-10"
               >
                 <Plus className="h-5 w-5 ml-2" />
                 הוסף תרגיל
