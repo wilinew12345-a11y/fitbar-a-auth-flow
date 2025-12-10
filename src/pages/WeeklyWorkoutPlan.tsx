@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import FitBarcaLogo from "@/components/FitBarcaLogo";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Edit2, Trash2, Plus, RotateCcw } from "lucide-react";
+import { Edit2, Trash2, Plus, RotateCcw, ArrowRight } from "lucide-react";
 
 const DAYS_OF_WEEK = [
   { key: "sunday", label: "ראשון", short: "א'" },
@@ -218,9 +218,17 @@ const WeeklyWorkoutPlan = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#004D98] via-[#003366] to-[#A50044] p-4 pb-8" dir="rtl">
-      {/* Logo */}
-      <div className="text-center pt-6 pb-4">
+      {/* Header with Back Button */}
+      <div className="flex items-center justify-between pt-6 pb-4 max-w-2xl mx-auto">
         <FitBarcaLogo size="lg" />
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/dashboard')}
+          className="text-white/70 hover:text-white hover:bg-white/10"
+        >
+          <ArrowRight className="h-5 w-5 ml-2" />
+          חזרה
+        </Button>
       </div>
 
       {/* Builder Section - Glassmorphism Card */}

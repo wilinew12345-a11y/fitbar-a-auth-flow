@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import FitBarcaLogo from "@/components/FitBarcaLogo";
 import AuthBackground from "@/components/AuthBackground";
 import { Button } from "@/components/ui/button";
-import { Settings, Dumbbell } from "lucide-react";
+import { Settings, Dumbbell, ArrowRight } from "lucide-react";
 
 const WorkoutPlanning = () => {
   const navigate = useNavigate();
@@ -22,6 +22,16 @@ const WorkoutPlanning = () => {
   return (
     <div className="min-h-screen flex items-center justify-center p-4" dir="rtl">
       <AuthBackground />
+      
+      {/* Back Button */}
+      <Button
+        variant="ghost"
+        onClick={() => navigate('/dashboard')}
+        className="absolute top-4 left-4 text-white/70 hover:text-white hover:bg-white/10"
+      >
+        <ArrowRight className="h-5 w-5 ml-2" />
+        חזרה
+      </Button>
       
       <div className="w-full max-w-lg relative z-10 text-center">
         <div className="animate-slide-up">
