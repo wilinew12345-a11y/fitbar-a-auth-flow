@@ -71,11 +71,12 @@ export const ExerciseCard = ({
     >
       {/* Compact Header Row */}
       <div className="flex items-center gap-1.5">
-        {/* Drag Handle */}
+        {/* Drag Handle - ONLY this element triggers drag */}
         <div
           {...attributes}
           {...listeners}
           className="cursor-grab active:cursor-grabbing p-0.5 text-white/40 hover:text-white/70 touch-none flex-shrink-0"
+          style={{ touchAction: 'none' }}
         >
           <GripVertical className="h-4 w-4" />
         </div>
