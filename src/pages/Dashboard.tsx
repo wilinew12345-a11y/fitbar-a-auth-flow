@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import FitBarcaLogo from '@/components/FitBarcaLogo';
-import { User, Dumbbell, LogOut } from 'lucide-react';
+import { User, Dumbbell, LogOut, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Dashboard = () => {
@@ -44,6 +44,14 @@ const Dashboard = () => {
       icon: Dumbbell,
       route: '/workout-log',
       gradient: 'from-[#a50044] to-[#cc0055]',
+    },
+    {
+      id: 'progress',
+      title: 'גרף התקדמות',
+      description: 'צפה בהתקדמות שלך לאורך זמן',
+      icon: TrendingUp,
+      route: '/progress',
+      gradient: 'from-[#0f766e] to-[#14b8a6]',
     },
   ];
 

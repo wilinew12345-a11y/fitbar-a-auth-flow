@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from '@/hooks/use-toast';
-import { ArrowRight, Plus } from 'lucide-react';
+import { ArrowRight, Plus, CheckCircle } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   DndContext,
@@ -51,6 +51,7 @@ const WorkoutLog = () => {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [activeExercise, setActiveExercise] = useState<Exercise | null>(null);
+  const [isFinishing, setIsFinishing] = useState(false);
 
   const [newExercise, setNewExercise] = useState({
     name: '',
@@ -236,6 +237,35 @@ const WorkoutLog = () => {
     }
   };
 
+  const handleFinishWorkout = async () => {
+    if (exercises.length === 0) {
+      toast({ title: 'אין תרגילים לשמור', variant: 'destructive' });
+      return;
+    }
+
+    setIsFinishing(true);
+
+    const historyRecords = exercises.map(ex => ({
+      user_id: user!.id,
+      exercise_name: ex.name,
+      weight: ex.weight || 0,
+      sets: ex.sets || 0,
+      reps: ex.reps || 0,
+    }));
+
+    const { error } = await supabase
+      .from('workout_history')
+      .insert(historyRecords);
+
+    if (error) {
+      toast({ title: 'שגיאה בשמירת האימון', variant: 'destructive' });
+    } else {
+      toast({ title: 'האימון נשמר! 💪' });
+    }
+
+    setIsFinishing(false);
+  };
+
   if (loading || isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#004d98] via-[#0a1628] to-[#a50044] flex items-center justify-center">
@@ -370,6 +400,18 @@ const WorkoutLog = () => {
             ) : null}
           </DragOverlay>
         </DndContext>
+
+        {/* Finish Workout Button */}
+        <div className="mt-8 flex justify-center pb-8">
+          <Button
+            onClick={handleFinishWorkout}
+            disabled={isFinishing || exercises.length === 0}
+            className="bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#16a34a] hover:to-[#15803d] text-white px-8 py-6 text-lg font-bold rounded-xl shadow-lg"
+          >
+            <CheckCircle className="h-6 w-6 ml-2" />
+            {isFinishing ? 'שומר...' : 'סיום אימון'}
+          </Button>
+        </div>
       </main>
     </div>
   );
