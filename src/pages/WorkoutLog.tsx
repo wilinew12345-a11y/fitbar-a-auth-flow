@@ -21,7 +21,7 @@ import {
   DragEndEvent,
   DragOverlay,
   DragStartEvent,
-  PointerSensor,
+  MouseSensor,
   TouchSensor,
   useSensor,
   useSensors,
@@ -58,28 +58,21 @@ const WorkoutLog = () => {
     body_part: '',
   });
 
-  const shouldHandleEvent = (element: HTMLElement | null) => {
-    if (!element) return true;
-    // Don't start drag if clicking on input, button, or interactive elements
-    const interactiveElements = ['INPUT', 'BUTTON', 'TEXTAREA', 'SELECT'];
-    if (interactiveElements.includes(element.tagName)) return false;
-    if (element.closest('input, button, textarea, select')) return false;
-    return true;
-  };
+  // Use MouseSensor with activation only from drag handle
+  const mouseSensor = useSensor(MouseSensor, {
+    activationConstraint: {
+      distance: 8,
+    },
+  });
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 10,
-      },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 400,
-        tolerance: 10,
-      },
-    })
-  );
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: {
+      delay: 300,
+      tolerance: 8,
+    },
+  });
+
+  const sensors = useSensors(mouseSensor, touchSensor);
 
   useEffect(() => {
     if (!loading && !user) {

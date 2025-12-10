@@ -73,12 +73,13 @@ export const ExerciseCard = ({
       <div className="flex items-center gap-1.5">
         {/* Drag Handle - ONLY this element triggers drag */}
         <div
+          data-drag-handle="true"
           {...attributes}
           {...listeners}
-          className="cursor-grab active:cursor-grabbing p-0.5 text-white/40 hover:text-white/70 touch-none flex-shrink-0"
+          className="cursor-grab active:cursor-grabbing p-1 text-white/40 hover:text-white/70 touch-none flex-shrink-0 rounded hover:bg-white/10"
           style={{ touchAction: 'none' }}
         >
-          <GripVertical className="h-4 w-4" />
+          <GripVertical className="h-4 w-4 pointer-events-none" />
         </div>
 
         {/* Exercise Name */}
