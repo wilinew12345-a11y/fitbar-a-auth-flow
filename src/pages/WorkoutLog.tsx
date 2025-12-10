@@ -58,6 +58,15 @@ const WorkoutLog = () => {
     body_part: '',
   });
 
+  const shouldHandleEvent = (element: HTMLElement | null) => {
+    if (!element) return true;
+    // Don't start drag if clicking on input, button, or interactive elements
+    const interactiveElements = ['INPUT', 'BUTTON', 'TEXTAREA', 'SELECT'];
+    if (interactiveElements.includes(element.tagName)) return false;
+    if (element.closest('input, button, textarea, select')) return false;
+    return true;
+  };
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -66,8 +75,8 @@ const WorkoutLog = () => {
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 300,
-        tolerance: 8,
+        delay: 400,
+        tolerance: 10,
       },
     })
   );
