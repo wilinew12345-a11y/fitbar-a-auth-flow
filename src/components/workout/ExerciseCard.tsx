@@ -86,11 +86,13 @@ export const ExerciseCard = ({
           {exercise.name}
         </span>
 
-        {/* Compact Inputs Row */}
+        {/* Compact Inputs Row - Completely isolated from drag */}
         <div 
           className="flex items-center gap-1 flex-1 min-w-0"
           onPointerDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
+          onDragStart={(e) => e.preventDefault()}
         >
           <div className="relative flex-1 min-w-0">
             <Dumbbell className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-white/40 pointer-events-none" />
@@ -98,6 +100,8 @@ export const ExerciseCard = ({
               type="number"
               value={localValues.weight}
               onChange={(e) => setLocalValues({ ...localValues, weight: Number(e.target.value) })}
+              onPointerDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
               className="bg-white/10 border-white/20 text-white text-[10px] h-6 pr-5 pl-1 w-full"
               placeholder="kg"
             />
@@ -108,6 +112,8 @@ export const ExerciseCard = ({
               type="number"
               value={localValues.sets}
               onChange={(e) => setLocalValues({ ...localValues, sets: Number(e.target.value) })}
+              onPointerDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
               className="bg-white/10 border-white/20 text-white text-[10px] h-6 pr-5 pl-1 w-full"
               placeholder="סט"
             />
@@ -118,6 +124,8 @@ export const ExerciseCard = ({
               type="number"
               value={localValues.reps}
               onChange={(e) => setLocalValues({ ...localValues, reps: Number(e.target.value) })}
+              onPointerDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
               className="bg-white/10 border-white/20 text-white text-[10px] h-6 pr-5 pl-1 w-full"
               placeholder="חזר"
             />
