@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from '@/hooks/use-toast';
-import { ArrowRight, Plus, CheckCircle } from 'lucide-react';
+import { ArrowRight, Plus, Check, Loader2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   DndContext,
@@ -248,25 +248,60 @@ const WorkoutLog = () => {
 
     setIsFinishing(true);
 
-    const historyRecords = exercises.map(ex => ({
-      user_id: user!.id,
-      exercise_name: ex.name,
-      weight: ex.weight || 0,
-      sets: ex.sets || 0,
-      reps: ex.reps || 0,
-    }));
+    try {
+      // First, blur any focused input to trigger pending saves
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
 
-    const { error } = await supabase
-      .from('workout_history')
-      .insert(historyRecords);
+      // Small delay to ensure any pending state updates are flushed
+      await new Promise(resolve => setTimeout(resolve, 100));
 
-    if (error) {
-      toast({ title: 'שגיאה בשמירת האימון', variant: 'destructive' });
-    } else {
-      toast({ title: 'האימון נשמר! 💪' });
+      // Fetch the absolute latest data from database to ensure consistency
+      const { data: latestExercises, error: fetchError } = await supabase
+        .from('exercises')
+        .select('*')
+        .eq('user_id', user!.id);
+
+      if (fetchError) {
+        throw new Error('שגיאה בטעינת הנתונים');
+      }
+
+      if (!latestExercises || latestExercises.length === 0) {
+        toast({ title: 'אין תרגילים לשמור', variant: 'destructive' });
+        setIsFinishing(false);
+        return;
+      }
+
+      // Create history records from the freshly fetched data
+      const historyRecords = latestExercises.map(ex => ({
+        user_id: user!.id,
+        exercise_name: ex.name,
+        weight: ex.weight || 0,
+        sets: ex.sets || 0,
+        reps: ex.reps || 0,
+      }));
+
+      const { error: insertError } = await supabase
+        .from('workout_history')
+        .insert(historyRecords);
+
+      if (insertError) {
+        throw new Error('שגיאה בשמירת האימון');
+      }
+
+      // Update local state with fresh data
+      setExercises(latestExercises);
+
+      toast({ title: 'האימון נשמר בהצלחה! 💪' });
+    } catch (error) {
+      toast({ 
+        title: error instanceof Error ? error.message : 'שגיאה בשמירת האימון', 
+        variant: 'destructive' 
+      });
+    } finally {
+      setIsFinishing(false);
     }
-
-    setIsFinishing(false);
   };
 
   if (loading || isLoading) {
@@ -406,14 +441,31 @@ const WorkoutLog = () => {
 
         {/* Finish Workout Button */}
         <div className="mt-8 flex justify-center pb-8">
-          <Button
+          <button
             onClick={handleFinishWorkout}
             disabled={isFinishing || exercises.length === 0}
-            className="bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#16a34a] hover:to-[#15803d] text-white px-8 py-6 text-lg font-bold rounded-xl shadow-lg"
+            className={`
+              flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-white font-bold text-lg transition-all shadow-lg
+              ${isFinishing 
+                ? 'bg-green-600/70 cursor-not-allowed' 
+                : exercises.length === 0 
+                  ? 'bg-green-600/50 cursor-not-allowed' 
+                  : 'bg-green-600 hover:bg-green-700 hover:shadow-xl active:scale-[0.98]'
+              }
+            `}
           >
-            <CheckCircle className="h-6 w-6 ml-2" />
-            {isFinishing ? 'שומר...' : 'סיום אימון'}
-          </Button>
+            {isFinishing ? (
+              <>
+                <Loader2 className="w-6 h-6 animate-spin" />
+                <span>שומר נתונים...</span>
+              </>
+            ) : (
+              <>
+                <Check className="w-6 h-6" />
+                <span>סיום אימון</span>
+              </>
+            )}
+          </button>
         </div>
       </main>
     </div>
