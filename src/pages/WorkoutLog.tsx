@@ -54,6 +54,9 @@ const WorkoutLog = () => {
   const [activeExercise, setActiveExercise] = useState<Exercise | null>(null);
   const [isFinishing, setIsFinishing] = useState(false);
 
+  // Track pending save operations to ensure they complete before finishing workout
+  const pendingSavesRef = useRef<Map<string, Promise<void>>>(new Map());
+
   const [newExercise, setNewExercise] = useState({
     name: '',
     body_part: '',
@@ -144,18 +147,32 @@ const WorkoutLog = () => {
   const handleUpdateExercise = async (id: string, updates: Partial<Exercise>) => {
     setSavingId(id);
     
-    const { error } = await supabase
-      .from('exercises')
-      .update(updates)
-      .eq('id', id);
+    // Create the save promise and track it
+    const savePromise = (async () => {
+      const { error } = await supabase
+        .from('exercises')
+        .update(updates)
+        .eq('id', id);
 
-    if (error) {
-      toast({ title: 'שגיאה בעדכון התרגיל', variant: 'destructive' });
-    } else {
-      setExercises(exercises.map(ex => ex.id === id ? { ...ex, ...updates } : ex));
-      toast({ title: 'נשמר!' });
+      if (error) {
+        console.error('Error updating exercise:', error);
+        toast({ title: 'שגיאה בעדכון התרגיל', variant: 'destructive' });
+        throw error;
+      } else {
+        setExercises(prev => prev.map(ex => ex.id === id ? { ...ex, ...updates } : ex));
+      }
+    })();
+
+    // Track this save operation
+    pendingSavesRef.current.set(id, savePromise);
+
+    try {
+      await savePromise;
+    } finally {
+      // Remove from pending saves when complete
+      pendingSavesRef.current.delete(id);
+      setSavingId(null);
     }
-    setSavingId(null);
   };
 
   const handleDeleteExercise = async (id: string) => {
@@ -249,21 +266,29 @@ const WorkoutLog = () => {
     setIsFinishing(true);
 
     try {
-      // First, blur any focused input to trigger pending saves
+      // Step 1: Blur any focused input to trigger pending saves
       if (document.activeElement instanceof HTMLElement) {
         document.activeElement.blur();
       }
 
-      // Small delay to ensure any pending state updates are flushed
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Step 2: Wait for ALL pending save operations to complete
+      const pendingSaves = Array.from(pendingSavesRef.current.values());
+      if (pendingSaves.length > 0) {
+        console.log(`Waiting for ${pendingSaves.length} pending saves to complete...`);
+        await Promise.allSettled(pendingSaves);
+      }
 
-      // Fetch the absolute latest data from database to ensure consistency
+      // Step 3: Small additional delay to ensure state is fully synced
+      await new Promise(resolve => setTimeout(resolve, 150));
+
+      // Step 4: Fetch the absolute latest data from database to ensure consistency
       const { data: latestExercises, error: fetchError } = await supabase
         .from('exercises')
         .select('*')
         .eq('user_id', user!.id);
 
       if (fetchError) {
+        console.error('Error fetching exercises:', fetchError);
         throw new Error('שגיאה בטעינת הנתונים');
       }
 
@@ -273,7 +298,9 @@ const WorkoutLog = () => {
         return;
       }
 
-      // Create history records from the freshly fetched data
+      console.log('Saving workout history with data:', latestExercises);
+
+      // Step 5: Create history records from the freshly fetched data
       const historyRecords = latestExercises.map(ex => ({
         user_id: user!.id,
         exercise_name: ex.name,
@@ -282,19 +309,22 @@ const WorkoutLog = () => {
         reps: ex.reps || 0,
       }));
 
+      // Step 6: Insert into workout_history
       const { error: insertError } = await supabase
         .from('workout_history')
         .insert(historyRecords);
 
       if (insertError) {
+        console.error('Error inserting workout history:', insertError);
         throw new Error('שגיאה בשמירת האימון');
       }
 
-      // Update local state with fresh data
+      // Step 7: Update local state with fresh data
       setExercises(latestExercises);
 
       toast({ title: 'האימון נשמר בהצלחה! 💪' });
     } catch (error) {
+      console.error('Finish workout error:', error);
       toast({ 
         title: error instanceof Error ? error.message : 'שגיאה בשמירת האימון', 
         variant: 'destructive' 
