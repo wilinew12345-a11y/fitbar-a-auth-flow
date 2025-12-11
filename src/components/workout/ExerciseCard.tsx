@@ -3,7 +3,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Button } from '@/components/ui/button';
 import { Trash2, Upload, Image as ImageIcon, GripVertical, ChevronDown, ChevronUp } from 'lucide-react';
-
+import { NumberInput } from './NumberInput';
 export interface Exercise {
   id: string;
   name: string;
@@ -135,7 +135,7 @@ export const ExerciseCard = ({
 
       {/* Input Fields Row */}
       <div 
-        className="flex items-center justify-center gap-2 relative z-10"
+        className="flex items-center justify-center gap-1 relative z-10"
         onPointerDown={stopDragPropagation}
         onMouseDown={stopDragPropagation}
         onTouchStart={stopDragPropagation}
@@ -143,97 +143,66 @@ export const ExerciseCard = ({
       >
         {isAerobic ? (
           <>
-            <div className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
-              <span className="text-[10px] text-white/50">מהירות</span>
-              <input
-                type="number"
-                value={localValues.speed || ''}
-                onChange={(e) => setLocalValues({ ...localValues, speed: Number(e.target.value) || 0 })}
-                onBlur={() => handleBlur('speed')}
-                onPointerDown={stopDragPropagation}
-                onMouseDown={stopDragPropagation}
-                onKeyDown={stopDragPropagation}
-                placeholder="0"
-                className="w-full min-w-[48px] max-w-[60px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
-              />
-            </div>
-
-            <div className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
-              <span className="text-[10px] text-white/50">שיפוע</span>
-              <input
-                type="number"
-                value={localValues.incline || ''}
-                onChange={(e) => setLocalValues({ ...localValues, incline: Number(e.target.value) || 0 })}
-                onBlur={() => handleBlur('incline')}
-                onPointerDown={stopDragPropagation}
-                onMouseDown={stopDragPropagation}
-                onKeyDown={stopDragPropagation}
-                placeholder="0"
-                className="w-full min-w-[48px] max-w-[60px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
-              />
-            </div>
-
-            <div className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
-              <span className="text-[10px] text-white/50">זמן</span>
-              <input
-                type="number"
-                value={localValues.duration || ''}
-                onChange={(e) => setLocalValues({ ...localValues, duration: Number(e.target.value) || 0 })}
-                onBlur={() => handleBlur('duration')}
-                onPointerDown={stopDragPropagation}
-                onMouseDown={stopDragPropagation}
-                onKeyDown={stopDragPropagation}
-                placeholder="0"
-                className="w-full min-w-[48px] max-w-[60px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
-              />
-            </div>
+            <NumberInput
+              label="מהירות"
+              value={localValues.speed}
+              onChange={(val) => setLocalValues({ ...localValues, speed: val })}
+              onBlur={() => handleBlur('speed')}
+              onPointerDown={stopDragPropagation}
+              onMouseDown={stopDragPropagation}
+              onKeyDown={stopDragPropagation}
+              step={0.5}
+            />
+            <NumberInput
+              label="שיפוע"
+              value={localValues.incline}
+              onChange={(val) => setLocalValues({ ...localValues, incline: val })}
+              onBlur={() => handleBlur('incline')}
+              onPointerDown={stopDragPropagation}
+              onMouseDown={stopDragPropagation}
+              onKeyDown={stopDragPropagation}
+              step={0.5}
+            />
+            <NumberInput
+              label="זמן"
+              value={localValues.duration}
+              onChange={(val) => setLocalValues({ ...localValues, duration: val })}
+              onBlur={() => handleBlur('duration')}
+              onPointerDown={stopDragPropagation}
+              onMouseDown={stopDragPropagation}
+              onKeyDown={stopDragPropagation}
+            />
           </>
         ) : (
           <>
-            <div className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
-              <span className="text-[10px] text-white/50">משקל</span>
-              <input
-                type="number"
-                value={localValues.weight || ''}
-                onChange={(e) => setLocalValues({ ...localValues, weight: Number(e.target.value) || 0 })}
-                onBlur={() => handleBlur('weight')}
-                onPointerDown={stopDragPropagation}
-                onMouseDown={stopDragPropagation}
-                onKeyDown={stopDragPropagation}
-                placeholder="0"
-                className="w-full min-w-[48px] max-w-[60px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
-              />
-            </div>
-
-            <div className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
-              <span className="text-[10px] text-white/50">סטים</span>
-              <input
-                type="number"
-                value={localValues.sets || ''}
-                onChange={(e) => setLocalValues({ ...localValues, sets: Number(e.target.value) || 0 })}
-                onBlur={() => handleBlur('sets')}
-                onPointerDown={stopDragPropagation}
-                onMouseDown={stopDragPropagation}
-                onKeyDown={stopDragPropagation}
-                placeholder="0"
-                className="w-full min-w-[48px] max-w-[60px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
-              />
-            </div>
-
-            <div className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
-              <span className="text-[10px] text-white/50">חזרות</span>
-              <input
-                type="number"
-                value={localValues.reps || ''}
-                onChange={(e) => setLocalValues({ ...localValues, reps: Number(e.target.value) || 0 })}
-                onBlur={() => handleBlur('reps')}
-                onPointerDown={stopDragPropagation}
-                onMouseDown={stopDragPropagation}
-                onKeyDown={stopDragPropagation}
-                placeholder="0"
-                className="w-full min-w-[48px] max-w-[60px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
-              />
-            </div>
+            <NumberInput
+              label="משקל"
+              value={localValues.weight}
+              onChange={(val) => setLocalValues({ ...localValues, weight: val })}
+              onBlur={() => handleBlur('weight')}
+              onPointerDown={stopDragPropagation}
+              onMouseDown={stopDragPropagation}
+              onKeyDown={stopDragPropagation}
+              step={2.5}
+            />
+            <NumberInput
+              label="סטים"
+              value={localValues.sets}
+              onChange={(val) => setLocalValues({ ...localValues, sets: val })}
+              onBlur={() => handleBlur('sets')}
+              onPointerDown={stopDragPropagation}
+              onMouseDown={stopDragPropagation}
+              onKeyDown={stopDragPropagation}
+            />
+            <NumberInput
+              label="חזרות"
+              value={localValues.reps}
+              onChange={(val) => setLocalValues({ ...localValues, reps: val })}
+              onBlur={() => handleBlur('reps')}
+              onPointerDown={stopDragPropagation}
+              onMouseDown={stopDragPropagation}
+              onKeyDown={stopDragPropagation}
+            />
           </>
         )}
       </div>
