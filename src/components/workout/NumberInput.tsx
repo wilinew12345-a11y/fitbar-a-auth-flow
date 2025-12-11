@@ -68,9 +68,10 @@ export const NumberInput = ({
   const isAtMin = value <= min;
 
   return (
-    <div className="flex flex-col items-center gap-1 flex-1 min-w-0">
-      <span className="text-[10px] text-white/50 font-medium">{label}</span>
-      <div className="flex items-center gap-1.5">
+    <div className="flex flex-col items-center gap-0.5 flex-1 min-w-0 max-w-full box-border">
+      <span className="text-[9px] md:text-[10px] text-white/50 font-medium">{label}</span>
+      <div className="flex items-center gap-1 md:gap-1.5 max-w-full">
+        {/* Minus Button - with expanded touch target */}
         <button
           type="button"
           disabled={isAtMin}
@@ -86,16 +87,17 @@ export const NumberInput = ({
           }}
           onTouchEnd={stopContinuousChange}
           onPointerDown={onPointerDown}
-          className={`flex items-center justify-center w-8 h-8 rounded-full bg-[#DB0030] text-white font-bold transition-all select-none
+          className={`relative flex items-center justify-center w-6 h-6 md:w-7 md:h-7 rounded-full bg-[#DB0030] text-white font-bold transition-all select-none flex-shrink-0 box-border
+            before:content-[''] before:absolute before:inset-[-8px] before:rounded-full
             ${isAtMin 
               ? 'opacity-40 cursor-not-allowed' 
-              : 'hover:bg-[#ff1a4d] hover:scale-105 active:scale-95 active:bg-[#b8002a] cursor-pointer shadow-md hover:shadow-lg'
+              : 'hover:bg-[#ff1a4d] md:hover:scale-105 active:scale-95 active:bg-[#b8002a] cursor-pointer shadow-sm md:shadow-md md:hover:shadow-lg'
             }`}
         >
-          <Minus className="h-4 w-4 stroke-[3]" />
+          <Minus className="h-3 w-3 md:h-3.5 md:w-3.5 stroke-[3]" />
         </button>
 
-        {/* Input Field */}
+        {/* Input Field - can shrink slightly */}
         <input
           type="number"
           value={value || ''}
@@ -105,9 +107,10 @@ export const NumberInput = ({
           onMouseDown={onMouseDown}
           onKeyDown={onKeyDown}
           placeholder="0"
-          className="w-12 h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-bold placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent caret-[#DB0030]"
+          className="w-9 md:w-11 h-6 md:h-7 bg-white/20 border border-white/30 rounded-md text-white text-center text-xs md:text-sm font-bold placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent caret-[#DB0030] min-w-0 flex-shrink box-border"
         />
 
+        {/* Plus Button - with expanded touch target */}
         <button
           type="button"
           onMouseDown={(e) => {
@@ -122,9 +125,11 @@ export const NumberInput = ({
           }}
           onTouchEnd={stopContinuousChange}
           onPointerDown={onPointerDown}
-          className="flex items-center justify-center w-8 h-8 rounded-full bg-[#DB0030] text-white font-bold transition-all select-none cursor-pointer shadow-md hover:bg-[#ff1a4d] hover:scale-105 hover:shadow-lg active:scale-95 active:bg-[#b8002a]"
+          className="relative flex items-center justify-center w-6 h-6 md:w-7 md:h-7 rounded-full bg-[#DB0030] text-white font-bold transition-all select-none cursor-pointer shadow-sm md:shadow-md flex-shrink-0 box-border
+            before:content-[''] before:absolute before:inset-[-8px] before:rounded-full
+            hover:bg-[#ff1a4d] md:hover:scale-105 md:hover:shadow-lg active:scale-95 active:bg-[#b8002a]"
         >
-          <Plus className="h-4 w-4 stroke-[3]" />
+          <Plus className="h-3 w-3 md:h-3.5 md:w-3.5 stroke-[3]" />
         </button>
       </div>
     </div>
