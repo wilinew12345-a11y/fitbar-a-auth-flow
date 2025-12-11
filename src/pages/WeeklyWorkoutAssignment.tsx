@@ -386,7 +386,7 @@ const WeeklyWorkoutAssignment = () => {
         {schedules.length > 0 && (
           <div className="mt-8 text-center animate-slide-up-delay-2">
             <Button
-              onClick={() => navigate('/workout-planning')}
+              onClick={() => navigate('/workout-log')}
               className="bg-[hsl(213,100%,30%)] hover:bg-[hsl(213,100%,40%)] text-white px-12 py-6 text-lg font-bold rounded-xl shadow-lg"
             >
               המשך לשלב הבא
