@@ -105,6 +105,37 @@
     @apply bg-background text-foreground font-sans;
     font-family: 'Montserrat', sans-serif;
   }
+
+  /* FC Barcelona Premium Scrollbar */
+  ::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #DB0030 0%, #004D98 100%);
+    border-radius: 10px;
+    transition: all 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #ff1a4d 0%, #0066cc 100%);
+    box-shadow: 0 0 8px rgba(219, 0, 48, 0.4);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #a50044 transparent;
+  }
 }
 
 @layer utilities {
