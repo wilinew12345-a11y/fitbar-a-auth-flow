@@ -11,6 +11,9 @@ export interface Exercise {
   weight: number;
   sets: number;
   reps: number;
+  speed?: number;
+  incline?: number;
+  duration?: number;
   image_url: string | null;
 }
 
@@ -32,10 +35,15 @@ export const ExerciseCard = ({
   isUploading 
 }: ExerciseCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const isAerobic = exercise.body_part === 'אירובי';
+  
   const [localValues, setLocalValues] = useState({
     weight: exercise.weight,
     sets: exercise.sets,
     reps: exercise.reps,
+    speed: exercise.speed || 0,
+    incline: exercise.incline || 0,
+    duration: exercise.duration || 0,
   });
 
   // Sync local values when exercise prop changes
@@ -44,8 +52,11 @@ export const ExerciseCard = ({
       weight: exercise.weight,
       sets: exercise.sets,
       reps: exercise.reps,
+      speed: exercise.speed || 0,
+      incline: exercise.incline || 0,
+      duration: exercise.duration || 0,
     });
-  }, [exercise.weight, exercise.sets, exercise.reps]);
+  }, [exercise.weight, exercise.sets, exercise.reps, exercise.speed, exercise.incline, exercise.duration]);
 
   const {
     attributes,
@@ -63,8 +74,9 @@ export const ExerciseCard = ({
   };
 
   // Auto-save on blur if values changed
-  const handleBlur = (field: 'weight' | 'sets' | 'reps') => {
-    if (localValues[field] !== exercise[field]) {
+  const handleBlur = (field: 'weight' | 'sets' | 'reps' | 'speed' | 'incline' | 'duration') => {
+    const exerciseValue = exercise[field as keyof Exercise] ?? 0;
+    if (localValues[field] !== exerciseValue) {
       onUpdate(exercise.id, { [field]: localValues[field] });
     }
   };
@@ -98,53 +110,107 @@ export const ExerciseCard = ({
           onTouchStart={stopDragPropagation}
           onKeyDown={stopDragPropagation}
         >
-          {/* Weight Input */}
-          <div className="flex flex-col items-center gap-0.5">
-            <span className="text-[10px] text-white/50">משקל</span>
-            <input
-              type="number"
-              value={localValues.weight || ''}
-              onChange={(e) => setLocalValues({ ...localValues, weight: Number(e.target.value) || 0 })}
-              onBlur={() => handleBlur('weight')}
-              onPointerDown={stopDragPropagation}
-              onMouseDown={stopDragPropagation}
-              onKeyDown={stopDragPropagation}
-              placeholder="0"
-              className="min-w-[55px] w-[55px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
-            />
-          </div>
+          {isAerobic ? (
+            <>
+              {/* Speed Input */}
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="text-[10px] text-white/50">מהירות</span>
+                <input
+                  type="number"
+                  value={localValues.speed || ''}
+                  onChange={(e) => setLocalValues({ ...localValues, speed: Number(e.target.value) || 0 })}
+                  onBlur={() => handleBlur('speed')}
+                  onPointerDown={stopDragPropagation}
+                  onMouseDown={stopDragPropagation}
+                  onKeyDown={stopDragPropagation}
+                  placeholder="0"
+                  className="min-w-[55px] w-[55px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
+                />
+              </div>
 
-          {/* Sets Input */}
-          <div className="flex flex-col items-center gap-0.5">
-            <span className="text-[10px] text-white/50">סטים</span>
-            <input
-              type="number"
-              value={localValues.sets || ''}
-              onChange={(e) => setLocalValues({ ...localValues, sets: Number(e.target.value) || 0 })}
-              onBlur={() => handleBlur('sets')}
-              onPointerDown={stopDragPropagation}
-              onMouseDown={stopDragPropagation}
-              onKeyDown={stopDragPropagation}
-              placeholder="0"
-              className="min-w-[55px] w-[55px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
-            />
-          </div>
+              {/* Incline Input */}
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="text-[10px] text-white/50">שיפוע</span>
+                <input
+                  type="number"
+                  value={localValues.incline || ''}
+                  onChange={(e) => setLocalValues({ ...localValues, incline: Number(e.target.value) || 0 })}
+                  onBlur={() => handleBlur('incline')}
+                  onPointerDown={stopDragPropagation}
+                  onMouseDown={stopDragPropagation}
+                  onKeyDown={stopDragPropagation}
+                  placeholder="0"
+                  className="min-w-[55px] w-[55px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
+                />
+              </div>
 
-          {/* Reps Input */}
-          <div className="flex flex-col items-center gap-0.5">
-            <span className="text-[10px] text-white/50">חזרות</span>
-            <input
-              type="number"
-              value={localValues.reps || ''}
-              onChange={(e) => setLocalValues({ ...localValues, reps: Number(e.target.value) || 0 })}
-              onBlur={() => handleBlur('reps')}
-              onPointerDown={stopDragPropagation}
-              onMouseDown={stopDragPropagation}
-              onKeyDown={stopDragPropagation}
-              placeholder="0"
-              className="min-w-[55px] w-[55px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
-            />
-          </div>
+              {/* Duration Input */}
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="text-[10px] text-white/50">זמן</span>
+                <input
+                  type="number"
+                  value={localValues.duration || ''}
+                  onChange={(e) => setLocalValues({ ...localValues, duration: Number(e.target.value) || 0 })}
+                  onBlur={() => handleBlur('duration')}
+                  onPointerDown={stopDragPropagation}
+                  onMouseDown={stopDragPropagation}
+                  onKeyDown={stopDragPropagation}
+                  placeholder="0"
+                  className="min-w-[55px] w-[55px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Weight Input */}
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="text-[10px] text-white/50">משקל</span>
+                <input
+                  type="number"
+                  value={localValues.weight || ''}
+                  onChange={(e) => setLocalValues({ ...localValues, weight: Number(e.target.value) || 0 })}
+                  onBlur={() => handleBlur('weight')}
+                  onPointerDown={stopDragPropagation}
+                  onMouseDown={stopDragPropagation}
+                  onKeyDown={stopDragPropagation}
+                  placeholder="0"
+                  className="min-w-[55px] w-[55px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
+                />
+              </div>
+
+              {/* Sets Input */}
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="text-[10px] text-white/50">סטים</span>
+                <input
+                  type="number"
+                  value={localValues.sets || ''}
+                  onChange={(e) => setLocalValues({ ...localValues, sets: Number(e.target.value) || 0 })}
+                  onBlur={() => handleBlur('sets')}
+                  onPointerDown={stopDragPropagation}
+                  onMouseDown={stopDragPropagation}
+                  onKeyDown={stopDragPropagation}
+                  placeholder="0"
+                  className="min-w-[55px] w-[55px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
+                />
+              </div>
+
+              {/* Reps Input */}
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="text-[10px] text-white/50">חזרות</span>
+                <input
+                  type="number"
+                  value={localValues.reps || ''}
+                  onChange={(e) => setLocalValues({ ...localValues, reps: Number(e.target.value) || 0 })}
+                  onBlur={() => handleBlur('reps')}
+                  onPointerDown={stopDragPropagation}
+                  onMouseDown={stopDragPropagation}
+                  onKeyDown={stopDragPropagation}
+                  placeholder="0"
+                  className="min-w-[55px] w-[55px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
+                />
+              </div>
+            </>
+          )}
         </div>
 
         {/* Controls - Right: Drag Handle + Expand */}

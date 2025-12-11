@@ -18,33 +18,42 @@ export type Database = {
         Row: {
           body_part: string
           created_at: string
+          duration: number | null
           id: string
           image_url: string | null
+          incline: number | null
           name: string
           reps: number | null
           sets: number | null
+          speed: number | null
           user_id: string
           weight: number | null
         }
         Insert: {
           body_part: string
           created_at?: string
+          duration?: number | null
           id?: string
           image_url?: string | null
+          incline?: number | null
           name: string
           reps?: number | null
           sets?: number | null
+          speed?: number | null
           user_id?: string
           weight?: number | null
         }
         Update: {
           body_part?: string
           created_at?: string
+          duration?: number | null
           id?: string
           image_url?: string | null
+          incline?: number | null
           name?: string
           reps?: number | null
           sets?: number | null
+          speed?: number | null
           user_id?: string
           weight?: number | null
         }
