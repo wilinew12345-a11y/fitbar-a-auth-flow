@@ -40,6 +40,7 @@ const BODY_PART_CATEGORIES = [
   { key: 'בטן', label: 'בטן (Abs)' },
   { key: 'מתח', label: 'מתח (Pull-ups)' },
   { key: 'Full Body', label: 'Full Body' },
+  { key: 'אירובי', label: 'אירובי (Aerobic)' },
 ];
 
 const WorkoutLog = () => {
