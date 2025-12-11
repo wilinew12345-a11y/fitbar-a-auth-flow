@@ -92,150 +92,150 @@ export const ExerciseCard = ({
       style={style}
       className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20 transition-all hover:bg-white/15"
     >
-      {/* Header Row: Name | Inputs | Controls */}
-      <div className="flex items-center gap-3">
-        {/* Exercise Name - Left */}
+      {/* Title Row */}
+      <div className="flex items-center justify-between gap-2 mb-2">
         <span 
-          className="text-sm font-semibold text-white truncate min-w-0 flex-shrink-0 max-w-[100px]" 
+          className="text-sm font-semibold text-white truncate flex-1" 
           title={exercise.name}
         >
           {exercise.name}
         </span>
-
-        {/* Input Fields - Center (isolated from drag) */}
-        <div 
-          className="flex items-center gap-2 flex-1 justify-center relative z-10"
-          onPointerDown={stopDragPropagation}
-          onMouseDown={stopDragPropagation}
-          onTouchStart={stopDragPropagation}
-          onKeyDown={stopDragPropagation}
-        >
-          {isAerobic ? (
-            <>
-              {/* Speed Input */}
-              <div className="flex flex-col items-center gap-0.5">
-                <span className="text-[10px] text-white/50">מהירות</span>
-                <input
-                  type="number"
-                  value={localValues.speed || ''}
-                  onChange={(e) => setLocalValues({ ...localValues, speed: Number(e.target.value) || 0 })}
-                  onBlur={() => handleBlur('speed')}
-                  onPointerDown={stopDragPropagation}
-                  onMouseDown={stopDragPropagation}
-                  onKeyDown={stopDragPropagation}
-                  placeholder="0"
-                  className="min-w-[55px] w-[55px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
-                />
-              </div>
-
-              {/* Incline Input */}
-              <div className="flex flex-col items-center gap-0.5">
-                <span className="text-[10px] text-white/50">שיפוע</span>
-                <input
-                  type="number"
-                  value={localValues.incline || ''}
-                  onChange={(e) => setLocalValues({ ...localValues, incline: Number(e.target.value) || 0 })}
-                  onBlur={() => handleBlur('incline')}
-                  onPointerDown={stopDragPropagation}
-                  onMouseDown={stopDragPropagation}
-                  onKeyDown={stopDragPropagation}
-                  placeholder="0"
-                  className="min-w-[55px] w-[55px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
-                />
-              </div>
-
-              {/* Duration Input */}
-              <div className="flex flex-col items-center gap-0.5">
-                <span className="text-[10px] text-white/50">זמן</span>
-                <input
-                  type="number"
-                  value={localValues.duration || ''}
-                  onChange={(e) => setLocalValues({ ...localValues, duration: Number(e.target.value) || 0 })}
-                  onBlur={() => handleBlur('duration')}
-                  onPointerDown={stopDragPropagation}
-                  onMouseDown={stopDragPropagation}
-                  onKeyDown={stopDragPropagation}
-                  placeholder="0"
-                  className="min-w-[55px] w-[55px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
-                />
-              </div>
-            </>
-          ) : (
-            <>
-              {/* Weight Input */}
-              <div className="flex flex-col items-center gap-0.5">
-                <span className="text-[10px] text-white/50">משקל</span>
-                <input
-                  type="number"
-                  value={localValues.weight || ''}
-                  onChange={(e) => setLocalValues({ ...localValues, weight: Number(e.target.value) || 0 })}
-                  onBlur={() => handleBlur('weight')}
-                  onPointerDown={stopDragPropagation}
-                  onMouseDown={stopDragPropagation}
-                  onKeyDown={stopDragPropagation}
-                  placeholder="0"
-                  className="min-w-[55px] w-[55px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
-                />
-              </div>
-
-              {/* Sets Input */}
-              <div className="flex flex-col items-center gap-0.5">
-                <span className="text-[10px] text-white/50">סטים</span>
-                <input
-                  type="number"
-                  value={localValues.sets || ''}
-                  onChange={(e) => setLocalValues({ ...localValues, sets: Number(e.target.value) || 0 })}
-                  onBlur={() => handleBlur('sets')}
-                  onPointerDown={stopDragPropagation}
-                  onMouseDown={stopDragPropagation}
-                  onKeyDown={stopDragPropagation}
-                  placeholder="0"
-                  className="min-w-[55px] w-[55px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
-                />
-              </div>
-
-              {/* Reps Input */}
-              <div className="flex flex-col items-center gap-0.5">
-                <span className="text-[10px] text-white/50">חזרות</span>
-                <input
-                  type="number"
-                  value={localValues.reps || ''}
-                  onChange={(e) => setLocalValues({ ...localValues, reps: Number(e.target.value) || 0 })}
-                  onBlur={() => handleBlur('reps')}
-                  onPointerDown={stopDragPropagation}
-                  onMouseDown={stopDragPropagation}
-                  onKeyDown={stopDragPropagation}
-                  placeholder="0"
-                  className="min-w-[55px] w-[55px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
-                />
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Controls - Right: Drag Handle + Expand */}
+        
+        {/* Controls: Drag Handle + Expand + Delete */}
         <div className="flex items-center gap-1 flex-shrink-0">
-          {/* Drag Handle */}
           <div
             data-drag-handle="true"
             {...attributes}
             {...listeners}
-            className="cursor-grab active:cursor-grabbing p-1.5 text-white/40 hover:text-white/70 touch-none rounded hover:bg-white/10"
+            className="cursor-grab active:cursor-grabbing p-1 text-white/40 hover:text-white/70 touch-none rounded hover:bg-white/10"
             style={{ touchAction: 'none' }}
           >
-            <GripVertical className="h-5 w-5 pointer-events-none" />
+            <GripVertical className="h-4 w-4 pointer-events-none" />
           </div>
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onDelete(exercise.id)}
+            className="h-7 w-7 text-red-400/70 hover:text-red-400 hover:bg-red-500/20"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
 
-          {/* Expand/Collapse Toggle */}
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="h-8 w-8 text-white/50 hover:text-white hover:bg-white/10"
+            className="h-7 w-7 text-white/50 hover:text-white hover:bg-white/10"
           >
             {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </Button>
         </div>
+      </div>
+
+      {/* Input Fields Row */}
+      <div 
+        className="flex items-center justify-center gap-2 relative z-10"
+        onPointerDown={stopDragPropagation}
+        onMouseDown={stopDragPropagation}
+        onTouchStart={stopDragPropagation}
+        onKeyDown={stopDragPropagation}
+      >
+        {isAerobic ? (
+          <>
+            <div className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
+              <span className="text-[10px] text-white/50">מהירות</span>
+              <input
+                type="number"
+                value={localValues.speed || ''}
+                onChange={(e) => setLocalValues({ ...localValues, speed: Number(e.target.value) || 0 })}
+                onBlur={() => handleBlur('speed')}
+                onPointerDown={stopDragPropagation}
+                onMouseDown={stopDragPropagation}
+                onKeyDown={stopDragPropagation}
+                placeholder="0"
+                className="w-full min-w-[48px] max-w-[60px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
+              />
+            </div>
+
+            <div className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
+              <span className="text-[10px] text-white/50">שיפוע</span>
+              <input
+                type="number"
+                value={localValues.incline || ''}
+                onChange={(e) => setLocalValues({ ...localValues, incline: Number(e.target.value) || 0 })}
+                onBlur={() => handleBlur('incline')}
+                onPointerDown={stopDragPropagation}
+                onMouseDown={stopDragPropagation}
+                onKeyDown={stopDragPropagation}
+                placeholder="0"
+                className="w-full min-w-[48px] max-w-[60px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
+              />
+            </div>
+
+            <div className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
+              <span className="text-[10px] text-white/50">זמן</span>
+              <input
+                type="number"
+                value={localValues.duration || ''}
+                onChange={(e) => setLocalValues({ ...localValues, duration: Number(e.target.value) || 0 })}
+                onBlur={() => handleBlur('duration')}
+                onPointerDown={stopDragPropagation}
+                onMouseDown={stopDragPropagation}
+                onKeyDown={stopDragPropagation}
+                placeholder="0"
+                className="w-full min-w-[48px] max-w-[60px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
+              <span className="text-[10px] text-white/50">משקל</span>
+              <input
+                type="number"
+                value={localValues.weight || ''}
+                onChange={(e) => setLocalValues({ ...localValues, weight: Number(e.target.value) || 0 })}
+                onBlur={() => handleBlur('weight')}
+                onPointerDown={stopDragPropagation}
+                onMouseDown={stopDragPropagation}
+                onKeyDown={stopDragPropagation}
+                placeholder="0"
+                className="w-full min-w-[48px] max-w-[60px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
+              />
+            </div>
+
+            <div className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
+              <span className="text-[10px] text-white/50">סטים</span>
+              <input
+                type="number"
+                value={localValues.sets || ''}
+                onChange={(e) => setLocalValues({ ...localValues, sets: Number(e.target.value) || 0 })}
+                onBlur={() => handleBlur('sets')}
+                onPointerDown={stopDragPropagation}
+                onMouseDown={stopDragPropagation}
+                onKeyDown={stopDragPropagation}
+                placeholder="0"
+                className="w-full min-w-[48px] max-w-[60px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
+              />
+            </div>
+
+            <div className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
+              <span className="text-[10px] text-white/50">חזרות</span>
+              <input
+                type="number"
+                value={localValues.reps || ''}
+                onChange={(e) => setLocalValues({ ...localValues, reps: Number(e.target.value) || 0 })}
+                onBlur={() => handleBlur('reps')}
+                onPointerDown={stopDragPropagation}
+                onMouseDown={stopDragPropagation}
+                onKeyDown={stopDragPropagation}
+                placeholder="0"
+                className="w-full min-w-[48px] max-w-[60px] h-8 bg-white/20 border border-white/30 rounded-lg text-white text-center text-sm font-medium placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent"
+              />
+            </div>
+          </>
+        )}
       </div>
 
       {/* Saving Indicator */}
@@ -246,11 +246,10 @@ export const ExerciseCard = ({
         </div>
       )}
 
-      {/* Expanded Content */}
+      {/* Expanded Content - uses flow layout, no absolute positioning */}
       {isExpanded && (
-        <div className="mt-3 pt-3 border-t border-white/10 space-y-3">
-          {/* Image Upload */}
-          <div className="w-full h-20 rounded-lg overflow-hidden bg-white/5 border border-white/10 relative group">
+        <div className="mt-3 pt-3 border-t border-white/10">
+          <div className="w-full h-24 rounded-lg overflow-hidden bg-white/5 border border-white/10 relative group">
             {exercise.image_url ? (
               <img
                 src={exercise.image_url}
@@ -279,17 +278,6 @@ export const ExerciseCard = ({
               />
             </label>
           </div>
-
-          {/* Delete Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onDelete(exercise.id)}
-            className="w-full h-8 text-red-400 hover:text-red-300 hover:bg-red-500/20 text-xs"
-          >
-            <Trash2 className="h-4 w-4 ml-1" />
-            מחק תרגיל
-          </Button>
         </div>
       )}
     </div>
