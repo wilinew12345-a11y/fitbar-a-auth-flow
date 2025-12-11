@@ -70,8 +70,42 @@ export const NumberInput = ({
   return (
     <div className="flex flex-col items-center gap-0.5 flex-1 min-w-0 max-w-full box-border">
       <span className="text-[9px] md:text-[10px] text-white/50 font-medium">{label}</span>
-      <div className="flex items-center gap-1 md:gap-1.5 max-w-full">
-        {/* Minus Button - with expanded touch target */}
+      <div className="flex items-center gap-1 max-w-full">
+        {/* Plus Button (Left) - minimalist icon */}
+        <button
+          type="button"
+          onMouseDown={(e) => {
+            onMouseDown(e);
+            startContinuousChange('increment', value);
+          }}
+          onMouseUp={stopContinuousChange}
+          onMouseLeave={stopContinuousChange}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            startContinuousChange('increment', value);
+          }}
+          onTouchEnd={stopContinuousChange}
+          onPointerDown={onPointerDown}
+          className="relative flex items-center justify-center w-5 h-5 text-[#DB0030] hover:text-[#ff1a4d] active:text-[#b8002a] transition-colors select-none cursor-pointer flex-shrink-0
+            before:content-[''] before:absolute before:inset-[-6px]"
+        >
+          <Plus className="h-4 w-4 stroke-[2.5]" />
+        </button>
+
+        {/* Input Field (Center) */}
+        <input
+          type="number"
+          value={value || ''}
+          onChange={(e) => onChange(Math.max(min, Number(e.target.value) || 0))}
+          onBlur={onBlur}
+          onPointerDown={onPointerDown}
+          onMouseDown={onMouseDown}
+          onKeyDown={onKeyDown}
+          placeholder="0"
+          className="w-10 md:w-12 h-7 bg-white/10 border border-white/20 rounded-md text-white text-center text-sm font-semibold placeholder:text-white/40 focus:outline-none focus:ring-1 focus:ring-[#004d98] focus:border-transparent caret-[#DB0030] min-w-0 flex-shrink box-border"
+        />
+
+        {/* Minus Button (Right) - minimalist icon */}
         <button
           type="button"
           disabled={isAtMin}
@@ -87,49 +121,14 @@ export const NumberInput = ({
           }}
           onTouchEnd={stopContinuousChange}
           onPointerDown={onPointerDown}
-          className={`relative flex items-center justify-center w-6 h-6 md:w-7 md:h-7 rounded-full bg-[#DB0030] text-white font-bold transition-all select-none flex-shrink-0 box-border
-            before:content-[''] before:absolute before:inset-[-8px] before:rounded-full
+          className={`relative flex items-center justify-center w-5 h-5 transition-colors select-none flex-shrink-0
+            before:content-[''] before:absolute before:inset-[-6px]
             ${isAtMin 
-              ? 'opacity-40 cursor-not-allowed' 
-              : 'hover:bg-[#ff1a4d] md:hover:scale-105 active:scale-95 active:bg-[#b8002a] cursor-pointer shadow-sm md:shadow-md md:hover:shadow-lg'
+              ? 'text-[#DB0030]/40 cursor-not-allowed' 
+              : 'text-[#DB0030] hover:text-[#ff1a4d] active:text-[#b8002a] cursor-pointer'
             }`}
         >
-          <Minus className="h-3 w-3 md:h-3.5 md:w-3.5 stroke-[3]" />
-        </button>
-
-        {/* Input Field - can shrink slightly */}
-        <input
-          type="number"
-          value={value || ''}
-          onChange={(e) => onChange(Math.max(min, Number(e.target.value) || 0))}
-          onBlur={onBlur}
-          onPointerDown={onPointerDown}
-          onMouseDown={onMouseDown}
-          onKeyDown={onKeyDown}
-          placeholder="0"
-          className="w-9 md:w-11 h-6 md:h-7 bg-white/20 border border-white/30 rounded-md text-white text-center text-xs md:text-sm font-bold placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#004d98] focus:border-transparent caret-[#DB0030] min-w-0 flex-shrink box-border"
-        />
-
-        {/* Plus Button - with expanded touch target */}
-        <button
-          type="button"
-          onMouseDown={(e) => {
-            onMouseDown(e);
-            startContinuousChange('increment', value);
-          }}
-          onMouseUp={stopContinuousChange}
-          onMouseLeave={stopContinuousChange}
-          onTouchStart={(e) => {
-            e.preventDefault();
-            startContinuousChange('increment', value);
-          }}
-          onTouchEnd={stopContinuousChange}
-          onPointerDown={onPointerDown}
-          className="relative flex items-center justify-center w-6 h-6 md:w-7 md:h-7 rounded-full bg-[#DB0030] text-white font-bold transition-all select-none cursor-pointer shadow-sm md:shadow-md flex-shrink-0 box-border
-            before:content-[''] before:absolute before:inset-[-8px] before:rounded-full
-            hover:bg-[#ff1a4d] md:hover:scale-105 md:hover:shadow-lg active:scale-95 active:bg-[#b8002a]"
-        >
-          <Plus className="h-3 w-3 md:h-3.5 md:w-3.5 stroke-[3]" />
+          <Minus className="h-4 w-4 stroke-[2.5]" />
         </button>
       </div>
     </div>
