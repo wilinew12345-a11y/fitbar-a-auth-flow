@@ -27,6 +27,7 @@ const MUSCLE_GROUPS = [
   { key: 'shoulders', label: 'כתפיים' },
   { key: 'abs', label: 'בטן' },
   { key: 'stretch', label: 'מתח' },
+  { key: 'aerobic', label: 'אירובי' },
   { key: 'fullbody', label: 'Full Body' },
 ];
 
