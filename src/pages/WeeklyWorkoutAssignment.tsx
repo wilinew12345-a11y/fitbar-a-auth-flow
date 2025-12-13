@@ -1,35 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import FitBarcaLogo from "@/components/FitBarcaLogo";
-import { Plus, Trash2, Pencil, X, Loader2, RotateCcw, ArrowRight } from "lucide-react";
-
-// Days of week in Hebrew
-const DAYS_OF_WEEK = [
-  { key: 'sunday', label: 'ראשון', short: 'א' },
-  { key: 'monday', label: 'שני', short: 'ב' },
-  { key: 'tuesday', label: 'שלישי', short: 'ג' },
-  { key: 'wednesday', label: 'רביעי', short: 'ד' },
-  { key: 'thursday', label: 'חמישי', short: 'ה' },
-  { key: 'friday', label: 'שישי', short: 'ו' },
-  { key: 'saturday', label: 'שבת', short: 'ש' },
-];
-
-// Muscle groups
-const MUSCLE_GROUPS = [
-  { key: 'chest', label: 'חזה' },
-  { key: 'triceps', label: 'יד אחורית' },
-  { key: 'biceps', label: 'יד קדמית' },
-  { key: 'back', label: 'גב' },
-  { key: 'legs', label: 'רגליים' },
-  { key: 'shoulders', label: 'כתפיים' },
-  { key: 'abs', label: 'בטן' },
-  { key: 'stretch', label: 'מתח' },
-  { key: 'aerobic', label: 'אירובי' },
-  { key: 'fullbody', label: 'Full Body' },
-];
+import LanguageSelector from "@/components/LanguageSelector";
+import { Plus, Trash2, Pencil, X, Loader2, RotateCcw, ArrowRight, ArrowLeft } from "lucide-react";
 
 interface Schedule {
   id: string;
@@ -39,12 +16,38 @@ interface Schedule {
 
 const WeeklyWorkoutAssignment = () => {
   const navigate = useNavigate();
+  const { t, isRtl } = useLanguage();
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedMuscles, setSelectedMuscles] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // Days of week with translations
+  const DAYS_OF_WEEK = useMemo(() => [
+    { key: 'sunday', label: t('sunday'), short: t('sunShort') },
+    { key: 'monday', label: t('monday'), short: t('monShort') },
+    { key: 'tuesday', label: t('tuesday'), short: t('tueShort') },
+    { key: 'wednesday', label: t('wednesday'), short: t('wedShort') },
+    { key: 'thursday', label: t('thursday'), short: t('thuShort') },
+    { key: 'friday', label: t('friday'), short: t('friShort') },
+    { key: 'saturday', label: t('saturday'), short: t('satShort') },
+  ], [t]);
+
+  // Muscle groups with translations
+  const MUSCLE_GROUPS = useMemo(() => [
+    { key: 'chest', label: t('chest') },
+    { key: 'triceps', label: t('triceps') },
+    { key: 'biceps', label: t('biceps') },
+    { key: 'back', label: t('backMuscle') },
+    { key: 'legs', label: t('legs') },
+    { key: 'shoulders', label: t('shoulders') },
+    { key: 'abs', label: t('abs') },
+    { key: 'stretch', label: t('pullups') },
+    { key: 'aerobic', label: t('aerobic') },
+    { key: 'fullbody', label: t('fullBody') },
+  ], [t]);
 
   // Check auth and fetch schedules
   useEffect(() => {
@@ -93,8 +96,7 @@ const WeeklyWorkoutAssignment = () => {
   const handleAddToSchedule = async () => {
     if (!selectedDay || selectedMuscles.length === 0) {
       toast({
-        title: "שגיאה",
-        description: "יש לבחור יום וקבוצות שרירים",
+        title: t('selectDayAndMuscles'),
         variant: "destructive",
       });
       return;
@@ -120,7 +122,7 @@ const WeeklyWorkoutAssignment = () => {
 
         if (error) throw error;
 
-        toast({ title: "האימון עודכן בהצלחה!" });
+        toast({ title: t('workoutUpdated') });
         setEditingId(null);
       } else {
         // Check if day already has a schedule
@@ -136,7 +138,7 @@ const WeeklyWorkoutAssignment = () => {
             .eq('id', existingSchedule.id);
 
           if (error) throw error;
-          toast({ title: "האימון עודכן בהצלחה!" });
+          toast({ title: t('workoutUpdated') });
         } else {
           // Insert new
           const { error } = await supabase
@@ -148,7 +150,7 @@ const WeeklyWorkoutAssignment = () => {
             });
 
           if (error) throw error;
-          toast({ title: "האימון נוסף בהצלחה!" });
+          toast({ title: t('workoutAdded') });
         }
       }
 
@@ -158,8 +160,7 @@ const WeeklyWorkoutAssignment = () => {
     } catch (error) {
       console.error('Error saving schedule:', error);
       toast({
-        title: "שגיאה בשמירה",
-        description: "נסה שוב",
+        title: "Error saving",
         variant: "destructive",
       });
     } finally {
@@ -181,14 +182,13 @@ const WeeklyWorkoutAssignment = () => {
 
     if (error) {
       toast({
-        title: "שגיאה במחיקה",
-        description: "נסה שוב",
+        title: "Error deleting",
         variant: "destructive",
       });
       return;
     }
 
-    toast({ title: "האימון נמחק" });
+    toast({ title: t('workoutDeleted') });
     await fetchSchedules();
   };
 
@@ -203,14 +203,13 @@ const WeeklyWorkoutAssignment = () => {
 
     if (error) {
       toast({
-        title: "שגיאה באיפוס",
-        description: "נסה שוב",
+        title: "Error resetting",
         variant: "destructive",
       });
       return;
     }
 
-    toast({ title: "כל האימונים נמחקו" });
+    toast({ title: t('allWorkoutsDeleted') });
     setSchedules([]);
     setSelectedDay(null);
     setSelectedMuscles([]);
@@ -227,6 +226,8 @@ const WeeklyWorkoutAssignment = () => {
       .join(', ');
   };
 
+  const BackIcon = isRtl ? ArrowLeft : ArrowRight;
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center gradient-barca">
@@ -236,26 +237,29 @@ const WeeklyWorkoutAssignment = () => {
   }
 
   return (
-    <div className="min-h-screen gradient-barca p-4 overflow-auto" dir="rtl">
+    <div className="min-h-screen gradient-barca p-4 overflow-auto" dir={isRtl ? 'rtl' : 'ltr'}>
       <div className="max-w-2xl mx-auto py-6">
         {/* Header with Back Button */}
         <div className="flex items-center justify-between mb-8 animate-slide-up">
           <FitBarcaLogo size="md" />
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/dashboard')}
-            className="text-white/70 hover:text-white hover:bg-white/10"
-          >
-            <ArrowRight className="h-5 w-5 ml-2" />
-            חזרה
-          </Button>
+          <div className="flex items-center gap-2">
+            <LanguageSelector />
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/dashboard')}
+              className="text-white/70 hover:text-white hover:bg-white/10"
+            >
+              <BackIcon className="h-5 w-5 mx-2" />
+              {t('back')}
+            </Button>
+          </div>
         </div>
 
         {/* Builder Card */}
         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-2xl animate-slide-up-delay-1">
           {/* Day Selector */}
           <div className="mb-6">
-            <h2 className="text-white text-lg font-semibold mb-4">1. בחר יום בשבוע:</h2>
+            <h2 className="text-white text-lg font-semibold mb-4">{t('selectDayOfWeek')}</h2>
             <div className="flex flex-wrap gap-2 justify-center">
               {DAYS_OF_WEEK.map((day) => (
                 <button
@@ -277,7 +281,7 @@ const WeeklyWorkoutAssignment = () => {
 
           {/* Muscle Selector */}
           <div className="mb-6">
-            <h2 className="text-white text-lg font-semibold mb-4">2. סמן את קבוצות השרירים לאימון:</h2>
+            <h2 className="text-white text-lg font-semibold mb-4">{t('selectMuscleGroups')}</h2>
             <div className="flex flex-wrap gap-3 justify-center">
               {MUSCLE_GROUPS.map((muscle) => (
                 <button
@@ -308,8 +312,8 @@ const WeeklyWorkoutAssignment = () => {
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
                 <>
-                  <Plus className="h-5 w-5 mr-2" />
-                  {editingId ? 'עדכן אימון' : 'הוסף לאימונים שלי'}
+                  <Plus className="h-5 w-5 mx-2" />
+                  {editingId ? t('updateWorkout') : t('addToMyWorkouts')}
                 </>
               )}
             </Button>
@@ -323,8 +327,8 @@ const WeeklyWorkoutAssignment = () => {
                 variant="ghost"
                 className="text-white hover:bg-white/20"
               >
-                <X className="h-5 w-5 mr-1" />
-                ביטול
+                <X className="h-5 w-5 mx-1" />
+                {t('cancelEdit')}
               </Button>
             )}
           </div>
@@ -333,7 +337,7 @@ const WeeklyWorkoutAssignment = () => {
         {/* Schedule Display */}
         <div className="mt-8 animate-slide-up-delay-2">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-white text-xl font-bold">התוכנית שלי:</h2>
+            <h2 className="text-white text-xl font-bold">{t('myPlan')}</h2>
             {schedules.length > 0 && (
               <Button
                 onClick={handleResetAll}
@@ -341,15 +345,15 @@ const WeeklyWorkoutAssignment = () => {
                 className="text-white/70 hover:text-white hover:bg-white/10"
                 size="sm"
               >
-                <RotateCcw className="h-4 w-4 mr-1" />
-                איפוס הכל
+                <RotateCcw className="h-4 w-4 mx-1" />
+                {t('resetAll')}
               </Button>
             )}
           </div>
 
           {schedules.length === 0 ? (
             <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 text-center border border-white/10">
-              <p className="text-white/60">עדיין לא הוספת אימונים. בחר יום ושרירים והוסף לרשימה!</p>
+              <p className="text-white/60">{t('noWorkoutsYet')}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -359,7 +363,7 @@ const WeeklyWorkoutAssignment = () => {
                   className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 flex items-center justify-between"
                 >
                   <div>
-                    <h3 className="text-white font-bold text-lg">יום {getDayLabel(schedule.day_of_week)}</h3>
+                    <h3 className="text-white font-bold text-lg">{t('day')} {getDayLabel(schedule.day_of_week)}</h3>
                     <p className="text-white/80 mt-1">• {getMuscleLabels(schedule.workout_types)}</p>
                   </div>
                   <div className="flex gap-2">
@@ -389,14 +393,14 @@ const WeeklyWorkoutAssignment = () => {
               onClick={() => navigate('/workout-log')}
               className="bg-[hsl(213,100%,30%)] hover:bg-[hsl(213,100%,40%)] text-white px-12 py-6 text-lg font-bold rounded-xl shadow-lg"
             >
-              המשך לשלב הבא
+              {t('continueToNextStep')}
             </Button>
           </div>
         )}
 
         {/* Step Indicator */}
         <div className="text-center mt-8">
-          <p className="text-white/60 text-sm">שלב 2 מתוך 3</p>
+          <p className="text-white/60 text-sm">{t('stepOf').replace('{0}', '2').replace('{1}', '3')}</p>
         </div>
       </div>
     </div>
