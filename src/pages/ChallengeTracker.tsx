@@ -71,22 +71,22 @@ const ChallengeTracker = () => {
 
   // Dashboard View
   return (
-    <div className="min-h-screen bg-[#1a1a1a] text-white" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-b from-[#004D98] to-[#061E40] text-white" dir="rtl">
       {/* Header */}
-      <header className="sticky top-0 bg-[#1a1a1a]/95 backdrop-blur-sm border-b border-[#333] z-40">
+      <header className="sticky top-0 bg-[#004D98]/95 backdrop-blur-sm border-b border-blue-800/50 z-40">
         <div className="max-w-4xl mx-auto p-4">
           <div className="flex items-center justify-between">
             <button
               onClick={() => navigate('/dashboard')}
-              className="p-2 rounded-lg bg-[#252525] hover:bg-[#333] transition-colors"
+              className="p-2 rounded-lg bg-blue-800/50 hover:bg-blue-700/50 transition-colors"
             >
               <ArrowRight className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-green-500/20 to-green-600/20">
-                <Trophy className="w-6 h-6 text-green-400" />
+              <div className="p-2 rounded-xl bg-gradient-to-br from-[#A50044]/30 to-[#A50044]/50">
+                <Trophy className="w-6 h-6 text-red-400" />
               </div>
-              <h1 className="text-2xl font-bold">מעקב אתגרים</h1>
+              <h1 className="text-2xl font-bold text-white">מעקב אתגרים</h1>
             </div>
             <div className="w-10" /> {/* Spacer for centering */}
           </div>
@@ -97,11 +97,11 @@ const ChallengeTracker = () => {
       <main className="max-w-4xl mx-auto p-4 pb-24">
         {challenges.length === 0 ? (
           <div className="text-center py-20">
-            <div className="w-20 h-20 rounded-full bg-[#252525] flex items-center justify-center mx-auto mb-6">
-              <Dumbbell className="w-10 h-10 text-gray-500" />
+            <div className="w-20 h-20 rounded-full bg-blue-900/60 flex items-center justify-center mx-auto mb-6">
+              <Dumbbell className="w-10 h-10 text-blue-300" />
             </div>
-            <h2 className="text-xl font-bold text-gray-400 mb-2">אין אתגרים פעילים</h2>
-            <p className="text-gray-500 mb-6">צור אתגר חדש כדי להתחיל לעקוב אחרי ההתקדמות שלך</p>
+            <h2 className="text-xl font-bold text-blue-200 mb-2">אין אתגרים פעילים</h2>
+            <p className="text-blue-300/70 mb-6">צור אתגר חדש כדי להתחיל לעקוב אחרי ההתקדמות שלך</p>
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
@@ -121,7 +121,7 @@ const ChallengeTracker = () => {
       {/* FAB - Create New Challenge */}
       <button
         onClick={() => setShowCreateDialog(true)}
-        className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-6 py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-full shadow-lg shadow-green-500/30 transition-all hover:scale-105"
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-6 py-4 bg-[#A50044] hover:bg-red-800 text-white font-bold rounded-full shadow-lg shadow-red-900/40 transition-all hover:scale-105"
       >
         <Plus className="w-5 h-5" />
         אתגר חדש
@@ -136,20 +136,20 @@ const ChallengeTracker = () => {
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteDialogId} onOpenChange={() => setDeleteDialogId(null)}>
-        <AlertDialogContent className="bg-[#1a1a1a] border-[#333] text-white" dir="rtl">
+        <AlertDialogContent className="bg-[#061E40] border-blue-800 text-white" dir="rtl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl">מחיקת אתגר</AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-400">
+            <AlertDialogTitle className="text-xl text-white">מחיקת אתגר</AlertDialogTitle>
+            <AlertDialogDescription className="text-blue-200">
               האם אתה בטוח שברצונך למחוק את האתגר הזה? פעולה זו לא ניתנת לביטול.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex gap-3 sm:flex-row-reverse">
-            <AlertDialogCancel className="bg-[#252525] border-[#333] text-white hover:bg-[#333]">
+            <AlertDialogCancel className="bg-blue-900/60 border-blue-800 text-white hover:bg-blue-800/60">
               ביטול
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteChallenge}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-[#A50044] hover:bg-red-800 text-white"
             >
               מחק אתגר
             </AlertDialogAction>
