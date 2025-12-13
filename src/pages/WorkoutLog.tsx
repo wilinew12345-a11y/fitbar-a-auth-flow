@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import FitBarcaLogo from '@/components/FitBarcaLogo';
+import LanguageSelector from '@/components/LanguageSelector';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from '@/hooks/use-toast';
-import { ArrowRight, Plus, Check, Loader2 } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Plus, Check, Loader2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   DndContext,
@@ -30,21 +32,9 @@ import {
 import { KanbanColumn } from '@/components/workout/KanbanColumn';
 import { ExerciseCard, Exercise } from '@/components/workout/ExerciseCard';
 
-const BODY_PART_CATEGORIES = [
-  { key: 'חזה', label: 'חזה (Chest)' },
-  { key: 'יד אחורית', label: 'יד אחורית (Triceps)' },
-  { key: 'יד קדמית', label: 'יד קדמית (Biceps)' },
-  { key: 'גב', label: 'גב (Back)' },
-  { key: 'כתפיים', label: 'כתפיים (Shoulders)' },
-  { key: 'רגליים', label: 'רגליים (Legs)' },
-  { key: 'בטן', label: 'בטן (Abs)' },
-  { key: 'מתח', label: 'מתח (Pull-ups)' },
-  { key: 'Full Body', label: 'Full Body' },
-  { key: 'אירובי', label: 'אירובי (Aerobic)' },
-];
-
 const WorkoutLog = () => {
   const { user, loading } = useAuth();
+  const { t, isRtl } = useLanguage();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -61,6 +51,20 @@ const WorkoutLog = () => {
     name: '',
     body_part: '',
   });
+
+  // Body part categories with translations
+  const BODY_PART_CATEGORIES = useMemo(() => [
+    { key: 'חזה', label: t('chest') },
+    { key: 'יד אחורית', label: t('triceps') },
+    { key: 'יד קדמית', label: t('biceps') },
+    { key: 'גב', label: t('backMuscle') },
+    { key: 'כתפיים', label: t('shoulders') },
+    { key: 'רגליים', label: t('legs') },
+    { key: 'בטן', label: t('abs') },
+    { key: 'מתח', label: t('pullups') },
+    { key: 'Full Body', label: t('fullBody') },
+    { key: 'אירובי', label: t('aerobic') },
+  ], [t]);
 
   // Use MouseSensor with activation only from drag handle
   const mouseSensor = useSensor(MouseSensor, {
@@ -94,7 +98,7 @@ const WorkoutLog = () => {
       .order('created_at', { ascending: false });
 
     if (error) {
-      toast({ title: 'שגיאה בטעינת התרגילים', variant: 'destructive' });
+      toast({ title: 'Error loading exercises', variant: 'destructive' });
     } else {
       setExercises(data || []);
     }
@@ -114,11 +118,11 @@ const WorkoutLog = () => {
       grouped[cat.key] = exercises.filter(ex => ex.body_part === cat.key);
     });
     return grouped;
-  }, [exercises]);
+  }, [exercises, BODY_PART_CATEGORIES]);
 
   const handleAddExercise = async () => {
     if (!user || !newExercise.name.trim() || !newExercise.body_part) {
-      toast({ title: 'נא למלא שם תרגיל ולבחור קטגוריה', variant: 'destructive' });
+      toast({ title: 'Please fill exercise name and select category', variant: 'destructive' });
       return;
     }
 
@@ -136,11 +140,11 @@ const WorkoutLog = () => {
       .single();
 
     if (error) {
-      toast({ title: 'שגיאה בהוספת התרגיל', variant: 'destructive' });
+      toast({ title: 'Error adding exercise', variant: 'destructive' });
     } else {
       setExercises([data, ...exercises]);
       setNewExercise({ name: '', body_part: '' });
-      toast({ title: 'התרגיל נוסף בהצלחה!' });
+      toast({ title: t('exerciseAdded') });
     }
   };
 
@@ -156,7 +160,7 @@ const WorkoutLog = () => {
 
       if (error) {
         console.error('Error updating exercise:', error);
-        toast({ title: 'שגיאה בעדכון התרגיל', variant: 'destructive' });
+        toast({ title: 'Error updating exercise', variant: 'destructive' });
         throw error;
       } else {
         setExercises(prev => prev.map(ex => ex.id === id ? { ...ex, ...updates } : ex));
@@ -182,10 +186,10 @@ const WorkoutLog = () => {
       .eq('id', id);
 
     if (error) {
-      toast({ title: 'שגיאה במחיקת התרגיל', variant: 'destructive' });
+      toast({ title: 'Error deleting exercise', variant: 'destructive' });
     } else {
       setExercises(exercises.filter(ex => ex.id !== id));
-      toast({ title: 'התרגיל נמחק' });
+      toast({ title: 'Exercise deleted' });
     }
   };
 
@@ -201,7 +205,7 @@ const WorkoutLog = () => {
       .upload(fileName, file, { upsert: true });
 
     if (uploadError) {
-      toast({ title: 'שגיאה בהעלאת התמונה', variant: 'destructive' });
+      toast({ title: 'Error uploading image', variant: 'destructive' });
       setUploadingId(null);
       return;
     }
@@ -251,15 +255,15 @@ const WorkoutLog = () => {
       setExercises(prev =>
         prev.map(ex => ex.id === exerciseId ? { ...ex, body_part: exercise.body_part } : ex)
       );
-      toast({ title: 'שגיאה בעדכון הקטגוריה', variant: 'destructive' });
+      toast({ title: 'Error updating category', variant: 'destructive' });
     } else {
-      toast({ title: `התרגיל הועבר ל${newCategory}` });
+      toast({ title: `${t('movedTo')} ${newCategory}` });
     }
   };
 
   const handleFinishWorkout = async () => {
     if (exercises.length === 0) {
-      toast({ title: 'אין תרגילים לשמור', variant: 'destructive' });
+      toast({ title: t('noExercisesToSave'), variant: 'destructive' });
       return;
     }
 
@@ -289,11 +293,11 @@ const WorkoutLog = () => {
 
       if (fetchError) {
         console.error('Error fetching exercises:', fetchError);
-        throw new Error('שגיאה בטעינת הנתונים');
+        throw new Error('Error loading data');
       }
 
       if (!latestExercises || latestExercises.length === 0) {
-        toast({ title: 'אין תרגילים לשמור', variant: 'destructive' });
+        toast({ title: t('noExercisesToSave'), variant: 'destructive' });
         setIsFinishing(false);
         return;
       }
@@ -316,23 +320,25 @@ const WorkoutLog = () => {
 
       if (insertError) {
         console.error('Error inserting workout history:', insertError);
-        throw new Error('שגיאה בשמירת האימון');
+        throw new Error('Error saving workout');
       }
 
       // Step 7: Update local state with fresh data
       setExercises(latestExercises);
 
-      toast({ title: 'האימון נשמר בהצלחה! 💪' });
+      toast({ title: t('workoutSaved') });
     } catch (error) {
       console.error('Finish workout error:', error);
       toast({ 
-        title: error instanceof Error ? error.message : 'שגיאה בשמירת האימון', 
+        title: error instanceof Error ? error.message : 'Error saving workout', 
         variant: 'destructive' 
       });
     } finally {
       setIsFinishing(false);
     }
   };
+
+  const BackIcon = isRtl ? ArrowLeft : ArrowRight;
 
   if (loading || isLoading) {
     return (
@@ -343,44 +349,47 @@ const WorkoutLog = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#004d98] via-[#0a1628] to-[#a50044]" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-[#004d98] via-[#0a1628] to-[#a50044]" dir={isRtl ? 'rtl' : 'ltr'}>
       {/* Header */}
       <header className="p-4 md:p-6 flex items-center justify-between sticky top-0 z-50 bg-gradient-to-b from-[#004d98]/90 to-transparent backdrop-blur-sm">
         <FitBarcaLogo />
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/dashboard')}
-          className="text-white/70 hover:text-white hover:bg-white/10"
-        >
-          <ArrowRight className="h-5 w-5 ml-2" />
-          חזרה
-        </Button>
+        <div className="flex items-center gap-2">
+          <LanguageSelector />
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/dashboard')}
+            className="text-white/70 hover:text-white hover:bg-white/10"
+          >
+            <BackIcon className="h-5 w-5 mx-2" />
+            {t('back')}
+          </Button>
+        </div>
       </header>
 
       <main className="container mx-auto px-4 py-4 max-w-7xl">
-        <h1 className="text-2xl md:text-3xl font-bold text-white mb-6 text-center">יומן אימונים</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-white mb-6 text-center">{t('workoutLog')}</h1>
 
         {/* Add New Exercise Card */}
         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 md:p-6 mb-6 border border-white/20">
-          <h2 className="text-lg font-semibold text-white mb-4">הוסף תרגיל חדש</h2>
+          <h2 className="text-lg font-semibold text-white mb-4">{t('addNewExercise')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label className="text-white/80 text-sm">שם התרגיל</Label>
+              <Label className="text-white/80 text-sm">{t('exerciseName')}</Label>
               <Input
                 value={newExercise.name}
                 onChange={(e) => setNewExercise({ ...newExercise, name: e.target.value })}
-                placeholder="לדוגמה: לחיצת חזה"
+                placeholder="e.g. Bench Press"
                 className="bg-white/10 border-white/20 text-white placeholder:text-white/40 h-10"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-white/80 text-sm">קטגוריה</Label>
+              <Label className="text-white/80 text-sm">{t('category')}</Label>
               <Select
                 value={newExercise.body_part}
                 onValueChange={(value) => setNewExercise({ ...newExercise, body_part: value })}
               >
                 <SelectTrigger className="bg-white/10 border-white/20 text-white h-10">
-                  <SelectValue placeholder="בחר קטגוריה" />
+                  <SelectValue placeholder={t('selectCategory')} />
                 </SelectTrigger>
                 <SelectContent className="bg-[#1a2a4a] border-white/20">
                   {BODY_PART_CATEGORIES.map((cat) => (
@@ -396,13 +405,13 @@ const WorkoutLog = () => {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-white/80 text-sm invisible">פעולה</Label>
+              <Label className="text-white/80 text-sm invisible">Action</Label>
               <Button
                 onClick={handleAddExercise}
                 className="w-full bg-[#a50044] hover:bg-[#8a0039] text-white h-10"
               >
-                <Plus className="h-5 w-5 ml-2" />
-                הוסף תרגיל
+                <Plus className="h-5 w-5 mx-2" />
+                {t('addExercise')}
               </Button>
             </div>
           </div>
@@ -487,12 +496,12 @@ const WorkoutLog = () => {
             {isFinishing ? (
               <>
                 <Loader2 className="w-6 h-6 animate-spin" />
-                <span>שומר נתונים...</span>
+                <span>{t('savingData')}</span>
               </>
             ) : (
               <>
                 <Check className="w-6 h-6" />
-                <span>סיום אימון</span>
+                <span>{t('finishWorkout')}</span>
               </>
             )}
           </button>

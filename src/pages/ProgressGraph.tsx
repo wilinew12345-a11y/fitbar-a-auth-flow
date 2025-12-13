@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import FitBarcaLogo from '@/components/FitBarcaLogo';
+import LanguageSelector from '@/components/LanguageSelector';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -11,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import {
   LineChart,
@@ -59,6 +61,7 @@ const CustomDot = (props: any) => {
 
 const ProgressGraph = () => {
   const { user, loading } = useAuth();
+  const { t, isRtl } = useLanguage();
   const navigate = useNavigate();
   const [exerciseNames, setExerciseNames] = useState<string[]>([]);
   const [selectedExercise, setSelectedExercise] = useState<string>('');
@@ -140,6 +143,8 @@ const ProgressGraph = () => {
     });
   }, [historyData]);
 
+  const BackIcon = isRtl ? ArrowLeft : ArrowRight;
+
   if (loading || isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#004d98] via-[#0a1628] to-[#a50044] flex items-center justify-center">
@@ -149,29 +154,32 @@ const ProgressGraph = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#004d98] via-[#0a1628] to-[#a50044]" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-[#004d98] via-[#0a1628] to-[#a50044]" dir={isRtl ? 'rtl' : 'ltr'}>
       {/* Header */}
       <header className="p-4 md:p-6 flex items-center justify-between sticky top-0 z-50 bg-gradient-to-b from-[#004d98]/90 to-transparent backdrop-blur-sm">
         <FitBarcaLogo />
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/dashboard')}
-          className="text-white/70 hover:text-white hover:bg-white/10"
-        >
-          <ArrowRight className="h-5 w-5 ml-2" />
-          חזרה
-        </Button>
+        <div className="flex items-center gap-2">
+          <LanguageSelector />
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/dashboard')}
+            className="text-white/70 hover:text-white hover:bg-white/10"
+          >
+            <BackIcon className="h-5 w-5 mx-2" />
+            {t('back')}
+          </Button>
+        </div>
       </header>
 
       <main className="container mx-auto px-4 py-4 max-w-4xl">
-        <h1 className="text-2xl md:text-3xl font-bold text-white mb-6 text-center">גרף התקדמות</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-white mb-6 text-center">{t('progressGraph')}</h1>
 
         {/* Exercise Selector */}
         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 md:p-6 mb-6 border border-white/20">
-          <label className="text-white/80 text-sm block mb-2">בחר תרגיל</label>
+          <label className="text-white/80 text-sm block mb-2">{t('selectExercise')}</label>
           <Select value={selectedExercise} onValueChange={setSelectedExercise}>
             <SelectTrigger className="bg-white/10 border-white/20 text-white">
-              <SelectValue placeholder="בחר תרגיל" />
+              <SelectValue placeholder={t('selectExercise')} />
             </SelectTrigger>
             <SelectContent className="bg-[#1a2a4a] border-white/20">
               {exerciseNames.map((name) => (
@@ -191,15 +199,15 @@ const ProgressGraph = () => {
         <div className="flex justify-center gap-6 mb-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-[#22c55e]" />
-            <span className="text-white/80 text-sm">התקדמות</span>
+            <span className="text-white/80 text-sm">{t('progress')}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-[#fbbf24]" />
-            <span className="text-white/80 text-sm">ללא שינוי</span>
+            <span className="text-white/80 text-sm">{t('noChange')}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-[#ef4444]" />
-            <span className="text-white/80 text-sm">ירידה</span>
+            <span className="text-white/80 text-sm">{t('decline')}</span>
           </div>
         </div>
 
@@ -207,7 +215,7 @@ const ProgressGraph = () => {
         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 md:p-6 border border-white/20">
           {chartData.length === 0 ? (
             <div className="h-[300px] flex items-center justify-center text-white/60">
-              אין נתונים עבור תרגיל זה. סיים אימון כדי לראות את ההתקדמות שלך!
+              {t('noData')}
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={350}>
@@ -222,7 +230,7 @@ const ProgressGraph = () => {
                   stroke="rgba(255,255,255,0.6)"
                   tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 12 }}
                   label={{ 
-                    value: 'משקל (ק"ג)', 
+                    value: t('weightKg'), 
                     angle: -90, 
                     position: 'insideLeft',
                     fill: 'rgba(255,255,255,0.6)',
@@ -236,7 +244,7 @@ const ProgressGraph = () => {
                     borderRadius: '8px',
                     color: 'white',
                   }}
-                  formatter={(value: number) => [`${value} ק"ג`, 'משקל']}
+                  formatter={(value: number) => [`${value} kg`, t('weight')]}
                 />
                 <Line 
                   type="monotone" 
