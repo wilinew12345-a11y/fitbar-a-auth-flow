@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import FitBarcaLogo from "@/components/FitBarcaLogo";
 import AuthBackground from "@/components/AuthBackground";
+import LanguageSelector from "@/components/LanguageSelector";
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
 import { z } from "zod";
 
@@ -28,6 +30,7 @@ const loginSchema = z.object({
 
 const Auth = () => {
   const navigate = useNavigate();
+  const { t, isRtl } = useLanguage();
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -210,19 +213,26 @@ const Auth = () => {
     }
   };
 
+  const BackIcon = isRtl ? ArrowRight : ArrowLeft;
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4" dir={isRtl ? 'rtl' : 'ltr'}>
       <AuthBackground />
+      
+      {/* Language Selector */}
+      <div className="absolute top-4 right-4">
+        <LanguageSelector />
+      </div>
       
       {/* Back Button */}
       <Button
         variant="ghost"
         size="sm"
         onClick={() => navigate("/")}
-        className="absolute top-4 left-4 gap-2 text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/20"
+        className={`absolute top-4 ${isRtl ? 'right-20' : 'left-4'} gap-2 text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/20`}
       >
-        <ArrowLeft className="h-4 w-4" />
-        Back
+        <BackIcon className="h-4 w-4" />
+        {t('back')}
       </Button>
       
       <div className="w-full max-w-md">
@@ -230,7 +240,7 @@ const Auth = () => {
         <div className="text-center mb-8 animate-slide-up">
           <FitBarcaLogo size="lg" />
           <p className="mt-6 text-muted-foreground">
-            {isLogin ? "Welcome back, champion" : "Begin your fitness journey"}
+            {isLogin ? t('welcomeBack') : t('welcomeNew')}
           </p>
         </div>
 
@@ -250,7 +260,7 @@ const Auth = () => {
                   : "text-muted-foreground hover:text-sidebar-foreground"
               }`}
             >
-              Login
+              {t('login')}
             </button>
             <button
               type="button"
@@ -264,7 +274,7 @@ const Auth = () => {
                   : "text-muted-foreground hover:text-sidebar-foreground"
               }`}
             >
-              Sign Up
+              {t('signUp')}
             </button>
           </div>
 
@@ -274,17 +284,17 @@ const Auth = () => {
               <div className="grid grid-cols-2 gap-4 animate-slide-up">
                 <div className="space-y-2">
                   <Label htmlFor="firstName" className="text-sm text-sidebar-foreground">
-                    First Name
+                    {t('firstName')}
                   </Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <User className={`absolute ${isRtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
                     <Input
                       id="firstName"
                       name="firstName"
                       placeholder="John"
                       value={formData.firstName}
                       onChange={handleInputChange}
-                      className="pl-10"
+                      className={isRtl ? 'pr-10' : 'pl-10'}
                     />
                   </div>
                   {errors.firstName && (
@@ -293,17 +303,17 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lastName" className="text-sm text-sidebar-foreground">
-                    Last Name
+                    {t('lastName')}
                   </Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <User className={`absolute ${isRtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
                     <Input
                       id="lastName"
                       name="lastName"
                       placeholder="Doe"
                       value={formData.lastName}
                       onChange={handleInputChange}
-                      className="pl-10"
+                      className={isRtl ? 'pr-10' : 'pl-10'}
                     />
                   </div>
                   {errors.lastName && (
@@ -316,10 +326,10 @@ const Auth = () => {
             {/* Email */}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm text-sidebar-foreground">
-                Email
+                {t('emailLabel')}
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Mail className={`absolute ${isRtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
                 <Input
                   id="email"
                   name="email"
@@ -327,7 +337,7 @@ const Auth = () => {
                   placeholder="you@example.com"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="pl-10"
+                  className={isRtl ? 'pr-10' : 'pl-10'}
                 />
               </div>
               {errors.email && (
@@ -338,10 +348,10 @@ const Auth = () => {
             {/* Password */}
             <div className="space-y-2">
               <Label htmlFor="password" className="text-sm text-sidebar-foreground">
-                Password
+                {t('passwordLabel')}
               </Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Lock className={`absolute ${isRtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
                 <Input
                   id="password"
                   name="password"
@@ -349,12 +359,12 @@ const Auth = () => {
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="pl-10 pr-10"
+                  className={isRtl ? 'pr-10 pl-10' : 'pl-10 pr-10'}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-sidebar-foreground transition-colors"
+                  className={`absolute ${isRtl ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 text-muted-foreground hover:text-sidebar-foreground transition-colors`}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -368,10 +378,10 @@ const Auth = () => {
             {!isLogin && (
               <div className="space-y-2 animate-slide-up">
                 <Label htmlFor="confirmPassword" className="text-sm text-sidebar-foreground">
-                  Confirm Password
+                  {t('confirmPassword')}
                 </Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Lock className={`absolute ${isRtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
                   <Input
                     id="confirmPassword"
                     name="confirmPassword"
@@ -379,12 +389,12 @@ const Auth = () => {
                     placeholder="••••••••"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
-                    className="pl-10 pr-10"
+                    className={isRtl ? 'pr-10 pl-10' : 'pl-10 pr-10'}
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-sidebar-foreground transition-colors"
+                    className={`absolute ${isRtl ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 text-muted-foreground hover:text-sidebar-foreground transition-colors`}
                   >
                     {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -397,13 +407,13 @@ const Auth = () => {
 
             {/* Forgot Password Link */}
             {isLogin && (
-              <div className="text-right">
+              <div className={isRtl ? 'text-left' : 'text-right'}>
                 <button
                   type="button"
                   onClick={handleForgotPassword}
                   className="text-sm text-accent hover:text-accent/80 transition-colors"
                 >
-                  Forgot password?
+                  {t('forgotPassword')}
                 </button>
               </div>
             )}
@@ -420,7 +430,7 @@ const Auth = () => {
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
                 <>
-                  {isLogin ? "Login" : "Create Account"}
+                  {isLogin ? t('loginButton') : t('createAccount')}
                   <ArrowRight className="h-5 w-5" />
                 </>
               )}
@@ -430,7 +440,7 @@ const Auth = () => {
 
         {/* Bottom Text */}
         <p className="text-center text-sm text-muted-foreground mt-6 animate-slide-up-delay-2">
-          {isLogin ? "New to FitBarça? " : "Already have an account? "}
+          {isLogin ? t('noAccount').split('?')[0] + "? " : t('alreadyHaveAccount') + " "}
           <button
             type="button"
             onClick={() => {
@@ -439,7 +449,7 @@ const Auth = () => {
             }}
             className="text-barca-gold hover:underline font-medium"
           >
-            {isLogin ? "Create an account" : "Login here"}
+            {isLogin ? t('signUp') : t('loginHere')}
           </button>
         </p>
       </div>
