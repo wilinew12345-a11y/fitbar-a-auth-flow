@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import FitBarcaLogo from '@/components/FitBarcaLogo';
-import { User, Dumbbell, LogOut, TrendingUp } from 'lucide-react';
+import { User, Dumbbell, LogOut, TrendingUp, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Dashboard = () => {
@@ -53,6 +53,14 @@ const Dashboard = () => {
       route: '/progress',
       gradient: 'from-[#0f766e] to-[#14b8a6]',
     },
+    {
+      id: 'challenges',
+      title: 'מעקב אתגרים',
+      description: 'צור ועקוב אחר אתגרי כושר',
+      icon: Trophy,
+      route: '/challenges',
+      gradient: 'from-[#854d0e] to-[#ca8a04]',
+    },
   ];
 
   return (
@@ -80,7 +88,7 @@ const Dashboard = () => {
         </div>
 
         {/* Tiles Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {tiles.map((tile) => (
             <button
               key={tile.id}
