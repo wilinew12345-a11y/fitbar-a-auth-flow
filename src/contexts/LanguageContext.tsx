@@ -30,7 +30,16 @@ const translations = {
     saveChallengeBtn: "צור אתגר +",
     delete: "מחק",
     reset: "אפס",
-    share: "שתף התקדמות"
+    share: "שתף התקדמות",
+    challengeTracker: "מעקב אתגרים",
+    completed: "הושלם!",
+    customChallenge: "אתגר מותאם",
+    features: {
+      build: "בנייה אישית",
+      track: "מעקב צמוד",
+      share: "שתף והצלח"
+    },
+    ticker: "🔥 יוסי סיים אימון חזה | 🏆 דנה השלימה אתגר | ⚽ עמית הצטרף | 💪 שירה שברה שיא אישי"
   },
   en: {
     dir: "ltr",
@@ -59,7 +68,16 @@ const translations = {
     saveChallengeBtn: "Create Challenge +",
     delete: "Delete",
     reset: "Reset",
-    share: "Share Progress"
+    share: "Share Progress",
+    challengeTracker: "Challenge Tracker",
+    completed: "Completed!",
+    customChallenge: "Custom Challenge",
+    features: {
+      build: "Custom Build",
+      track: "Track Progress",
+      share: "Share Success"
+    },
+    ticker: "🔥 Yossi finished Chest Day | 🏆 Dana completed the challenge | ⚽ Amit joined | 💪 Shira broke a record"
   },
   es: {
     dir: "ltr",
@@ -88,7 +106,16 @@ const translations = {
     saveChallengeBtn: "Crear Reto +",
     delete: "Eliminar",
     reset: "Reiniciar",
-    share: "Compartir Progreso"
+    share: "Compartir Progreso",
+    challengeTracker: "Seguimiento de Retos",
+    completed: "¡Completado!",
+    customChallenge: "Reto Personalizado",
+    features: {
+      build: "Construcción",
+      track: "Seguimiento",
+      share: "Compartir"
+    },
+    ticker: "🔥 Jose terminó Pecho | 🏆 Maria completó el reto | ⚽ Carlos se unió | 💪 Ana rompió récord"
   },
   ar: {
     dir: "rtl",
@@ -117,17 +144,29 @@ const translations = {
     saveChallengeBtn: "إنشاء التحدي +",
     delete: "حذف",
     reset: "إعادة تعيين",
-    share: "شارك تقدمك"
+    share: "شارك تقدمك",
+    challengeTracker: "متتبع التحديات",
+    completed: "مكتمل!",
+    customChallenge: "تحدي مخصص",
+    features: {
+      build: "بناء شخصي",
+      track: "تتبع دقيق",
+      share: "شارك ونجح"
+    },
+    ticker: "🔥 يوسف أنهى تمرين الصدر | 🏆 دانا أكملت التحدي | ⚽ أحمد انضم | 💪 سارة حطمت الرقم القياسي"
   }
 } as const;
 
-type TranslationKeys = keyof typeof translations.he;
+type TranslationKeys = keyof Omit<typeof translations.he, 'features'>;
+type FeatureKeys = keyof typeof translations.he.features;
 
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (key: TranslationKeys) => string;
+  tf: (key: FeatureKeys) => string;
   isRtl: boolean;
+  translations: typeof translations;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -146,11 +185,18 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   }, [language, isRtl]);
 
   const t = (key: TranslationKeys): string => {
-    return translations[language][key] || translations.he[key] || key;
+    const value = translations[language][key];
+    if (typeof value === 'string') return value;
+    const fallback = translations.he[key];
+    return typeof fallback === 'string' ? fallback : key;
+  };
+
+  const tf = (key: FeatureKeys): string => {
+    return translations[language].features[key] || translations.he.features[key] || key;
   };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, isRtl }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, tf, isRtl, translations }}>
       {children}
     </LanguageContext.Provider>
   );
