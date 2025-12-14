@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { Plus, Trophy, Dumbbell, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useChallenges } from '@/hooks/useChallenges';
+import { useChallengesSupabase } from '@/hooks/useChallengesSupabase';
 import { ChallengeCard } from '@/components/challenges/ChallengeCard';
 import { CreateChallengeDialog } from '@/components/challenges/CreateChallengeDialog';
 import { ChallengeDetailView } from '@/components/challenges/ChallengeDetailView';
 import LanguageSelector from '@/components/LanguageSelector';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,13 +25,13 @@ const ChallengeTracker = () => {
   const { t, isRtl } = useLanguage();
   const {
     challenges,
-    isLoaded,
+    isLoading,
     addChallenge,
     deleteChallenge,
     toggleWorkout,
     resetChallenge,
     getProgress,
-  } = useChallenges();
+  } = useChallengesSupabase();
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedChallengeId, setSelectedChallengeId] = useState<string | null>(null);
@@ -53,10 +54,26 @@ const ChallengeTracker = () => {
 
   const BackIcon = isRtl ? ArrowLeft : ArrowRight;
 
-  if (!isLoaded) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full" />
+      <div className="min-h-screen bg-gradient-to-b from-[#004D98] to-[#061E40] text-white p-4" dir={isRtl ? 'rtl' : 'ltr'}>
+        <header className="sticky top-0 bg-[#004D98]/95 backdrop-blur-sm border-b border-blue-800/50 z-40 mb-6">
+          <div className="max-w-4xl mx-auto p-4">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-10 w-10 rounded-lg bg-blue-800/50" />
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-10 w-10 rounded-xl bg-blue-800/50" />
+                <Skeleton className="h-8 w-40 bg-blue-800/50" />
+              </div>
+              <Skeleton className="h-10 w-24 bg-blue-800/50" />
+            </div>
+          </div>
+        </header>
+        <div className="max-w-4xl mx-auto grid gap-4 md:grid-cols-2">
+          {[1, 2].map(i => (
+            <Skeleton key={i} className="h-40 rounded-2xl bg-blue-900/60" />
+          ))}
+        </div>
       </div>
     );
   }

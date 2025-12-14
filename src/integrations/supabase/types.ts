@@ -14,6 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
+      challenge_workouts: {
+        Row: {
+          challenge_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          is_completed: boolean
+          workout_index: number
+          workout_text: string
+        }
+        Insert: {
+          challenge_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          workout_index: number
+          workout_text: string
+        }
+        Update: {
+          challenge_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          workout_index?: number
+          workout_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_workouts_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenges: {
+        Row: {
+          created_at: string
+          id: string
+          target_per_week: number
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          target_per_week?: number
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          target_per_week?: number
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       exercises: {
         Row: {
           body_part: string
