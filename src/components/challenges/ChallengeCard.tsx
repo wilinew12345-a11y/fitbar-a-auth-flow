@@ -1,6 +1,7 @@
 import { Trash2, ChevronLeft } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-import { Challenge } from '@/hooks/useChallenges';
+import { Challenge } from '@/hooks/useChallengesSupabase';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ChallengeCardProps {
   challenge: Challenge;
@@ -10,6 +11,8 @@ interface ChallengeCardProps {
 }
 
 export const ChallengeCard = ({ challenge, progress, onSelect, onDelete }: ChallengeCardProps) => {
+  const { t } = useLanguage();
+  
   return (
     <div
       className="bg-blue-900/60 backdrop-blur-sm rounded-2xl p-5 border border-blue-800 hover:border-red-700/50 transition-all cursor-pointer group"
@@ -32,7 +35,7 @@ export const ChallengeCard = ({ challenge, progress, onSelect, onDelete }: Chall
 
       <div className="space-y-3">
         <div className="flex justify-between text-sm text-blue-200">
-          <span>{progress.completed} / {progress.total} אימונים</span>
+          <span>{progress.completed} / {progress.total} {t('workouts')}</span>
           <span className="text-yellow-400 font-semibold">{progress.percentage}%</span>
         </div>
         <Progress 
@@ -40,7 +43,7 @@ export const ChallengeCard = ({ challenge, progress, onSelect, onDelete }: Chall
           className="h-3 bg-blue-950/50"
         />
         <div className="flex items-center justify-between text-xs text-blue-300/70">
-          <span>יעד שבועי: {challenge.targetPerWeek} אימונים</span>
+          <span>{t('weeklyTarget')}: {challenge.targetPerWeek} {t('workouts')}</span>
           <ChevronLeft className="w-4 h-4 text-red-400 group-hover:translate-x-[-4px] transition-transform" />
         </div>
       </div>
