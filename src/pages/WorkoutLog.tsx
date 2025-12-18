@@ -462,7 +462,7 @@ const WorkoutLog = () => {
             </div>
           ) : (
             // Desktop: Grid columns
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
               {BODY_PART_CATEGORIES.map((cat) => (
                 <KanbanColumn
                   key={cat.key}
