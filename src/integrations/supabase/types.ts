@@ -223,28 +223,37 @@ export type Database = {
       workout_history: {
         Row: {
           created_at: string
+          duration: number | null
           exercise_name: string
           id: string
+          incline: number | null
           reps: number
           sets: number
+          speed: number | null
           user_id: string
           weight: number
         }
         Insert: {
           created_at?: string
+          duration?: number | null
           exercise_name: string
           id?: string
+          incline?: number | null
           reps?: number
           sets?: number
+          speed?: number | null
           user_id?: string
           weight?: number
         }
         Update: {
           created_at?: string
+          duration?: number | null
           exercise_name?: string
           id?: string
+          incline?: number | null
           reps?: number
           sets?: number
+          speed?: number | null
           user_id?: string
           weight?: number
         }

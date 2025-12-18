@@ -319,13 +319,16 @@ const WorkoutLog = () => {
 
       console.log('Saving workout history with data:', latestExercises);
 
-      // Step 6: Create history records
+      // Step 6: Create history records including cardio metrics
       const historyRecords = latestExercises.map(ex => ({
         user_id: user!.id,
         exercise_name: ex.name,
         weight: Number(ex.weight) || 0,
         sets: Number(ex.sets) || 0,
         reps: Number(ex.reps) || 0,
+        speed: Number(ex.speed) || 0,
+        incline: Number(ex.incline) || 0,
+        duration: Number(ex.duration) || 0,
       }));
 
       // Step 7: Insert into workout_history
