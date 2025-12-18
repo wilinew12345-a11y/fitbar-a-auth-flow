@@ -45,6 +45,8 @@ interface ChartDataPoint {
 }
 
 type CardioMetric = 'speed' | 'incline' | 'duration';
+type StrengthMetric = 'weight' | 'reps' | 'sets';
+type Metric = CardioMetric | StrengthMetric;
 
 // Multilingual cardio keywords for fallback detection
 const CARDIO_KEYWORDS = [
@@ -92,7 +94,7 @@ const ProgressGraph = () => {
   const [historyData, setHistoryData] = useState<WorkoutHistory[]>([]);
   const [exerciseBodyPart, setExerciseBodyPart] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedMetric, setSelectedMetric] = useState<CardioMetric>('speed');
+  const [selectedMetric, setSelectedMetric] = useState<Metric>('weight');
 
   useEffect(() => {
     if (!loading && !user) {
@@ -193,38 +195,46 @@ const ProgressGraph = () => {
     return false;
   }, [historyData, exerciseBodyPart, selectedExercise]);
 
-  // Auto-select best metric when exercise changes
+  // Reset metric when switching between cardio and strength exercises
   useEffect(() => {
-    if (!isCardioExercise || historyData.length === 0) return;
-    
-    // Check which metrics have meaningful data
-    const avgSpeed = historyData.reduce((sum, item) => sum + (Number(item.speed) || 0), 0) / historyData.length;
-    const avgIncline = historyData.reduce((sum, item) => sum + (Number(item.incline) || 0), 0) / historyData.length;
-    const avgDuration = historyData.reduce((sum, item) => sum + (Number(item.duration_minutes) || Number(item.duration) || 0), 0) / historyData.length;
-    
-    // Default to speed, then incline, then duration
-    if (avgSpeed > 0) {
-      setSelectedMetric('speed');
-    } else if (avgIncline > 0) {
-      setSelectedMetric('incline');
-    } else if (avgDuration > 0) {
-      setSelectedMetric('duration');
+    if (isCardioExercise) {
+      // Check which cardio metric has data and default to it
+      const hasSpeed = historyData.some(item => Number(item.speed) > 0);
+      const hasIncline = historyData.some(item => Number(item.incline) > 0);
+      const hasDuration = historyData.some(item => Number(item.duration_minutes) > 0 || Number(item.duration) > 0);
+      
+      if (hasSpeed) {
+        setSelectedMetric('speed');
+      } else if (hasIncline) {
+        setSelectedMetric('incline');
+      } else if (hasDuration) {
+        setSelectedMetric('duration');
+      } else {
+        setSelectedMetric('speed'); // default
+      }
+    } else {
+      // Strength exercise - default to weight
+      setSelectedMetric('weight');
     }
-  }, [historyData, isCardioExercise, selectedExercise]);
+  }, [isCardioExercise, selectedExercise]);
 
   // Get value for the selected metric
   const getMetricValue = (item: WorkoutHistory): number => {
-    if (!isCardioExercise) {
-      return Number(item.weight) || 0;
-    }
-    
     switch (selectedMetric) {
+      // Cardio metrics
       case 'speed':
         return Number(item.speed) || 0;
       case 'incline':
         return Number(item.incline) || 0;
       case 'duration':
         return Number(item.duration_minutes) || Number(item.duration) || 0;
+      // Strength metrics
+      case 'weight':
+        return Number(item.weight) || 0;
+      case 'reps':
+        return Number(item.reps) || 0;
+      case 'sets':
+        return Number(item.sets) || 0;
       default:
         return 0;
     }
@@ -256,39 +266,47 @@ const ProgressGraph = () => {
 
   // Get the appropriate Y-axis label
   const yAxisLabel = useMemo(() => {
-    if (!isCardioExercise) {
-      return t('weightKg');
-    }
-    
     switch (selectedMetric) {
+      // Cardio
       case 'speed':
         return `${t('speed')} (km/h)`;
       case 'incline':
         return `${t('incline')} (%)`;
       case 'duration':
         return `${t('time')} (min)`;
+      // Strength
+      case 'weight':
+        return t('weightKg');
+      case 'reps':
+        return t('reps');
+      case 'sets':
+        return t('sets');
       default:
         return '';
     }
-  }, [isCardioExercise, selectedMetric, t]);
+  }, [selectedMetric, t]);
 
   // Get the appropriate tooltip formatter
   const tooltipFormatter = useMemo(() => {
-    if (!isCardioExercise) {
-      return (value: number) => [`${value} kg`, t('weight')];
-    }
-    
     switch (selectedMetric) {
+      // Cardio
       case 'speed':
         return (value: number) => [`${value} km/h`, t('speed')];
       case 'incline':
         return (value: number) => [`${value}%`, t('incline')];
       case 'duration':
         return (value: number) => [`${value} min`, t('time')];
+      // Strength
+      case 'weight':
+        return (value: number) => [`${value} kg`, t('weight')];
+      case 'reps':
+        return (value: number) => [`${value}`, t('reps')];
+      case 'sets':
+        return (value: number) => [`${value}`, t('sets')];
       default:
         return (value: number) => [`${value}`, ''];
     }
-  }, [isCardioExercise, selectedMetric, t]);
+  }, [selectedMetric, t]);
 
   const BackIcon = isRtl ? ArrowLeft : ArrowRight;
 
@@ -341,53 +359,81 @@ const ProgressGraph = () => {
             </SelectContent>
           </Select>
           
-          {/* Metric Selector for Cardio */}
-          {historyData.length > 0 && isCardioExercise && (
-            <div className="mt-4">
-              <label className="text-white/80 text-sm block mb-2">{t('selectExercise')} Metric:</label>
-              <div className="flex gap-2 flex-wrap">
-                <Button
-                  variant={selectedMetric === 'speed' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setSelectedMetric('speed')}
-                  className={selectedMetric === 'speed' 
-                    ? 'bg-blue-500 hover:bg-blue-600 text-white' 
-                    : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}
-                >
-                  {t('speed')} (km/h)
-                </Button>
-                <Button
-                  variant={selectedMetric === 'incline' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setSelectedMetric('incline')}
-                  className={selectedMetric === 'incline' 
-                    ? 'bg-blue-500 hover:bg-blue-600 text-white' 
-                    : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}
-                >
-                  {t('incline')} (%)
-                </Button>
-                <Button
-                  variant={selectedMetric === 'duration' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setSelectedMetric('duration')}
-                  className={selectedMetric === 'duration' 
-                    ? 'bg-blue-500 hover:bg-blue-600 text-white' 
-                    : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}
-                >
-                  {t('time')} (min)
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Show exercise type indicator */}
+          {/* Metric Selector */}
           {historyData.length > 0 && (
-            <div className="mt-3 text-sm text-white/60">
-              {isCardioExercise ? (
-                <span>📍 {t('aerobic')}</span>
-              ) : (
-                <span>💪 {t('strength')} - {t('weight')}</span>
-              )}
+            <div className="mt-4">
+              <label className="text-white/80 text-sm block mb-2">
+                {isCardioExercise ? '📍 ' + t('aerobic') : '💪 ' + t('strength')}
+              </label>
+              <div className="flex gap-2 flex-wrap">
+                {isCardioExercise ? (
+                  <>
+                    <Button
+                      variant={selectedMetric === 'speed' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedMetric('speed')}
+                      className={selectedMetric === 'speed' 
+                        ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                        : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}
+                    >
+                      {t('speed')} (km/h)
+                    </Button>
+                    <Button
+                      variant={selectedMetric === 'incline' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedMetric('incline')}
+                      className={selectedMetric === 'incline' 
+                        ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                        : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}
+                    >
+                      {t('incline')} (%)
+                    </Button>
+                    <Button
+                      variant={selectedMetric === 'duration' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedMetric('duration')}
+                      className={selectedMetric === 'duration' 
+                        ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                        : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}
+                    >
+                      {t('time')} (min)
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      variant={selectedMetric === 'weight' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedMetric('weight')}
+                      className={selectedMetric === 'weight' 
+                        ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                        : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}
+                    >
+                      {t('weight')} (kg)
+                    </Button>
+                    <Button
+                      variant={selectedMetric === 'reps' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedMetric('reps')}
+                      className={selectedMetric === 'reps' 
+                        ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                        : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}
+                    >
+                      {t('reps')}
+                    </Button>
+                    <Button
+                      variant={selectedMetric === 'sets' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedMetric('sets')}
+                      className={selectedMetric === 'sets' 
+                        ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                        : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}
+                    >
+                      {t('sets')}
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           )}
         </div>
