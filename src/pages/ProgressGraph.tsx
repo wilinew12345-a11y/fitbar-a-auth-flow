@@ -412,16 +412,6 @@ const ProgressGraph = () => {
                       {t('weight')} (kg)
                     </Button>
                     <Button
-                      variant={selectedMetric === 'reps' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setSelectedMetric('reps')}
-                      className={selectedMetric === 'reps' 
-                        ? 'bg-blue-500 hover:bg-blue-600 text-white' 
-                        : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}
-                    >
-                      {t('reps')}
-                    </Button>
-                    <Button
                       variant={selectedMetric === 'sets' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setSelectedMetric('sets')}
@@ -430,6 +420,16 @@ const ProgressGraph = () => {
                         : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}
                     >
                       {t('sets')}
+                    </Button>
+                    <Button
+                      variant={selectedMetric === 'reps' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedMetric('reps')}
+                      className={selectedMetric === 'reps' 
+                        ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                        : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}
+                    >
+                      {t('reps')}
                     </Button>
                   </>
                 )}
