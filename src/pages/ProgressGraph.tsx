@@ -46,6 +46,24 @@ interface ChartDataPoint {
 
 type CardioMetric = 'speed' | 'incline' | 'duration';
 
+// Multilingual cardio keywords for fallback detection
+const CARDIO_KEYWORDS = [
+  // English
+  'cardio', 'aerobic', 'running', 'treadmill', 'cycling', 'bike', 'elliptical', 'rowing',
+  // Hebrew
+  'אירובי', 'ריצה', 'הליכון', 'אופניים', 'אליפטי',
+  // Spanish
+  'aeróbico', 'correr', 'cinta', 'bicicleta', 'elíptica',
+  // Arabic
+  'كارديو', 'تمارين هوائية', 'ركض', 'جري', 'دراجة'
+];
+
+// Helper function to check if text contains cardio keywords (case-insensitive)
+const containsCardioKeyword = (text: string): boolean => {
+  const lowerText = text.toLowerCase();
+  return CARDIO_KEYWORDS.some(keyword => lowerText.includes(keyword.toLowerCase()));
+};
+
 // Custom dot component with traffic light colors
 const CustomDot = (props: any) => {
   const { cx, cy, payload } = props;
@@ -72,6 +90,7 @@ const ProgressGraph = () => {
   const [exerciseNames, setExerciseNames] = useState<string[]>([]);
   const [selectedExercise, setSelectedExercise] = useState<string>('');
   const [historyData, setHistoryData] = useState<WorkoutHistory[]>([]);
+  const [exerciseBodyPart, setExerciseBodyPart] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [selectedMetric, setSelectedMetric] = useState<CardioMetric>('speed');
 
@@ -81,14 +100,14 @@ const ProgressGraph = () => {
     }
   }, [user, loading, navigate]);
 
-  // Fetch distinct exercise names
+  // Fetch distinct exercise names with body_part
   useEffect(() => {
     const fetchExerciseNames = async () => {
       if (!user) return;
 
       const { data, error } = await supabase
         .from('exercises')
-        .select('name')
+        .select('name, body_part')
         .eq('user_id', user.id);
 
       if (!error && data) {
@@ -96,6 +115,9 @@ const ProgressGraph = () => {
         setExerciseNames(uniqueNames);
         if (uniqueNames.length > 0) {
           setSelectedExercise(uniqueNames[0]);
+          // Set initial body part
+          const firstExercise = data.find(d => d.name === uniqueNames[0]);
+          setExerciseBodyPart(firstExercise?.body_part || '');
         }
       }
       setIsLoading(false);
@@ -105,6 +127,24 @@ const ProgressGraph = () => {
       fetchExerciseNames();
     }
   }, [user]);
+
+  // Fetch body_part when exercise changes
+  useEffect(() => {
+    const fetchBodyPart = async () => {
+      if (!user || !selectedExercise) return;
+
+      const { data } = await supabase
+        .from('exercises')
+        .select('body_part')
+        .eq('user_id', user.id)
+        .eq('name', selectedExercise)
+        .maybeSingle();
+
+      setExerciseBodyPart(data?.body_part || '');
+    };
+
+    fetchBodyPart();
+  }, [user, selectedExercise]);
 
   // Fetch history for selected exercise
   useEffect(() => {
@@ -126,15 +166,32 @@ const ProgressGraph = () => {
     fetchHistory();
   }, [user, selectedExercise]);
 
-  // Determine if this is a cardio exercise based on data
+  // Robust cardio detection: Data-driven (primary) + Keyword-based (fallback)
   const isCardioExercise = useMemo(() => {
-    if (historyData.length === 0) return false;
-    // Check if most entries have speed/duration > 0 and weight = 0
-    const cardioEntries = historyData.filter(
-      item => (Number(item.speed) > 0 || Number(item.duration) > 0 || Number(item.duration_minutes) > 0) && Number(item.weight) === 0
+    // Strategy A: Data-Driven (Universal) - Check if ANY data has cardio metrics
+    const hasCardioData = historyData.some(
+      item => (Number(item.speed) > 0 || Number(item.duration_minutes) > 0 || Number(item.duration) > 0)
     );
-    return cardioEntries.length > historyData.length / 2;
-  }, [historyData]);
+    
+    if (hasCardioData) {
+      return true;
+    }
+
+    // Strategy B: Multilingual Keywords (Fallback) - Check body_part and exercise name
+    if (containsCardioKeyword(exerciseBodyPart) || containsCardioKeyword(selectedExercise)) {
+      return true;
+    }
+
+    // Final check: If all entries have weight = 0 and we have data, likely cardio
+    if (historyData.length > 0) {
+      const allZeroWeight = historyData.every(item => Number(item.weight) === 0);
+      if (allZeroWeight) {
+        return true;
+      }
+    }
+
+    return false;
+  }, [historyData, exerciseBodyPart, selectedExercise]);
 
   // Auto-select best metric when exercise changes
   useEffect(() => {
