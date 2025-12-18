@@ -15,6 +15,7 @@ import WeeklyWorkoutPlan from "./pages/WeeklyWorkoutPlan";
 import ProgressGraph from "./pages/ProgressGraph";
 import ChallengeTracker from "./pages/ChallengeTracker";
 import SharedChallengeView from "./pages/SharedChallengeView";
+import AICoach from "./pages/AICoach";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/progress" element={<ProgressGraph />} />
             <Route path="/challenges" element={<ChallengeTracker />} />
             <Route path="/challenges/:id" element={<SharedChallengeView />} />
+            <Route path="/ai-coach" element={<AICoach />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
