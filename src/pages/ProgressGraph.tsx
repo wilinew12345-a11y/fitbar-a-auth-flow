@@ -31,9 +31,10 @@ interface WorkoutHistory {
   weight: number;
   sets: number;
   reps: number;
-  speed: number;
-  incline: number;
-  duration: number;
+  speed: number | null;
+  incline: number | null;
+  duration: number | null;
+  duration_minutes: number | null;
   created_at: string;
 }
 
@@ -42,6 +43,8 @@ interface ChartDataPoint {
   value: number;
   color: string;
 }
+
+type CardioMetric = 'speed' | 'incline' | 'duration';
 
 // Custom dot component with traffic light colors
 const CustomDot = (props: any) => {
@@ -70,6 +73,7 @@ const ProgressGraph = () => {
   const [selectedExercise, setSelectedExercise] = useState<string>('');
   const [historyData, setHistoryData] = useState<WorkoutHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedMetric, setSelectedMetric] = useState<CardioMetric>('speed');
 
   useEffect(() => {
     if (!loading && !user) {
@@ -109,7 +113,7 @@ const ProgressGraph = () => {
 
       const { data, error } = await supabase
         .from('workout_history')
-        .select('*')
+        .select('id, exercise_name, weight, sets, reps, speed, incline, duration, duration_minutes, created_at')
         .eq('user_id', user.id)
         .eq('exercise_name', selectedExercise)
         .order('created_at', { ascending: true });
@@ -127,43 +131,56 @@ const ProgressGraph = () => {
     if (historyData.length === 0) return false;
     // Check if most entries have speed/duration > 0 and weight = 0
     const cardioEntries = historyData.filter(
-      item => (Number(item.speed) > 0 || Number(item.duration) > 0) && Number(item.weight) === 0
+      item => (Number(item.speed) > 0 || Number(item.duration) > 0 || Number(item.duration_minutes) > 0) && Number(item.weight) === 0
     );
     return cardioEntries.length > historyData.length / 2;
   }, [historyData]);
 
-  // Determine primary metric for cardio
-  const primaryCardioMetric = useMemo(() => {
-    if (!isCardioExercise || historyData.length === 0) return 'speed';
-    // Use speed if it has meaningful values, otherwise duration
-    const avgSpeed = historyData.reduce((sum, item) => sum + Number(item.speed), 0) / historyData.length;
-    return avgSpeed > 0 ? 'speed' : 'duration';
-  }, [historyData, isCardioExercise]);
+  // Auto-select best metric when exercise changes
+  useEffect(() => {
+    if (!isCardioExercise || historyData.length === 0) return;
+    
+    // Check which metrics have meaningful data
+    const avgSpeed = historyData.reduce((sum, item) => sum + (Number(item.speed) || 0), 0) / historyData.length;
+    const avgIncline = historyData.reduce((sum, item) => sum + (Number(item.incline) || 0), 0) / historyData.length;
+    const avgDuration = historyData.reduce((sum, item) => sum + (Number(item.duration_minutes) || Number(item.duration) || 0), 0) / historyData.length;
+    
+    // Default to speed, then incline, then duration
+    if (avgSpeed > 0) {
+      setSelectedMetric('speed');
+    } else if (avgIncline > 0) {
+      setSelectedMetric('incline');
+    } else if (avgDuration > 0) {
+      setSelectedMetric('duration');
+    }
+  }, [historyData, isCardioExercise, selectedExercise]);
+
+  // Get value for the selected metric
+  const getMetricValue = (item: WorkoutHistory): number => {
+    if (!isCardioExercise) {
+      return Number(item.weight) || 0;
+    }
+    
+    switch (selectedMetric) {
+      case 'speed':
+        return Number(item.speed) || 0;
+      case 'incline':
+        return Number(item.incline) || 0;
+      case 'duration':
+        return Number(item.duration_minutes) || Number(item.duration) || 0;
+      default:
+        return 0;
+    }
+  };
 
   // Process data for chart with traffic light logic
   const chartData: ChartDataPoint[] = useMemo(() => {
     return historyData.map((item, index) => {
-      // Get the appropriate value based on exercise type
-      let currentValue: number;
-      if (isCardioExercise) {
-        currentValue = primaryCardioMetric === 'speed' 
-          ? Number(item.speed) || 0 
-          : Number(item.duration) || 0;
-      } else {
-        currentValue = Number(item.weight) || 0;
-      }
-
+      const currentValue = getMetricValue(item);
       let color = '#fbbf24'; // Yellow - default/first/stagnation
       
       if (index > 0) {
-        let prevValue: number;
-        if (isCardioExercise) {
-          prevValue = primaryCardioMetric === 'speed'
-            ? Number(historyData[index - 1].speed) || 0
-            : Number(historyData[index - 1].duration) || 0;
-        } else {
-          prevValue = Number(historyData[index - 1].weight) || 0;
-        }
+        const prevValue = getMetricValue(historyData[index - 1]);
         
         if (currentValue > prevValue) {
           color = '#22c55e'; // Green - progress
@@ -178,26 +195,43 @@ const ProgressGraph = () => {
         color,
       };
     });
-  }, [historyData, isCardioExercise, primaryCardioMetric]);
+  }, [historyData, isCardioExercise, selectedMetric]);
 
   // Get the appropriate Y-axis label
   const yAxisLabel = useMemo(() => {
-    if (isCardioExercise) {
-      return primaryCardioMetric === 'speed' ? t('speed') : t('time');
+    if (!isCardioExercise) {
+      return t('weightKg');
     }
-    return t('weightKg');
-  }, [isCardioExercise, primaryCardioMetric, t]);
+    
+    switch (selectedMetric) {
+      case 'speed':
+        return `${t('speed')} (km/h)`;
+      case 'incline':
+        return `${t('incline')} (%)`;
+      case 'duration':
+        return `${t('time')} (min)`;
+      default:
+        return '';
+    }
+  }, [isCardioExercise, selectedMetric, t]);
 
   // Get the appropriate tooltip formatter
   const tooltipFormatter = useMemo(() => {
-    if (isCardioExercise) {
-      if (primaryCardioMetric === 'speed') {
-        return (value: number) => [`${value} km/h`, t('speed')];
-      }
-      return (value: number) => [`${value} min`, t('time')];
+    if (!isCardioExercise) {
+      return (value: number) => [`${value} kg`, t('weight')];
     }
-    return (value: number) => [`${value} kg`, t('weight')];
-  }, [isCardioExercise, primaryCardioMetric, t]);
+    
+    switch (selectedMetric) {
+      case 'speed':
+        return (value: number) => [`${value} km/h`, t('speed')];
+      case 'incline':
+        return (value: number) => [`${value}%`, t('incline')];
+      case 'duration':
+        return (value: number) => [`${value} min`, t('time')];
+      default:
+        return (value: number) => [`${value}`, ''];
+    }
+  }, [isCardioExercise, selectedMetric, t]);
 
   const BackIcon = isRtl ? ArrowLeft : ArrowRight;
 
@@ -250,11 +284,50 @@ const ProgressGraph = () => {
             </SelectContent>
           </Select>
           
+          {/* Metric Selector for Cardio */}
+          {historyData.length > 0 && isCardioExercise && (
+            <div className="mt-4">
+              <label className="text-white/80 text-sm block mb-2">{t('selectExercise')} Metric:</label>
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  variant={selectedMetric === 'speed' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedMetric('speed')}
+                  className={selectedMetric === 'speed' 
+                    ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                    : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}
+                >
+                  {t('speed')} (km/h)
+                </Button>
+                <Button
+                  variant={selectedMetric === 'incline' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedMetric('incline')}
+                  className={selectedMetric === 'incline' 
+                    ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                    : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}
+                >
+                  {t('incline')} (%)
+                </Button>
+                <Button
+                  variant={selectedMetric === 'duration' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedMetric('duration')}
+                  className={selectedMetric === 'duration' 
+                    ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                    : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}
+                >
+                  {t('time')} (min)
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Show exercise type indicator */}
           {historyData.length > 0 && (
             <div className="mt-3 text-sm text-white/60">
               {isCardioExercise ? (
-                <span>📍 {t('aerobic')} - {primaryCardioMetric === 'speed' ? t('speed') : t('time')}</span>
+                <span>📍 {t('aerobic')}</span>
               ) : (
                 <span>💪 {t('strength')} - {t('weight')}</span>
               )}
