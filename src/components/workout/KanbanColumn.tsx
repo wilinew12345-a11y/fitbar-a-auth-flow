@@ -1,12 +1,7 @@
+import { useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { ExerciseCard, Exercise } from './ExerciseCard';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 
 interface KanbanColumnProps {
   category: string;
@@ -31,6 +26,7 @@ export const KanbanColumn = ({
   uploadingId,
   isMobile,
 }: KanbanColumnProps) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const { setNodeRef, isOver } = useDroppable({
     id: category,
   });
@@ -66,37 +62,43 @@ export const KanbanColumn = ({
 
   if (isMobile) {
     return (
-      <Accordion type="single" collapsible className="w-full">
-        <AccordionItem value={category} className="border-white/20">
-          <AccordionTrigger className="text-white hover:no-underline py-2 px-3 bg-white/10 rounded-lg mb-1">
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-sm">{categoryLabel}</span>
-              <span className="text-[10px] text-white/60 bg-white/20 px-1.5 py-0.5 rounded-full">
-                {exercises.length}
-              </span>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="pt-1 pb-2">
-            {columnContent}
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+      <div className="w-full">
+        {/* Clickable Header - No Icons */}
+        <div
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex items-center justify-between py-2 px-3 bg-white/10 rounded-lg mb-1 cursor-pointer hover:bg-white/15 transition-colors"
+        >
+          <span className="font-medium text-sm text-white">{categoryLabel}</span>
+          <span className="text-[10px] text-white/60 bg-white/20 px-1.5 py-0.5 rounded-full">
+            {exercises.length}
+          </span>
+        </div>
+        {/* Content - Hidden but not unmounted when collapsed */}
+        <div className={`overflow-hidden transition-all duration-200 ${isExpanded ? 'max-h-[2000px] opacity-100 pt-1 pb-2' : 'max-h-0 opacity-0'}`}>
+          {columnContent}
+        </div>
+      </div>
     );
   }
 
   return (
     <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 flex flex-col max-h-[calc(100vh-220px)]">
-      {/* Fixed Header */}
-      <div className="flex items-center justify-between p-2 border-b border-white/10 flex-shrink-0">
+      {/* Clickable Header - No Icons */}
+      <div
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="flex items-center justify-between p-2 border-b border-white/10 flex-shrink-0 cursor-pointer hover:bg-white/5 transition-colors"
+      >
         <h3 className="font-semibold text-white text-xs">{categoryLabel}</h3>
         <span className="text-[10px] text-white/60 bg-white/20 px-1.5 py-0.5 rounded-full">
           {exercises.length}
         </span>
       </div>
       
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto p-2 min-h-[60px]">
-        {columnContent}
+      {/* Content - Hidden but not unmounted when collapsed */}
+      <div className={`flex-1 overflow-hidden transition-all duration-200 ${isExpanded ? 'max-h-[calc(100vh-280px)] opacity-100' : 'max-h-0 opacity-0'}`}>
+        <div className="overflow-y-auto p-2 min-h-[60px] h-full">
+          {columnContent}
+        </div>
       </div>
     </div>
   );
