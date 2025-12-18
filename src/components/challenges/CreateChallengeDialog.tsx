@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChallengeWorkoutManager } from './ChallengeWorkoutManager';
+import { toast } from 'sonner';
 
 interface CreateChallengeDialogProps {
   open: boolean;
@@ -24,7 +25,7 @@ interface LocalWorkout {
 
 export const CreateChallengeDialog = ({ open, onOpenChange, onSave }: CreateChallengeDialogProps) => {
   const [title, setTitle] = useState('');
-  const [targetPerWeek, setTargetPerWeek] = useState(4);
+  const [targetPerWeek, setTargetPerWeek] = useState<number | ''>('');
   const [workoutsList, setWorkoutsList] = useState<LocalWorkout[]>([]);
 
   const handleAddWorkout = (workoutText: string) => {
@@ -44,17 +45,50 @@ export const CreateChallengeDialog = ({ open, onOpenChange, onSave }: CreateChal
   };
 
   const handleSave = () => {
-    if (!title.trim() || workoutsList.length === 0) return;
+    // Validate weekly goal
+    if (targetPerWeek === '' || Number(targetPerWeek) <= 0) {
+      toast.error('שגיאה', {
+        description: 'חובה להזין יעד אימונים שבועי (גדול מ-0)',
+      });
+      return;
+    }
+
+    if (!title.trim()) {
+      toast.error('שגיאה', {
+        description: 'חובה להזין שם לאתגר',
+      });
+      return;
+    }
+
+    if (workoutsList.length === 0) {
+      toast.error('שגיאה', {
+        description: 'חובה להוסיף לפחות אימון אחד',
+      });
+      return;
+    }
+
     const workoutsText = workoutsList.map(w => w.text).join('\n');
-    onSave(title.trim(), targetPerWeek, workoutsText);
+    onSave(title.trim(), Number(targetPerWeek), workoutsText);
     resetForm();
     onOpenChange(false);
   };
 
   const resetForm = () => {
     setTitle('');
-    setTargetPerWeek(4);
+    setTargetPerWeek('');
     setWorkoutsList([]);
+  };
+
+  const handleTargetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '') {
+      setTargetPerWeek('');
+    } else {
+      const num = parseInt(value);
+      if (!isNaN(num)) {
+        setTargetPerWeek(num);
+      }
+    }
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -78,25 +112,32 @@ export const CreateChallengeDialog = ({ open, onOpenChange, onSave }: CreateChal
           <div className="space-y-5 mt-4" dir="rtl">
             {/* Challenge Title */}
             <div className="space-y-2">
-              <label className="text-sm text-blue-200">שם האתגר</label>
+              <label className="text-sm text-blue-200">
+                שם האתגר <span className="text-red-400">*</span>
+              </label>
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="לדוגמה: אתגר ה-30"
+                required
                 className="bg-[#021024] border-blue-800 text-white placeholder:text-blue-400/50 focus:border-yellow-400 focus:ring-yellow-400"
               />
             </div>
 
             {/* Target Per Week */}
             <div className="space-y-2">
-              <label className="text-sm text-blue-200">יעד אימונים בשבוע</label>
+              <label className="text-sm text-blue-200">
+                יעד אימונים בשבוע <span className="text-red-400">*</span>
+              </label>
               <Input
                 type="number"
                 min={1}
                 max={7}
                 value={targetPerWeek}
-                onChange={(e) => setTargetPerWeek(parseInt(e.target.value) || 4)}
-                className="bg-[#021024] border-blue-800 text-white focus:border-yellow-400 focus:ring-yellow-400 w-24"
+                onChange={handleTargetChange}
+                placeholder="לדוגמה: 4"
+                required
+                className="bg-[#021024] border-blue-800 text-white placeholder:text-blue-400/50 focus:border-yellow-400 focus:ring-yellow-400 w-24"
               />
             </div>
 
@@ -112,7 +153,6 @@ export const CreateChallengeDialog = ({ open, onOpenChange, onSave }: CreateChal
             <div className="flex gap-3 pt-2">
               <Button
                 onClick={handleSave}
-                disabled={!title.trim() || workoutsList.length === 0}
                 className="flex-1 bg-[#A50044] hover:bg-[#800033] text-white font-bold shadow-lg shadow-red-900/30"
               >
                 <Plus className="w-4 h-4 ml-2" />
