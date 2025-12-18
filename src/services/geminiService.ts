@@ -1,7 +1,7 @@
 // Placeholder API key - replace with your actual Gemini API key
 const GEMINI_API_KEY = 'AIzaSyCDswjufzebrFo3GezCHNPe-y8OVgIT9mg';
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
 export interface ChatMessage {
   role: 'user' | 'model';
