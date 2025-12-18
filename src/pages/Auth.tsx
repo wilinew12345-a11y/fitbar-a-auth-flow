@@ -229,7 +229,7 @@ const Auth = () => {
         variant="ghost"
         size="sm"
         onClick={() => navigate("/")}
-        className={`absolute top-4 ${isRtl ? 'right-20' : 'left-4'} gap-2 text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/20`}
+        className="absolute top-4 left-4 gap-2 text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/20"
       >
         <BackIcon className="h-4 w-4" />
         {t('back')}
