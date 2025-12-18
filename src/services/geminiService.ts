@@ -1,17 +1,17 @@
-// Placeholder API key - replace with your actual Gemini API key
-const GEMINI_API_KEY = "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";
+// Groq API - Paste your API key here (get one at console.groq.com)
+const GROQ_API_KEY = "YOUR_GROQ_API_KEY_HERE";
 
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 export interface ChatMessage {
-  role: "user" | "model";
-  parts: { text: string }[];
+  role: "user" | "assistant" | "system";
+  content: string;
 }
 
-export interface GeminiResponse {
-  candidates?: {
-    content: {
-      parts: { text: string }[];
+export interface GroqResponse {
+  choices?: {
+    message: {
+      content: string;
       role: string;
     };
   }[];
@@ -30,64 +30,61 @@ const getLanguageFullName = (langCode: string): string => {
   return languageMap[langCode] || "English";
 };
 
-export const sendMessageToGemini = async (
+export const sendMessageToAI = async (
   userMessage: string,
   chatHistory: ChatMessage[],
   currentLanguage: string,
 ): Promise<string> => {
   const languageName = getLanguageFullName(currentLanguage);
 
-  const systemInstruction = `You are a professional FitBarça fitness coach. You are knowledgeable about workouts, nutrition, training plans, and athletic performance.
+  const systemPrompt = `You are a professional FitBarça fitness coach. You are knowledgeable about workouts, nutrition, training plans, and athletic performance.
 Current User Language: ${languageName}.
 INSTRUCTION: You MUST reply to the user strictly in ${languageName}, regardless of the language they type in. Always be encouraging, professional, and helpful.`;
 
-  const contents = [
-    {
-      role: "user",
-      parts: [{ text: systemInstruction }],
-    },
-    {
-      role: "model",
-      parts: [{ text: `Understood. I am your FitBarça fitness coach and I will respond in ${languageName}.` }],
-    },
+  const messages: ChatMessage[] = [
+    { role: "system", content: systemPrompt },
     ...chatHistory,
-    {
-      role: "user",
-      parts: [{ text: userMessage }],
-    },
+    { role: "user", content: userMessage },
   ];
 
   try {
-    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(GROQ_API_URL, {
       method: "POST",
       headers: {
+        "Authorization": `Bearer ${GROQ_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        contents,
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 1024,
-        },
+        model: "llama-3.3-70b-versatile",
+        messages,
+        temperature: 0.7,
+        max_tokens: 1024,
       }),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error?.message || "Failed to get response from Gemini");
+      console.error("Groq API Error:", response.status, errorData);
+      
+      if (response.status === 429) {
+        throw new Error("Rate limit exceeded. Please try again later.");
+      }
+      if (response.status === 401) {
+        throw new Error("Invalid API key. Please check your Groq API key.");
+      }
+      
+      throw new Error(errorData.error?.message || "Failed to get response from Groq");
     }
 
-    const data: GeminiResponse = await response.json();
+    const data: GroqResponse = await response.json();
 
-    if (data.candidates && data.candidates.length > 0) {
-      return data.candidates[0].content.parts[0].text;
+    if (data.choices && data.choices.length > 0) {
+      return data.choices[0].message.content;
     }
 
     throw new Error("No response generated");
   } catch (error) {
-    console.error("Gemini API Error:", error);
+    console.error("Groq API Error:", error);
     throw error;
   }
 };

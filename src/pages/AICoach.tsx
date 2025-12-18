@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
-import { sendMessageToGemini, ChatMessage } from '@/services/geminiService';
+import { sendMessageToAI, ChatMessage } from '@/services/geminiService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, ArrowRight, Send, Bot, User, Loader2 } from 'lucide-react';
@@ -56,13 +56,13 @@ const AICoach = () => {
     setIsLoading(true);
 
     try {
-      const response = await sendMessageToGemini(userMessage, chatHistory, language);
+      const response = await sendMessageToAI(userMessage, chatHistory, language);
       
       // Update chat history for context
       setChatHistory(prev => [
         ...prev,
-        { role: 'user', parts: [{ text: userMessage }] },
-        { role: 'model', parts: [{ text: response }] },
+        { role: 'user', content: userMessage },
+        { role: 'assistant', content: response },
       ]);
 
       // Add assistant message to display
