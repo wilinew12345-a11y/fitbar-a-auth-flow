@@ -82,17 +82,31 @@ ${t('completed')} ${progress.completed} / ${progress.total} ${t('workouts')}!`;
   };
 
   const handleShare = async () => {
-    const shareText = generateShareText();
+    const shareData = {
+      title: challenge.title,
+      text: generateShareText(),
+      url: window.location.href,
+    };
 
-    if (navigator.share) {
-      try {
-        await navigator.share({ text: shareText });
-      } catch (err) {
-        // User cancelled or error
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareData.url);
+        toast.success('הקישור הועתק!', {
+          description: 'שתף את הקישור עם חברים',
+        });
       }
-    } else {
-      await navigator.clipboard.writeText(shareText);
-      toast.success(t('copiedToClipboard'));
+    } catch (err) {
+      // User cancelled or error - try clipboard as last resort
+      if ((err as Error).name !== 'AbortError') {
+        try {
+          await navigator.clipboard.writeText(window.location.href);
+          toast.success('הקישור הועתק!');
+        } catch {
+          console.error('Error sharing:', err);
+        }
+      }
     }
   };
 
