@@ -160,10 +160,11 @@ const WorkoutLog = () => {
 
       if (error) {
         console.error('Error updating exercise:', error);
-        toast({ title: 'Error updating exercise', variant: 'destructive' });
+        toast({ title: t('errorSavingExercise'), variant: 'destructive' });
         throw error;
       } else {
         setExercises(prev => prev.map(ex => ex.id === id ? { ...ex, ...updates } : ex));
+        console.log('Exercise saved:', id, updates);
       }
     })();
 

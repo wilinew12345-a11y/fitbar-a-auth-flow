@@ -63,8 +63,20 @@ export const NumberInput = ({
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-  }, []);
+    // Trigger save after button interaction ends
+    onBlur();
+  }, [onBlur]);
 
+  const stopContinuousChangeNoSave = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }, []);
   const isAtMin = value <= min;
 
   return (
@@ -79,7 +91,7 @@ export const NumberInput = ({
             startContinuousChange('increment', value);
           }}
           onMouseUp={stopContinuousChange}
-          onMouseLeave={stopContinuousChange}
+          onMouseLeave={stopContinuousChangeNoSave}
           onTouchStart={(e) => {
             e.preventDefault();
             startContinuousChange('increment', value);
@@ -114,7 +126,7 @@ export const NumberInput = ({
             if (!isAtMin) startContinuousChange('decrement', value);
           }}
           onMouseUp={stopContinuousChange}
-          onMouseLeave={stopContinuousChange}
+          onMouseLeave={stopContinuousChangeNoSave}
           onTouchStart={(e) => {
             e.preventDefault();
             if (!isAtMin) startContinuousChange('decrement', value);
