@@ -81,6 +81,7 @@ export type Database = {
           body_part: string
           created_at: string
           duration: number | null
+          duration_minutes: number | null
           id: string
           image_url: string | null
           incline: number | null
@@ -95,6 +96,7 @@ export type Database = {
           body_part: string
           created_at?: string
           duration?: number | null
+          duration_minutes?: number | null
           id?: string
           image_url?: string | null
           incline?: number | null
@@ -109,6 +111,7 @@ export type Database = {
           body_part?: string
           created_at?: string
           duration?: number | null
+          duration_minutes?: number | null
           id?: string
           image_url?: string | null
           incline?: number | null
@@ -224,6 +227,7 @@ export type Database = {
         Row: {
           created_at: string
           duration: number | null
+          duration_minutes: number | null
           exercise_name: string
           id: string
           incline: number | null
@@ -236,6 +240,7 @@ export type Database = {
         Insert: {
           created_at?: string
           duration?: number | null
+          duration_minutes?: number | null
           exercise_name: string
           id?: string
           incline?: number | null
@@ -248,6 +253,7 @@ export type Database = {
         Update: {
           created_at?: string
           duration?: number | null
+          duration_minutes?: number | null
           exercise_name?: string
           id?: string
           incline?: number | null
