@@ -1,5 +1,5 @@
 // Groq API - Paste your API key here (get one at console.groq.com)
-const GROQ_API_KEY = "YOUR_GROQ_API_KEY_HERE";
+const GROQ_API_KEY = "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";
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
@@ -51,7 +51,7 @@ INSTRUCTION: You MUST reply to the user strictly in ${languageName}, regardless 
     const response = await fetch(GROQ_API_URL, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${GROQ_API_KEY}`,
+        Authorization: `Bearer ${GROQ_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -65,14 +65,14 @@ INSTRUCTION: You MUST reply to the user strictly in ${languageName}, regardless 
     if (!response.ok) {
       const errorData = await response.json();
       console.error("Groq API Error:", response.status, errorData);
-      
+
       if (response.status === 429) {
         throw new Error("Rate limit exceeded. Please try again later.");
       }
       if (response.status === 401) {
         throw new Error("Invalid API key. Please check your Groq API key.");
       }
-      
+
       throw new Error(errorData.error?.message || "Failed to get response from Groq");
     }
 
