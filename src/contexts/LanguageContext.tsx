@@ -154,7 +154,14 @@ export const translations = {
       track: "מעקב צמוד",
       share: "שתף והצלח"
     },
-    ticker: "🔥 יוסי סיים אימון חזה | 🏆 דנה השלימה אתגר | ⚽ עמית הצטרף | 💪 שירה שברה שיא אישי"
+    ticker: "🔥 יוסי סיים אימון חזה | 🏆 דנה השלימה אתגר | ⚽ עמית הצטרף | 💪 שירה שברה שיא אישי",
+    // AI Coach
+    aiCoachTitle: "מאמן אישי AI",
+    aiCoachWelcome: "שלום! אני המאמן האישי שלך. איך אוכל לעזור לך היום?",
+    aiCoachPlaceholder: "הקלד הודעה...",
+    aiCoachSend: "שלח",
+    aiCoachError: "מצטער, משהו השתבש. נסה שוב.",
+    cardAiCoach: "מאמן אישי AI"
   },
   en: {
     dir: "ltr",
@@ -297,7 +304,14 @@ export const translations = {
       track: "Track Progress",
       share: "Share Success"
     },
-    ticker: "🔥 Yossi finished Chest Day | 🏆 Dana completed the challenge | ⚽ Amit joined | 💪 Shira broke a record"
+    ticker: "🔥 Yossi finished Chest Day | 🏆 Dana completed the challenge | ⚽ Amit joined | 💪 Shira broke a record",
+    // AI Coach
+    aiCoachTitle: "AI Personal Coach",
+    aiCoachWelcome: "Hello! I'm your personal coach. How can I help you today?",
+    aiCoachPlaceholder: "Type a message...",
+    aiCoachSend: "Send",
+    aiCoachError: "Sorry, something went wrong. Please try again.",
+    cardAiCoach: "AI Personal Coach"
   },
   es: {
     dir: "ltr",
@@ -440,7 +454,14 @@ export const translations = {
       track: "Seguimiento",
       share: "Compartir"
     },
-    ticker: "🔥 Jose terminó Pecho | 🏆 Maria completó el reto | ⚽ Carlos se unió | 💪 Ana rompió récord"
+    ticker: "🔥 Jose terminó Pecho | 🏆 Maria completó el reto | ⚽ Carlos se unió | 💪 Ana rompió récord",
+    // AI Coach
+    aiCoachTitle: "Entrenador IA",
+    aiCoachWelcome: "¡Hola! Soy tu entrenador personal. ¿Cómo puedo ayudarte hoy?",
+    aiCoachPlaceholder: "Escribe un mensaje...",
+    aiCoachSend: "Enviar",
+    aiCoachError: "Lo siento, algo salió mal. Por favor, inténtalo de nuevo.",
+    cardAiCoach: "Entrenador IA"
   },
   ar: {
     dir: "rtl",
@@ -583,7 +604,14 @@ export const translations = {
       track: "تتبع دقيق",
       share: "شارك ونجح"
     },
-    ticker: "🔥 يوسف أنهى تمرين الصدر | 🏆 دانا أكملت التحدي | ⚽ أحمد انضم | 💪 سارة حطمت الرقم القياسي"
+    ticker: "🔥 يوسف أنهى تمرين الصدر | 🏆 دانا أكملت التحدي | ⚽ أحمد انضم | 💪 سارة حطمت الرقم القياسي",
+    // AI Coach
+    aiCoachTitle: "مدرب الذكاء الاصطناعي",
+    aiCoachWelcome: "مرحباً! أنا مدربك الشخصي. كيف يمكنني مساعدتك اليوم؟",
+    aiCoachPlaceholder: "اكتب رسالة...",
+    aiCoachSend: "إرسال",
+    aiCoachError: "عذراً، حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+    cardAiCoach: "مدرب الذكاء الاصطناعي"
   }
 } as const;
 

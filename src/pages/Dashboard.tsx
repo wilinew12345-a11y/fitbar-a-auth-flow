@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/contexts/LanguageContext';
 import FitBarcaLogo from '@/components/FitBarcaLogo';
 import LanguageSelector from '@/components/LanguageSelector';
-import { User, Dumbbell, LogOut, TrendingUp, Trophy } from 'lucide-react';
+import { User, Dumbbell, LogOut, TrendingUp, Trophy, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Dashboard = () => {
@@ -59,6 +59,13 @@ const Dashboard = () => {
       icon: Trophy,
       route: '/challenges',
       gradient: 'from-[#854d0e] to-[#ca8a04]',
+    },
+    {
+      id: 'ai-coach',
+      title: t('cardAiCoach'),
+      icon: Bot,
+      route: '/ai-coach',
+      gradient: 'from-[#7c3aed] to-[#a855f7]',
     },
   ];
 
