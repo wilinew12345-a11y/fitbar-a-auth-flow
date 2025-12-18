@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Trophy, Wrench, TrendingUp, Users } from 'lucide-react';
+import { Trophy, Wrench, TrendingUp, Users, Dumbbell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageSelector from '@/components/LanguageSelector';
@@ -104,9 +104,10 @@ const LandingPage = () => {
         {/* CTA Button */}
         <Button
           onClick={() => navigate('/auth')}
-          className="bg-[#A50044] hover:bg-[#800033] text-white text-xl px-10 py-6 rounded-full shadow-lg shadow-[#A50044]/40 animate-pulse-glow transition-transform hover:scale-105"
+          className="bg-[#A50044] hover:bg-[#800033] text-white text-xl px-10 py-6 rounded-full shadow-lg shadow-[#A50044]/40 animate-pulse-glow transition-transform hover:scale-105 flex items-center gap-2"
         >
-          {t('ctaStart')}
+          {t('ctaStart').replace(' ⚽', '')}
+          <Dumbbell className="w-6 h-6" />
         </Button>
       </div>
 
