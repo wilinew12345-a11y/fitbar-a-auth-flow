@@ -102,13 +102,15 @@ const LandingPage = () => {
         </div>
 
         {/* CTA Button */}
-        <Button
-          onClick={() => navigate('/auth')}
-          className="bg-[#A50044] hover:bg-[#800033] text-white text-xl px-10 py-6 rounded-full shadow-lg shadow-[#A50044]/40 animate-pulse-glow transition-transform hover:scale-105 flex items-center gap-2"
-        >
-          {t('ctaStart').replace(' ⚽', '')}
-          <Dumbbell className="w-6 h-6" />
-        </Button>
+        <div className="flex justify-center">
+          <Button
+            onClick={() => navigate('/auth')}
+            className="bg-[#A50044] hover:bg-[#800033] text-white text-xl px-10 py-6 rounded-full shadow-lg shadow-[#A50044]/40 animate-pulse-glow transition-transform hover:scale-105 flex items-center gap-2"
+          >
+            {t('ctaStart').replace(' ⚽', '')}
+            <Dumbbell className="w-6 h-6" />
+          </Button>
+        </div>
       </div>
 
       {/* Feature Grid */}
