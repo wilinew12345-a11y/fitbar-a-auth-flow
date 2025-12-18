@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { ArrowRight, ArrowLeft, RotateCcw, Share2, Trophy, Sparkles } from 'lucide-react';
+import { ArrowRight, ArrowLeft, RotateCcw, Share2, Trophy, Sparkles, Pencil, X } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Challenge } from '@/hooks/useChallengesSupabase';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageSelector from '@/components/LanguageSelector';
+import { ChallengeWorkoutManager } from './ChallengeWorkoutManager';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,6 +16,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { toast } from 'sonner';
 
 interface ChallengeDetailViewProps {
@@ -23,6 +30,8 @@ interface ChallengeDetailViewProps {
   onBack: () => void;
   onToggleWorkout: (workoutId: string) => void;
   onReset: () => void;
+  onAddWorkout?: (workoutText: string) => void;
+  onRemoveWorkout?: (workoutId: string) => void;
 }
 
 export const ChallengeDetailView = ({
@@ -31,9 +40,12 @@ export const ChallengeDetailView = ({
   onBack,
   onToggleWorkout,
   onReset,
+  onAddWorkout,
+  onRemoveWorkout,
 }: ChallengeDetailViewProps) => {
   const { t, isRtl } = useLanguage();
   const [showResetDialog, setShowResetDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [lastWeekCompleted, setLastWeekCompleted] = useState(-1);
   
@@ -91,6 +103,20 @@ ${t('completed')} ${progress.completed} / ${progress.total} ${t('workouts')}!`;
     toast.success(t('challengeReset'));
   };
 
+  const handleAddWorkoutInEdit = (workoutText: string) => {
+    if (onAddWorkout) {
+      onAddWorkout(workoutText);
+      toast.success('אימון נוסף בהצלחה');
+    }
+  };
+
+  const handleRemoveWorkoutInEdit = (_index: number, workoutId?: string) => {
+    if (onRemoveWorkout && workoutId) {
+      onRemoveWorkout(workoutId);
+      toast.success('אימון הוסר בהצלחה');
+    }
+  };
+
   // Group workouts by weeks
   const groupedWorkouts: { workouts: typeof challenge.workouts; weekNumber: number }[] = [];
   for (let i = 0; i < challenge.workouts.length; i += challenge.targetPerWeek) {
@@ -99,6 +125,13 @@ ${t('completed')} ${progress.completed} / ${progress.total} ${t('workouts')}!`;
       workouts: challenge.workouts.slice(i, i + challenge.targetPerWeek),
     });
   }
+
+  // Convert workouts for the manager component
+  const workoutsForManager = challenge.workouts.map((w, i) => ({
+    id: w.id,
+    text: w.text,
+    workoutIndex: i,
+  }));
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#004D98] to-[#061E40] text-white" dir={isRtl ? 'rtl' : 'ltr'}>
@@ -141,6 +174,15 @@ ${t('completed')} ${progress.completed} / ${progress.total} ${t('workouts')}!`;
             <h1 className="text-xl font-bold">{challenge.title}</h1>
             <div className="flex gap-2">
               <LanguageSelector />
+              {onAddWorkout && onRemoveWorkout && (
+                <button
+                  onClick={() => setShowEditDialog(true)}
+                  className="p-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors"
+                  title="ערוך אימונים"
+                >
+                  <Pencil className="w-5 h-5" />
+                </button>
+              )}
               <button
                 onClick={() => setShowResetDialog(true)}
                 className="p-2 rounded-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 transition-colors"
@@ -236,6 +278,39 @@ ${t('completed')} ${progress.completed} / ${progress.total} ${t('workouts')}!`;
           );
         })}
       </main>
+
+      {/* Edit Workouts Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="bg-[#061E40]/95 backdrop-blur-xl border-blue-800 text-white max-w-2xl max-h-[90vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-white flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-green-500/30">
+                <Pencil className="w-6 h-6 text-green-400" />
+              </div>
+              ערוך אימונים
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="max-h-[calc(90vh-120px)] overflow-y-auto pr-2">
+            <ChallengeWorkoutManager
+              workouts={workoutsForManager}
+              onAddWorkout={handleAddWorkoutInEdit}
+              onRemoveWorkout={handleRemoveWorkoutInEdit}
+              isEditMode={true}
+            />
+          </div>
+          
+          <div className="flex justify-end pt-4">
+            <button
+              onClick={() => setShowEditDialog(false)}
+              className="px-6 py-2 bg-blue-900/60 border border-blue-800 text-white rounded-lg hover:bg-blue-800/60 transition-colors flex items-center gap-2"
+            >
+              <X className="w-4 h-4" />
+              סגור
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Reset Confirmation Dialog */}
       <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>

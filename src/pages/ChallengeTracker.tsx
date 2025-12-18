@@ -30,6 +30,8 @@ const ChallengeTracker = () => {
     deleteChallenge,
     toggleWorkout,
     resetChallenge,
+    addWorkoutToChallenge,
+    removeWorkoutFromChallenge,
     getProgress,
   } = useChallengesSupabase();
 
@@ -87,6 +89,8 @@ const ChallengeTracker = () => {
         onBack={() => setSelectedChallengeId(null)}
         onToggleWorkout={(workoutId) => toggleWorkout(selectedChallenge.id, workoutId)}
         onReset={() => resetChallenge(selectedChallenge.id)}
+        onAddWorkout={(workoutText) => addWorkoutToChallenge(selectedChallenge.id, workoutText)}
+        onRemoveWorkout={(workoutId) => removeWorkoutFromChallenge(workoutId)}
       />
     );
   }

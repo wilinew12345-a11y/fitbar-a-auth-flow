@@ -385,6 +385,68 @@ export const useChallengesSupabase = () => {
     },
   });
 
+  // Add single workout to existing challenge
+  const addWorkoutMutation = useMutation({
+    mutationFn: async ({ challengeId, workoutText }: { challengeId: string; workoutText: string }) => {
+      // Get the current max workout_index for this challenge
+      const { data: existingWorkouts, error: fetchError } = await supabase
+        .from('challenge_workouts')
+        .select('workout_index')
+        .eq('challenge_id', challengeId)
+        .order('workout_index', { ascending: false })
+        .limit(1);
+
+      if (fetchError) throw fetchError;
+
+      const nextIndex = existingWorkouts && existingWorkouts.length > 0 
+        ? existingWorkouts[0].workout_index + 1 
+        : 0;
+
+      const { error } = await supabase
+        .from('challenge_workouts')
+        .insert({
+          challenge_id: challengeId,
+          workout_index: nextIndex,
+          workout_text: workoutText,
+          is_completed: false,
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['challenges', user?.id] });
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Failed to add workout. Please try again.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Remove single workout from challenge
+  const removeWorkoutMutation = useMutation({
+    mutationFn: async (workoutId: string) => {
+      const { error } = await supabase
+        .from('challenge_workouts')
+        .delete()
+        .eq('id', workoutId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['challenges', user?.id] });
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Failed to remove workout. Please try again.',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const toggleWorkout = (challengeId: string, workoutId: string) => {
     const challenge = challenges.find(c => c.id === challengeId);
     const workout = challenge?.workouts.find(w => w.id === workoutId);
@@ -405,6 +467,14 @@ export const useChallengesSupabase = () => {
     resetChallengeMutation.mutate(challengeId);
   };
 
+  const addWorkoutToChallenge = (challengeId: string, workoutText: string) => {
+    addWorkoutMutation.mutate({ challengeId, workoutText });
+  };
+
+  const removeWorkoutFromChallenge = (workoutId: string) => {
+    removeWorkoutMutation.mutate(workoutId);
+  };
+
   const getProgress = (challenge: Challenge) => {
     const completed = challenge.workouts.filter(w => w.completed).length;
     const total = challenge.workouts.length;
@@ -420,6 +490,8 @@ export const useChallengesSupabase = () => {
     deleteChallenge,
     toggleWorkout,
     resetChallenge,
+    addWorkoutToChallenge,
+    removeWorkoutFromChallenge,
     getProgress,
   };
 };
