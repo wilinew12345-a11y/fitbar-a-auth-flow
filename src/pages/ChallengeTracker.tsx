@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trophy, Dumbbell, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Plus, Dumbbell, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useChallengesSupabase } from '@/hooks/useChallengesSupabase';
@@ -110,7 +110,7 @@ const ChallengeTracker = () => {
             </button>
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-gradient-to-br from-[#A50044]/30 to-[#A50044]/50">
-                <Trophy className="w-6 h-6 text-red-400" />
+                <Dumbbell className="w-6 h-6 text-red-400" />
               </div>
               <h1 className="text-2xl font-bold text-white">{t('challengeTracker')}</h1>
             </div>
