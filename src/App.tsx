@@ -14,6 +14,7 @@ import WorkoutPlanning from "./pages/WorkoutPlanning";
 import WeeklyWorkoutPlan from "./pages/WeeklyWorkoutPlan";
 import ProgressGraph from "./pages/ProgressGraph";
 import ChallengeTracker from "./pages/ChallengeTracker";
+import SharedChallengeView from "./pages/SharedChallengeView";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/workout-planning" element={<WorkoutPlanning />} />
             <Route path="/progress" element={<ProgressGraph />} />
             <Route path="/challenges" element={<ChallengeTracker />} />
+            <Route path="/challenges/:id" element={<SharedChallengeView />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

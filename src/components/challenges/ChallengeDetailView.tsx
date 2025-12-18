@@ -82,17 +82,20 @@ ${t('completed')} ${progress.completed} / ${progress.total} ${t('workouts')}!`;
   };
 
   const handleShare = async () => {
+    // Build the shareable URL with the challenge ID
+    const shareUrl = `${window.location.origin}/challenges/${challenge.id}`;
+    
     const shareData = {
       title: challenge.title,
       text: generateShareText(),
-      url: window.location.href,
+      url: shareUrl,
     };
 
     try {
       if (navigator.share) {
         await navigator.share(shareData);
       } else {
-        await navigator.clipboard.writeText(shareData.url);
+        await navigator.clipboard.writeText(shareUrl);
         toast.success('הקישור הועתק!', {
           description: 'שתף את הקישור עם חברים',
         });
@@ -101,7 +104,7 @@ ${t('completed')} ${progress.completed} / ${progress.total} ${t('workouts')}!`;
       // User cancelled or error - try clipboard as last resort
       if ((err as Error).name !== 'AbortError') {
         try {
-          await navigator.clipboard.writeText(window.location.href);
+          await navigator.clipboard.writeText(shareUrl);
           toast.success('הקישור הועתק!');
         } catch {
           console.error('Error sharing:', err);
