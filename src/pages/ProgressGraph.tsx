@@ -31,12 +31,15 @@ interface WorkoutHistory {
   weight: number;
   sets: number;
   reps: number;
+  speed: number;
+  incline: number;
+  duration: number;
   created_at: string;
 }
 
 interface ChartDataPoint {
   date: string;
-  weight: number;
+  value: number;
   color: string;
 }
 
@@ -112,36 +115,89 @@ const ProgressGraph = () => {
         .order('created_at', { ascending: true });
 
       if (!error && data) {
-        setHistoryData(data);
+        setHistoryData(data as WorkoutHistory[]);
       }
     };
 
     fetchHistory();
   }, [user, selectedExercise]);
 
+  // Determine if this is a cardio exercise based on data
+  const isCardioExercise = useMemo(() => {
+    if (historyData.length === 0) return false;
+    // Check if most entries have speed/duration > 0 and weight = 0
+    const cardioEntries = historyData.filter(
+      item => (Number(item.speed) > 0 || Number(item.duration) > 0) && Number(item.weight) === 0
+    );
+    return cardioEntries.length > historyData.length / 2;
+  }, [historyData]);
+
+  // Determine primary metric for cardio
+  const primaryCardioMetric = useMemo(() => {
+    if (!isCardioExercise || historyData.length === 0) return 'speed';
+    // Use speed if it has meaningful values, otherwise duration
+    const avgSpeed = historyData.reduce((sum, item) => sum + Number(item.speed), 0) / historyData.length;
+    return avgSpeed > 0 ? 'speed' : 'duration';
+  }, [historyData, isCardioExercise]);
+
   // Process data for chart with traffic light logic
   const chartData: ChartDataPoint[] = useMemo(() => {
     return historyData.map((item, index) => {
+      // Get the appropriate value based on exercise type
+      let currentValue: number;
+      if (isCardioExercise) {
+        currentValue = primaryCardioMetric === 'speed' 
+          ? Number(item.speed) || 0 
+          : Number(item.duration) || 0;
+      } else {
+        currentValue = Number(item.weight) || 0;
+      }
+
       let color = '#fbbf24'; // Yellow - default/first/stagnation
       
       if (index > 0) {
-        const prevWeight = historyData[index - 1].weight;
-        const currentWeight = item.weight;
+        let prevValue: number;
+        if (isCardioExercise) {
+          prevValue = primaryCardioMetric === 'speed'
+            ? Number(historyData[index - 1].speed) || 0
+            : Number(historyData[index - 1].duration) || 0;
+        } else {
+          prevValue = Number(historyData[index - 1].weight) || 0;
+        }
         
-        if (currentWeight > prevWeight) {
+        if (currentValue > prevValue) {
           color = '#22c55e'; // Green - progress
-        } else if (currentWeight < prevWeight) {
+        } else if (currentValue < prevValue) {
           color = '#ef4444'; // Red - regression
         }
       }
 
       return {
         date: format(new Date(item.created_at), 'dd/MM'),
-        weight: Number(item.weight),
+        value: currentValue,
         color,
       };
     });
-  }, [historyData]);
+  }, [historyData, isCardioExercise, primaryCardioMetric]);
+
+  // Get the appropriate Y-axis label
+  const yAxisLabel = useMemo(() => {
+    if (isCardioExercise) {
+      return primaryCardioMetric === 'speed' ? t('speed') : t('time');
+    }
+    return t('weightKg');
+  }, [isCardioExercise, primaryCardioMetric, t]);
+
+  // Get the appropriate tooltip formatter
+  const tooltipFormatter = useMemo(() => {
+    if (isCardioExercise) {
+      if (primaryCardioMetric === 'speed') {
+        return (value: number) => [`${value} km/h`, t('speed')];
+      }
+      return (value: number) => [`${value} min`, t('time')];
+    }
+    return (value: number) => [`${value} kg`, t('weight')];
+  }, [isCardioExercise, primaryCardioMetric, t]);
 
   const BackIcon = isRtl ? ArrowLeft : ArrowRight;
 
@@ -193,6 +249,17 @@ const ProgressGraph = () => {
               ))}
             </SelectContent>
           </Select>
+          
+          {/* Show exercise type indicator */}
+          {historyData.length > 0 && (
+            <div className="mt-3 text-sm text-white/60">
+              {isCardioExercise ? (
+                <span>📍 {t('aerobic')} - {primaryCardioMetric === 'speed' ? t('speed') : t('time')}</span>
+              ) : (
+                <span>💪 {t('strength')} - {t('weight')}</span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Legend */}
@@ -230,7 +297,7 @@ const ProgressGraph = () => {
                   stroke="rgba(255,255,255,0.6)"
                   tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 12 }}
                   label={{ 
-                    value: t('weightKg'), 
+                    value: yAxisLabel, 
                     angle: -90, 
                     position: 'insideLeft',
                     fill: 'rgba(255,255,255,0.6)',
@@ -244,11 +311,11 @@ const ProgressGraph = () => {
                     borderRadius: '8px',
                     color: 'white',
                   }}
-                  formatter={(value: number) => [`${value} kg`, t('weight')]}
+                  formatter={tooltipFormatter}
                 />
                 <Line 
                   type="monotone" 
-                  dataKey="weight" 
+                  dataKey="value" 
                   stroke="#60a5fa"
                   strokeWidth={2}
                   dot={<CustomDot />}
