@@ -151,11 +151,22 @@ const WorkoutLog = () => {
   const handleUpdateExercise = async (id: string, updates: Partial<Exercise>) => {
     setSavingId(id);
     
+    // Ensure numeric values are properly converted
+    const sanitizedUpdates: Partial<Exercise> = { ...updates };
+    if ('weight' in updates) sanitizedUpdates.weight = Number(updates.weight) || 0;
+    if ('sets' in updates) sanitizedUpdates.sets = Number(updates.sets) || 0;
+    if ('reps' in updates) sanitizedUpdates.reps = Number(updates.reps) || 0;
+    if ('speed' in updates) sanitizedUpdates.speed = Number(updates.speed) || 0;
+    if ('incline' in updates) sanitizedUpdates.incline = Number(updates.incline) || 0;
+    if ('duration' in updates) sanitizedUpdates.duration = Number(updates.duration) || 0;
+
+    console.log('Updating exercise:', id, 'with:', sanitizedUpdates);
+    
     // Create the save promise and track it
     const savePromise = (async () => {
       const { error } = await supabase
         .from('exercises')
-        .update(updates)
+        .update(sanitizedUpdates)
         .eq('id', id);
 
       if (error) {
@@ -163,8 +174,8 @@ const WorkoutLog = () => {
         toast({ title: t('errorSavingExercise'), variant: 'destructive' });
         throw error;
       } else {
-        setExercises(prev => prev.map(ex => ex.id === id ? { ...ex, ...updates } : ex));
-        console.log('Exercise saved:', id, updates);
+        setExercises(prev => prev.map(ex => ex.id === id ? { ...ex, ...sanitizedUpdates } : ex));
+        console.log('Exercise saved successfully:', id);
       }
     })();
 
@@ -276,17 +287,20 @@ const WorkoutLog = () => {
         document.activeElement.blur();
       }
 
-      // Step 2: Wait for ALL pending save operations to complete
+      // Step 2: Wait a moment for any blur-triggered saves to start
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Step 3: Wait for ALL pending save operations to complete
       const pendingSaves = Array.from(pendingSavesRef.current.values());
       if (pendingSaves.length > 0) {
         console.log(`Waiting for ${pendingSaves.length} pending saves to complete...`);
         await Promise.allSettled(pendingSaves);
       }
 
-      // Step 3: Small additional delay to ensure state is fully synced
-      await new Promise(resolve => setTimeout(resolve, 150));
+      // Step 4: Additional delay to ensure DB is consistent
+      await new Promise(resolve => setTimeout(resolve, 200));
 
-      // Step 4: Fetch the absolute latest data from database to ensure consistency
+      // Step 5: Fetch the absolute latest data from database
       const { data: latestExercises, error: fetchError } = await supabase
         .from('exercises')
         .select('*')
@@ -305,16 +319,16 @@ const WorkoutLog = () => {
 
       console.log('Saving workout history with data:', latestExercises);
 
-      // Step 5: Create history records from the freshly fetched data
+      // Step 6: Create history records
       const historyRecords = latestExercises.map(ex => ({
         user_id: user!.id,
         exercise_name: ex.name,
-        weight: ex.weight || 0,
-        sets: ex.sets || 0,
-        reps: ex.reps || 0,
+        weight: Number(ex.weight) || 0,
+        sets: Number(ex.sets) || 0,
+        reps: Number(ex.reps) || 0,
       }));
 
-      // Step 6: Insert into workout_history
+      // Step 7: Insert into workout_history
       const { error: insertError } = await supabase
         .from('workout_history')
         .insert(historyRecords);
@@ -324,7 +338,7 @@ const WorkoutLog = () => {
         throw new Error('Error saving workout');
       }
 
-      // Step 7: Update local state with fresh data
+      // Step 8: Update local state with fresh data
       setExercises(latestExercises);
 
       toast({ title: t('workoutSaved') });

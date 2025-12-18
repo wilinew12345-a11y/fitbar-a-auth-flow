@@ -73,11 +73,14 @@ export const ExerciseCard = ({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  // Auto-save on blur if values changed
+  // Auto-save on blur - always save to ensure consistency
   const handleBlur = (field: 'weight' | 'sets' | 'reps' | 'speed' | 'incline' | 'duration') => {
-    const exerciseValue = exercise[field as keyof Exercise] ?? 0;
-    if (localValues[field] !== exerciseValue) {
-      onUpdate(exercise.id, { [field]: localValues[field] });
+    const exerciseValue = Number(exercise[field as keyof Exercise]) || 0;
+    const localValue = Number(localValues[field]) || 0;
+    // Compare with tolerance for floating point
+    if (Math.abs(localValue - exerciseValue) > 0.001) {
+      console.log(`Saving ${field}: ${exerciseValue} -> ${localValue}`);
+      onUpdate(exercise.id, { [field]: localValue });
     }
   };
 
