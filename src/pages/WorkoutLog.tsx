@@ -435,50 +435,29 @@ const WorkoutLog = () => {
           </div>
         </div>
 
-        {/* Kanban Board */}
+        {/* Category Stack - Centered Vertical Layout */}
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          {isMobile ? (
-            // Mobile: Accordions
-            <div className="space-y-2">
-              {BODY_PART_CATEGORIES.map((cat) => (
-                <KanbanColumn
-                  key={cat.key}
-                  category={cat.key}
-                  categoryLabel={cat.label}
-                  exercises={exercisesByCategory[cat.key]}
-                  onUpdate={handleUpdateExercise}
-                  onDelete={handleDeleteExercise}
-                  onImageUpload={handleImageUpload}
-                  savingId={savingId}
-                  uploadingId={uploadingId}
-                  isMobile={true}
-                />
-              ))}
-            </div>
-          ) : (
-            // Desktop: Grid columns
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
-              {BODY_PART_CATEGORIES.map((cat) => (
-                <KanbanColumn
-                  key={cat.key}
-                  category={cat.key}
-                  categoryLabel={cat.label}
-                  exercises={exercisesByCategory[cat.key]}
-                  onUpdate={handleUpdateExercise}
-                  onDelete={handleDeleteExercise}
-                  onImageUpload={handleImageUpload}
-                  savingId={savingId}
-                  uploadingId={uploadingId}
-                  isMobile={false}
-                />
-              ))}
-            </div>
-          )}
+          <div className="flex flex-col gap-4 max-w-3xl mx-auto">
+            {BODY_PART_CATEGORIES.map((cat) => (
+              <KanbanColumn
+                key={cat.key}
+                category={cat.key}
+                categoryLabel={cat.label}
+                exercises={exercisesByCategory[cat.key]}
+                onUpdate={handleUpdateExercise}
+                onDelete={handleDeleteExercise}
+                onImageUpload={handleImageUpload}
+                savingId={savingId}
+                uploadingId={uploadingId}
+                isMobile={isMobile}
+              />
+            ))}
+          </div>
 
           <DragOverlay>
             {activeExercise ? (

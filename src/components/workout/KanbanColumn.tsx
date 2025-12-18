@@ -24,7 +24,6 @@ export const KanbanColumn = ({
   onImageUpload,
   savingId,
   uploadingId,
-  isMobile,
 }: KanbanColumnProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const { setNodeRef, isOver } = useDroppable({
@@ -34,13 +33,13 @@ export const KanbanColumn = ({
   const columnContent = (
     <div
       ref={setNodeRef}
-      className={`space-y-2 transition-colors ${
-        isOver ? 'bg-white/5 rounded-lg p-1' : ''
+      className={`space-y-3 transition-colors ${
+        isOver ? 'bg-white/5 rounded-lg p-2' : 'p-2'
       }`}
     >
       <SortableContext items={exercises.map(e => e.id)} strategy={verticalListSortingStrategy}>
         {exercises.length === 0 ? (
-          <div className="text-center py-4 text-white/40 text-xs border border-dashed border-white/20 rounded-lg">
+          <div className="text-center py-6 text-white/40 text-sm border border-dashed border-white/20 rounded-xl">
             גרור תרגילים לכאן
           </div>
         ) : (
@@ -60,43 +59,48 @@ export const KanbanColumn = ({
     </div>
   );
 
-  if (isMobile) {
-    return (
-      <div className="w-full">
-        {/* Clickable Header - No Icons */}
-        <div
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center justify-between py-2 px-3 bg-white/10 rounded-lg mb-1 cursor-pointer hover:bg-white/15 transition-colors"
-        >
-          <span className="font-medium text-sm text-white">{categoryLabel}</span>
-          <span className="text-[10px] text-white/60 bg-white/20 px-1.5 py-0.5 rounded-full">
-            {exercises.length}
-          </span>
-        </div>
-        {/* Content - Hidden but not unmounted when collapsed */}
-        <div className={`overflow-hidden transition-all duration-200 ${isExpanded ? 'max-h-[2000px] opacity-100 pt-1 pb-2' : 'max-h-0 opacity-0'}`}>
-          {columnContent}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 flex flex-col max-h-[calc(100vh-220px)]">
-      {/* Clickable Header - No Icons */}
+    <div className="w-full">
+      {/* Premium Glass Card Header */}
       <div
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex items-center justify-between p-2 border-b border-white/10 flex-shrink-0 cursor-pointer hover:bg-white/5 transition-colors"
+        className={`
+          flex items-center justify-between py-4 px-5
+          bg-slate-800/50 backdrop-blur-md
+          border rounded-xl
+          cursor-pointer
+          transition-all duration-300 ease-out
+          ${isExpanded 
+            ? 'border-[#a50044]/60 bg-slate-800/70 rounded-b-none' 
+            : 'border-white/10 hover:border-[#a50044]/40 hover:bg-slate-800/60'
+          }
+        `}
       >
-        <h3 className="font-semibold text-white text-xs">{categoryLabel}</h3>
-        <span className="text-[10px] text-white/60 bg-white/20 px-1.5 py-0.5 rounded-full">
+        <span className="font-semibold text-base text-white tracking-wide">{categoryLabel}</span>
+        <span className={`
+          text-xs font-medium px-2.5 py-1 rounded-full
+          transition-colors duration-300
+          ${exercises.length > 0 
+            ? 'bg-[#a50044]/80 text-white' 
+            : 'bg-white/10 text-white/60'
+          }
+        `}>
           {exercises.length}
         </span>
       </div>
       
-      {/* Content - Hidden but not unmounted when collapsed */}
-      <div className={`flex-1 overflow-hidden transition-all duration-200 ${isExpanded ? 'max-h-[calc(100vh-280px)] opacity-100' : 'max-h-0 opacity-0'}`}>
-        <div className="overflow-y-auto p-2 min-h-[60px] h-full">
+      {/* Expandable Content with Smooth Animation */}
+      <div 
+        className={`
+          overflow-hidden
+          transition-all duration-300 ease-out
+          ${isExpanded 
+            ? 'max-h-[2000px] opacity-100' 
+            : 'max-h-0 opacity-0'
+          }
+        `}
+      >
+        <div className="bg-slate-900/40 backdrop-blur-sm border-x border-b border-white/10 rounded-b-xl">
           {columnContent}
         </div>
       </div>
