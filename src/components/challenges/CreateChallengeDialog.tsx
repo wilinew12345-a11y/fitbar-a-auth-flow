@@ -158,13 +158,6 @@ export const CreateChallengeDialog = ({ open, onOpenChange, onSave }: CreateChal
                 <Plus className="w-4 h-4 ml-2" />
                 צור אתגר
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => handleOpenChange(false)}
-                className="border-blue-800 text-blue-300 hover:bg-blue-900/50 hover:text-yellow-400"
-              >
-                <X className="w-4 h-4" />
-              </Button>
             </div>
           </div>
         </ScrollArea>
