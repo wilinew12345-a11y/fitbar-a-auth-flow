@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { ArrowLeft, ArrowRight, Send, Bot, User, Loader2 } from 'lucide-react';
 import FitBarcaLogo from '@/components/FitBarcaLogo';
 import LanguageSelector from '@/components/LanguageSelector';
+import { toast } from '@/hooks/use-toast';
 
 interface DisplayMessage {
   id: string;
@@ -73,10 +74,19 @@ const AICoach = () => {
       };
       setMessages(prev => [...prev, assistantDisplayMessage]);
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : t('aiCoachError');
+      
+      // Show toast for specific errors
+      if (errorMsg.includes('Rate limit')) {
+        toast({ title: "Rate Limited", description: errorMsg, variant: "destructive" });
+      } else if (errorMsg.includes('credits')) {
+        toast({ title: "Credits Exhausted", description: errorMsg, variant: "destructive" });
+      }
+      
       const errorMessage: DisplayMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: t('aiCoachError'),
+        content: errorMsg,
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
