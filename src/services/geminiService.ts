@@ -1,5 +1,5 @@
-// Groq API - Paste your API key here
-const GROQ_API_KEY = "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"; // Note: Consider moving this to Environment Variables for security
+// Groq API - Using environment variable for security
+const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
