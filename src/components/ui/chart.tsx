@@ -58,6 +58,34 @@ const ChartContainer = React.forwardRef<
 });
 ChartContainer.displayName = "Chart";
 
+// Sanitize CSS color values to prevent CSS injection attacks
+const sanitizeCssColor = (color: string): string | null => {
+  if (!color || typeof color !== 'string') return null;
+  
+  // Allow valid CSS color formats only
+  const validColorPatterns = [
+    /^#[0-9A-Fa-f]{3,8}$/, // hex colors (#fff, #ffffff, #ffffffff)
+    /^rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)$/i, // rgb()
+    /^rgba\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*[\d.]+\s*\)$/i, // rgba()
+    /^hsl\(\s*[\d.]+\s*,\s*[\d.]+%?\s*,\s*[\d.]+%?\s*\)$/i, // hsl()
+    /^hsla\(\s*[\d.]+\s*,\s*[\d.]+%?\s*,\s*[\d.]+%?\s*,\s*[\d.]+\s*\)$/i, // hsla()
+    /^[a-zA-Z]+$/, // named colors (red, blue, etc.)
+    /^var\(--[a-zA-Z0-9-]+\)$/, // CSS variables
+  ];
+  
+  const trimmedColor = color.trim();
+  const isValid = validColorPatterns.some(pattern => pattern.test(trimmedColor));
+  
+  return isValid ? trimmedColor : null;
+};
+
+// Sanitize CSS key names to prevent injection
+const sanitizeCssKey = (key: string): string | null => {
+  if (!key || typeof key !== 'string') return null;
+  // Only allow alphanumeric, hyphens, and underscores
+  return /^[a-zA-Z0-9_-]+$/.test(key) ? key : null;
+};
+
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(([_, config]) => config.theme || config.color);
 
@@ -74,9 +102,12 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
 ${prefix} [data-chart=${id}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
-    const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
+    const sanitizedKey = sanitizeCssKey(key);
+    const rawColor = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
+    const sanitizedColor = rawColor ? sanitizeCssColor(rawColor) : null;
+    return sanitizedKey && sanitizedColor ? `  --color-${sanitizedKey}: ${sanitizedColor};` : null;
   })
+  .filter(Boolean)
   .join("\n")}
 }
 `,
