@@ -48,6 +48,12 @@ const Auth = () => {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Handle PASSWORD_RECOVERY event - redirect to update password page
+      if (event === "PASSWORD_RECOVERY") {
+        navigate("/update-password");
+        return;
+      }
+      
       if (session?.user) {
         navigate("/dashboard");
       }
@@ -185,7 +191,7 @@ const Auth = () => {
 
     setIsLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
-      redirectTo: `${window.location.origin}/auth`,
+      redirectTo: `${window.location.origin}/update-password`,
     });
 
     if (error) {
