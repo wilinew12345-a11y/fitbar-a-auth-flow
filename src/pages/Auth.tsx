@@ -453,14 +453,14 @@ const Auth = () => {
             {/* Remember Me & Forgot Password (Login Only) */}
             {isLogin && (
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
+                <div className={`flex items-center gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
                   <Checkbox
                     id="rememberMe"
                     checked={rememberMe}
                     onCheckedChange={(checked) => setRememberMe(checked === true)}
                   />
-                  <Label htmlFor="rememberMe" className="text-sm text-muted-foreground cursor-pointer">
-                    Remember me
+                  <Label htmlFor="rememberMe" className="text-sm text-accent hover:text-accent/80 cursor-pointer transition-colors">
+                    {t('rememberMe')}
                   </Label>
                 </div>
                 <button
