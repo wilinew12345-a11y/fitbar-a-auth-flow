@@ -46,16 +46,14 @@ const Auth = () => {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Clear form fields on component mount for security (complete reset, not spread)
+  // Clear form fields on component mount for security
   useEffect(() => {
-    setFormData({
-      firstName: "",
-      lastName: "",
+    setFormData(prev => ({
+      ...prev,
       email: "",
       password: "",
       confirmPassword: "",
-    });
-    setErrors({});
+    }));
   }, []);
 
   useEffect(() => {
@@ -273,7 +271,6 @@ const Auth = () => {
               onClick={() => {
                 setIsLogin(true);
                 setErrors({});
-                setFormData(prev => ({ ...prev, password: "", confirmPassword: "" }));
               }}
               className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all duration-200 ${
                 isLogin
@@ -288,7 +285,6 @@ const Auth = () => {
               onClick={() => {
                 setIsLogin(false);
                 setErrors({});
-                setFormData(prev => ({ ...prev, password: "", confirmPassword: "" }));
               }}
               className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all duration-200 ${
                 !isLogin
@@ -359,7 +355,6 @@ const Auth = () => {
                   placeholder="you@example.com"
                   value={formData.email}
                   onChange={handleInputChange}
-                  autoComplete="username"
                   className={isRtl ? 'pr-10' : 'pl-10'}
                 />
               </div>
@@ -376,14 +371,12 @@ const Auth = () => {
               <div className="relative">
                 <Lock className={`absolute ${isRtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
                 <Input
-                  key={isLogin ? "login-password" : "signup-password"}
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={handleInputChange}
-                  autoComplete={isLogin ? "current-password" : "new-password"}
                   className={isRtl ? 'pr-10 pl-10' : 'pl-10 pr-10'}
                 />
                 <button
@@ -414,7 +407,6 @@ const Auth = () => {
                     placeholder="••••••••"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
-                    autoComplete="new-password"
                     className={isRtl ? 'pr-10 pl-10' : 'pl-10 pr-10'}
                   />
                   <button
@@ -472,7 +464,6 @@ const Auth = () => {
             onClick={() => {
               setIsLogin(!isLogin);
               setErrors({});
-              setFormData(prev => ({ ...prev, password: "", confirmPassword: "" }));
             }}
             className="text-barca-gold hover:underline font-medium"
           >
