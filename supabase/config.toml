@@ -1,1 +1,4 @@
 project_id = "wdccaqibuxtgktejushz"
+
+[functions.ai-coach]
+verify_jwt = false
