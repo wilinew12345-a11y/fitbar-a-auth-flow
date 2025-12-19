@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -52,6 +53,33 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error("Missing authorization header");
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      console.error("Authentication failed:", authError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`AI Coach request from user: ${user.id}`);
+
     const { messages, currentLanguage } = await req.json();
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -63,7 +91,7 @@ serve(async (req) => {
     const languageName = getLanguageFullName(currentLanguage || "en");
     const systemPrompt = buildSystemPrompt(languageName);
 
-    console.log(`AI Coach request - Language: ${languageName}, Messages count: ${messages?.length || 0}`);
+    console.log(`AI Coach request - User: ${user.id}, Language: ${languageName}, Messages count: ${messages?.length || 0}`);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -109,7 +137,7 @@ serve(async (req) => {
       throw new Error("No response generated from AI");
     }
 
-    console.log("AI Coach response generated successfully");
+    console.log(`AI Coach response generated successfully for user: ${user.id}`);
 
     return new Response(
       JSON.stringify({ content }),
