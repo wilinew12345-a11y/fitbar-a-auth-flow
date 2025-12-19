@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import FitBarcaLogo from "@/components/FitBarcaLogo";
@@ -36,6 +37,7 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [mountKey, setMountKey] = useState(Date.now());
+  const [rememberMe, setRememberMe] = useState(false);
   
   const [formData, setFormData] = useState({
     firstName: "",
@@ -47,16 +49,20 @@ const Auth = () => {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Clear form fields on component mount for security (complete reset)
+  // Load remembered email and clear password on mount
   useEffect(() => {
     console.log("Form reset on mount - clearing all fields");
+    const rememberedEmail = localStorage.getItem("rememberedEmail");
+    const wasRemembered = localStorage.getItem("rememberMe") === "true";
+    
     setFormData({
       firstName: "",
       lastName: "",
-      email: "",
+      email: rememberedEmail || "",
       password: "",
       confirmPassword: "",
     });
+    setRememberMe(wasRemembered);
     setErrors({});
     setMountKey(Date.now()); // Force inputs to remount
   }, []);
@@ -170,6 +176,15 @@ const Auth = () => {
         console.log("Login error - clearing password only");
         setFormData(prev => ({ ...prev, password: "" }));
         return;
+      }
+
+      // Handle remember me preference
+      if (rememberMe) {
+        localStorage.setItem("rememberedEmail", formData.email);
+        localStorage.setItem("rememberMe", "true");
+      } else {
+        localStorage.removeItem("rememberedEmail");
+        localStorage.removeItem("rememberMe");
       }
 
       if (data.user) {
@@ -435,9 +450,19 @@ const Auth = () => {
               </div>
             )}
 
-            {/* Forgot Password Link */}
+            {/* Remember Me & Forgot Password (Login Only) */}
             {isLogin && (
-              <div className={isRtl ? 'text-left' : 'text-right'}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="rememberMe"
+                    checked={rememberMe}
+                    onCheckedChange={(checked) => setRememberMe(checked === true)}
+                  />
+                  <Label htmlFor="rememberMe" className="text-sm text-muted-foreground cursor-pointer">
+                    Remember me
+                  </Label>
+                </div>
                 <button
                   type="button"
                   onClick={handleForgotPassword}
