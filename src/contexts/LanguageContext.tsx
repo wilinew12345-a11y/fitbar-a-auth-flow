@@ -34,7 +34,7 @@ export const translations = {
     greeting: "שלום, ",
     whatToDo: "מה נעשה היום?",
     cardWorkout: "יומן אימונים",
-    cardProfile: "הפרופיל שלי",
+    cardProfile: "פרופיל אימונים",
     cardChallenges: "מעקב אתגרים",
     cardProgress: "גרף התקדמות",
     // Workout Log
