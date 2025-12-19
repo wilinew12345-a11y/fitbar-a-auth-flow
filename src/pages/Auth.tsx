@@ -46,16 +46,6 @@ const Auth = () => {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Clear form fields on component mount for security
-  useEffect(() => {
-    setFormData(prev => ({
-      ...prev,
-      email: "",
-      password: "",
-      confirmPassword: "",
-    }));
-  }, []);
-
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       // Handle PASSWORD_RECOVERY event - redirect to update password page
@@ -156,8 +146,6 @@ const Auth = () => {
       });
 
       if (error) {
-        // Clear password but keep email for better UX
-        setFormData(prev => ({ ...prev, password: "" }));
         toast({
           title: "Login failed",
           description: "Invalid email or password. Please try again.",
