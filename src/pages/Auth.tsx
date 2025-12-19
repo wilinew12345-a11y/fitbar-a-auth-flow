@@ -35,6 +35,7 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [mountKey, setMountKey] = useState(Date.now());
   
   const [formData, setFormData] = useState({
     firstName: "",
@@ -46,8 +47,9 @@ const Auth = () => {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Clear form fields on component mount for security (complete reset, not spread)
+  // Clear form fields on component mount for security (complete reset)
   useEffect(() => {
+    console.log("Form reset on mount - clearing all fields");
     setFormData({
       firstName: "",
       lastName: "",
@@ -56,6 +58,7 @@ const Auth = () => {
       confirmPassword: "",
     });
     setErrors({});
+    setMountKey(Date.now()); // Force inputs to remount
   }, []);
 
   useEffect(() => {
@@ -158,13 +161,14 @@ const Auth = () => {
       });
 
       if (error) {
-        // Clear password but keep email for better UX
-        setFormData(prev => ({ ...prev, password: "" }));
         toast({
           title: "Login failed",
           description: "Invalid email or password. Please try again.",
           variant: "destructive",
         });
+        // Clear password AFTER toast, keep email for better UX
+        console.log("Login error - clearing password only");
+        setFormData(prev => ({ ...prev, password: "" }));
         return;
       }
 
@@ -300,7 +304,7 @@ const Auth = () => {
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} autoComplete="off" className="space-y-5">
             {/* Sign Up Only Fields */}
             {!isLogin && (
               <div className="grid grid-cols-2 gap-4 animate-slide-up">
@@ -359,7 +363,7 @@ const Auth = () => {
                   placeholder="you@example.com"
                   value={formData.email}
                   onChange={handleInputChange}
-                  autoComplete="username"
+                  autoComplete="off"
                   className={isRtl ? 'pr-10' : 'pl-10'}
                 />
               </div>
@@ -376,14 +380,14 @@ const Auth = () => {
               <div className="relative">
                 <Lock className={`absolute ${isRtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
                 <Input
-                  key={isLogin ? "login-password" : "signup-password"}
+                  key={`${isLogin ? "login" : "signup"}-password-${mountKey}`}
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={handleInputChange}
-                  autoComplete={isLogin ? "current-password" : "new-password"}
+                  autoComplete="new-password"
                   className={isRtl ? 'pr-10 pl-10' : 'pl-10 pr-10'}
                 />
                 <button
