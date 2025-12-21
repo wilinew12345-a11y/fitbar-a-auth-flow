@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Button } from '@/components/ui/button';
-import { Trash2, Upload, Image as ImageIcon, GripVertical, ChevronDown, ChevronUp } from 'lucide-react';
+import { Trash2, Upload, GripVertical, ChevronDown, ChevronUp, Maximize2, X } from 'lucide-react';
 import { NumberInput } from './NumberInput';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 export interface Exercise {
   id: string;
   name: string;
@@ -42,6 +43,8 @@ export const ExerciseCard = ({
   isUploading 
 }: ExerciseCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isMediaOpen, setIsMediaOpen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const isAerobic = exercise.body_part === 'אירובי';
   
   const [localValues, setLocalValues] = useState({
@@ -52,6 +55,14 @@ export const ExerciseCard = ({
     incline: exercise.incline || 0,
     duration: exercise.duration || 0,
   });
+
+  // Stop video when modal closes
+  useEffect(() => {
+    if (!isMediaOpen && videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  }, [isMediaOpen]);
 
   // Sync local values when exercise prop changes
   useEffect(() => {
@@ -229,39 +240,81 @@ export const ExerciseCard = ({
       {isExpanded && (
         <div className="mt-3 pt-3 border-t border-white/10">
           {exercise.image_url ? (
-            // Media exists - show it
-            <div className="w-full rounded-lg overflow-hidden bg-black relative group">
-              {isVideoUrl(exercise.image_url) ? (
-                <video
-                  src={exercise.image_url}
-                  controls
-                  className="w-full h-48 object-contain bg-black"
-                />
-              ) : (
-                <img
-                  src={exercise.image_url}
-                  alt={exercise.name}
-                  className="w-full h-48 object-cover"
-                />
-              )}
-              {/* Small overlay button to replace media */}
-              <label className="absolute top-2 right-2 bg-black/70 hover:bg-black/90 p-2 rounded-full cursor-pointer transition-colors">
-                {isUploading ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
-                ) : (
-                  <Upload className="h-4 w-4 text-white" />
-                )}
-                <input
-                  type="file"
-                  accept="image/*,video/mp4,video/quicktime,video/webm"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) onImageUpload(exercise.id, file);
-                  }}
-                />
-              </label>
-            </div>
+            // Media exists - show it with modal capability
+            <Dialog open={isMediaOpen} onOpenChange={setIsMediaOpen}>
+              <div className="w-full rounded-lg overflow-hidden bg-black relative group">
+                {/* Clickable thumbnail */}
+                <DialogTrigger asChild>
+                  <button className="w-full relative cursor-pointer focus:outline-none">
+                    {isVideoUrl(exercise.image_url) ? (
+                      <video
+                        src={exercise.image_url}
+                        className="w-full h-48 object-contain bg-black pointer-events-none"
+                        muted
+                      />
+                    ) : (
+                      <img
+                        src={exercise.image_url}
+                        alt={exercise.name}
+                        className="w-full h-48 object-cover"
+                      />
+                    )}
+                    {/* Expand overlay hint */}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 p-2 rounded-full">
+                        <Maximize2 className="h-5 w-5 text-white" />
+                      </div>
+                    </div>
+                  </button>
+                </DialogTrigger>
+                
+                {/* Small overlay button to replace media */}
+                <label className="absolute top-2 right-2 bg-black/70 hover:bg-black/90 p-2 rounded-full cursor-pointer transition-colors z-10">
+                  {isUploading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                  ) : (
+                    <Upload className="h-4 w-4 text-white" />
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*,video/mp4,video/quicktime,video/webm"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) onImageUpload(exercise.id, file);
+                    }}
+                  />
+                </label>
+              </div>
+
+              {/* Fullscreen Modal Content */}
+              <DialogContent className="max-w-[95vw] max-h-[95vh] w-auto h-auto p-0 bg-black/95 border-none overflow-hidden">
+                <button
+                  onClick={() => setIsMediaOpen(false)}
+                  className="absolute top-4 right-4 z-50 bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors"
+                >
+                  <X className="h-6 w-6 text-white" />
+                </button>
+                
+                <div className="flex items-center justify-center w-full h-full min-h-[50vh]">
+                  {isVideoUrl(exercise.image_url) ? (
+                    <video
+                      ref={videoRef}
+                      src={exercise.image_url}
+                      controls
+                      autoPlay
+                      className="max-w-full max-h-[90vh] object-contain"
+                    />
+                  ) : (
+                    <img
+                      src={exercise.image_url}
+                      alt={exercise.name}
+                      className="max-w-full max-h-[90vh] object-contain"
+                    />
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
           ) : (
             // No media - show upload dropzone
             <label className="w-full h-32 rounded-lg bg-white/5 border border-dashed border-white/20 flex flex-col items-center justify-center cursor-pointer hover:bg-white/10 transition-colors">
