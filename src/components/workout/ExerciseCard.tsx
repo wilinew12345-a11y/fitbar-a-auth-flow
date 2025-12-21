@@ -225,34 +225,53 @@ export const ExerciseCard = ({
         </div>
       )}
 
-      {/* Expanded Content - uses flow layout, no absolute positioning */}
+      {/* Expanded Content - Media Display */}
       {isExpanded && (
         <div className="mt-3 pt-3 border-t border-white/10">
-          <div className="w-full h-24 rounded-lg overflow-hidden bg-white/5 border border-white/10 relative group">
-            {exercise.image_url ? (
-              isVideoUrl(exercise.image_url) ? (
+          {exercise.image_url ? (
+            // Media exists - show it
+            <div className="w-full rounded-lg overflow-hidden bg-black relative group">
+              {isVideoUrl(exercise.image_url) ? (
                 <video
                   src={exercise.image_url}
                   controls
-                  className="w-full h-full object-cover"
+                  className="w-full h-48 object-contain bg-black"
                 />
               ) : (
                 <img
                   src={exercise.image_url}
                   alt={exercise.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-48 object-cover"
                 />
-              )
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <ImageIcon className="h-6 w-6 text-white/30" />
-              </div>
-            )}
-            <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+              )}
+              {/* Small overlay button to replace media */}
+              <label className="absolute top-2 right-2 bg-black/70 hover:bg-black/90 p-2 rounded-full cursor-pointer transition-colors">
+                {isUploading ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                ) : (
+                  <Upload className="h-4 w-4 text-white" />
+                )}
+                <input
+                  type="file"
+                  accept="image/*,video/mp4,video/quicktime,video/webm"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) onImageUpload(exercise.id, file);
+                  }}
+                />
+              </label>
+            </div>
+          ) : (
+            // No media - show upload dropzone
+            <label className="w-full h-32 rounded-lg bg-white/5 border border-dashed border-white/20 flex flex-col items-center justify-center cursor-pointer hover:bg-white/10 transition-colors">
               {isUploading ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-white"></div>
               ) : (
-                <Upload className="h-5 w-5 text-white" />
+                <>
+                  <Upload className="h-6 w-6 text-white/40 mb-2" />
+                  <span className="text-xs text-white/40">העלה תמונה או וידאו</span>
+                </>
               )}
               <input
                 type="file"
@@ -264,7 +283,7 @@ export const ExerciseCard = ({
                 }}
               />
             </label>
-          </div>
+          )}
         </div>
       )}
     </div>
