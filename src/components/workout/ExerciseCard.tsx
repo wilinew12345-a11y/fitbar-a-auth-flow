@@ -26,6 +26,13 @@ interface ExerciseCardProps {
   isUploading: boolean;
 }
 
+// Helper function to detect if URL is a video
+const isVideoUrl = (url: string): boolean => {
+  const videoExtensions = ['.mp4', '.mov', '.webm', '.quicktime'];
+  const lowerUrl = url.toLowerCase();
+  return videoExtensions.some(ext => lowerUrl.includes(ext));
+};
+
 export const ExerciseCard = ({ 
   exercise, 
   onUpdate, 
@@ -223,11 +230,19 @@ export const ExerciseCard = ({
         <div className="mt-3 pt-3 border-t border-white/10">
           <div className="w-full h-24 rounded-lg overflow-hidden bg-white/5 border border-white/10 relative group">
             {exercise.image_url ? (
-              <img
-                src={exercise.image_url}
-                alt={exercise.name}
-                className="w-full h-full object-cover"
-              />
+              isVideoUrl(exercise.image_url) ? (
+                <video
+                  src={exercise.image_url}
+                  controls
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <img
+                  src={exercise.image_url}
+                  alt={exercise.name}
+                  className="w-full h-full object-cover"
+                />
+              )
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <ImageIcon className="h-6 w-6 text-white/30" />
@@ -241,7 +256,7 @@ export const ExerciseCard = ({
               )}
               <input
                 type="file"
-                accept="image/*"
+                accept="image/*,video/mp4,video/quicktime,video/webm"
                 className="hidden"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
