@@ -25,44 +25,36 @@ const WeeklyWorkoutAssignment = () => {
   const [saving, setSaving] = useState(false);
 
   // Days of week with translations
-  const DAYS_OF_WEEK = useMemo(
-    () => [
-      { key: "sunday", label: t("sunday"), short: t("sunShort") },
-      { key: "monday", label: t("monday"), short: t("monShort") },
-      { key: "tuesday", label: t("tuesday"), short: t("tueShort") },
-      { key: "wednesday", label: t("wednesday"), short: t("wedShort") },
-      { key: "thursday", label: t("thursday"), short: t("thuShort") },
-      { key: "friday", label: t("friday"), short: t("friShort") },
-      { key: "saturday", label: t("saturday"), short: t("satShort") },
-    ],
-    [t],
-  );
+  const DAYS_OF_WEEK = useMemo(() => [
+    { key: 'sunday', label: t('sunday'), short: t('sunShort') },
+    { key: 'monday', label: t('monday'), short: t('monShort') },
+    { key: 'tuesday', label: t('tuesday'), short: t('tueShort') },
+    { key: 'wednesday', label: t('wednesday'), short: t('wedShort') },
+    { key: 'thursday', label: t('thursday'), short: t('thuShort') },
+    { key: 'friday', label: t('friday'), short: t('friShort') },
+    { key: 'saturday', label: t('saturday'), short: t('satShort') },
+  ], [t]);
 
   // Muscle groups with translations
-  const MUSCLE_GROUPS = useMemo(
-    () => [
-      { key: "chest", label: t("chest") },
-      { key: "triceps", label: t("triceps") },
-      { key: "biceps", label: t("biceps") },
-      { key: "back", label: t("backMuscle") },
-      { key: "legs", label: t("legs") },
-      { key: "shoulders", label: t("shoulders") },
-      { key: "abs", label: t("abs") },
-      { key: "stretch", label: t("pullups") },
-      { key: "aerobic", label: t("aerobic") },
-      { key: "fullbody", label: t("fullBody") },
-    ],
-    [t],
-  );
+  const MUSCLE_GROUPS = useMemo(() => [
+    { key: 'chest', label: t('chest') },
+    { key: 'triceps', label: t('triceps') },
+    { key: 'biceps', label: t('biceps') },
+    { key: 'back', label: t('backMuscle') },
+    { key: 'legs', label: t('legs') },
+    { key: 'shoulders', label: t('shoulders') },
+    { key: 'abs', label: t('abs') },
+    { key: 'stretch', label: t('pullups') },
+    { key: 'aerobic', label: t('aerobic') },
+    { key: 'fullbody', label: t('fullBody') },
+  ], [t]);
 
   // Check auth and fetch schedules
   useEffect(() => {
     const checkAuthAndFetch = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        navigate("/auth");
+        navigate('/auth');
         return;
       }
       await fetchSchedules();
@@ -72,19 +64,17 @@ const WeeklyWorkoutAssignment = () => {
   }, [navigate]);
 
   const fetchSchedules = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
     const { data, error } = await supabase
-      .from("weekly_schedules")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: true });
+      .from('weekly_schedules')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: true });
 
     if (error) {
-      console.error("Error fetching schedules:", error);
+      console.error('Error fetching schedules:', error);
       return;
     }
 
@@ -96,26 +86,26 @@ const WeeklyWorkoutAssignment = () => {
   };
 
   const handleMuscleToggle = (muscleKey: string) => {
-    setSelectedMuscles((prev) =>
-      prev.includes(muscleKey) ? prev.filter((m) => m !== muscleKey) : [...prev, muscleKey],
+    setSelectedMuscles(prev =>
+      prev.includes(muscleKey)
+        ? prev.filter(m => m !== muscleKey)
+        : [...prev, muscleKey]
     );
   };
 
   const handleAddToSchedule = async () => {
     if (!selectedDay || selectedMuscles.length === 0) {
       toast({
-        title: t("selectDayAndMuscles"),
+        title: t('selectDayAndMuscles'),
         variant: "destructive",
       });
       return;
     }
 
     setSaving(true);
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      navigate("/auth");
+      navigate('/auth');
       return;
     }
 
@@ -123,42 +113,44 @@ const WeeklyWorkoutAssignment = () => {
       if (editingId) {
         // Update existing
         const { error } = await supabase
-          .from("weekly_schedules")
+          .from('weekly_schedules')
           .update({
             day_of_week: selectedDay,
             workout_types: selectedMuscles,
           })
-          .eq("id", editingId);
+          .eq('id', editingId);
 
         if (error) throw error;
 
-        toast({ title: t("workoutUpdated") });
+        toast({ title: t('workoutUpdated') });
         setEditingId(null);
       } else {
         // Check if day already has a schedule
-        const existingSchedule = schedules.find((s) => s.day_of_week === selectedDay);
-
+        const existingSchedule = schedules.find(s => s.day_of_week === selectedDay);
+        
         if (existingSchedule) {
           // Update existing schedule for this day
           const { error } = await supabase
-            .from("weekly_schedules")
+            .from('weekly_schedules')
             .update({
               workout_types: selectedMuscles,
             })
-            .eq("id", existingSchedule.id);
+            .eq('id', existingSchedule.id);
 
           if (error) throw error;
-          toast({ title: t("workoutUpdated") });
+          toast({ title: t('workoutUpdated') });
         } else {
           // Insert new
-          const { error } = await supabase.from("weekly_schedules").insert({
-            user_id: user.id,
-            day_of_week: selectedDay,
-            workout_types: selectedMuscles,
-          });
+          const { error } = await supabase
+            .from('weekly_schedules')
+            .insert({
+              user_id: user.id,
+              day_of_week: selectedDay,
+              workout_types: selectedMuscles,
+            });
 
           if (error) throw error;
-          toast({ title: t("workoutAdded") });
+          toast({ title: t('workoutAdded') });
         }
       }
 
@@ -166,7 +158,7 @@ const WeeklyWorkoutAssignment = () => {
       setSelectedDay(null);
       setSelectedMuscles([]);
     } catch (error) {
-      console.error("Error saving schedule:", error);
+      console.error('Error saving schedule:', error);
       toast({
         title: "Error saving",
         variant: "destructive",
@@ -183,7 +175,10 @@ const WeeklyWorkoutAssignment = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.from("weekly_schedules").delete().eq("id", id);
+    const { error } = await supabase
+      .from('weekly_schedules')
+      .delete()
+      .eq('id', id);
 
     if (error) {
       toast({
@@ -193,17 +188,18 @@ const WeeklyWorkoutAssignment = () => {
       return;
     }
 
-    toast({ title: t("workoutDeleted") });
+    toast({ title: t('workoutDeleted') });
     await fetchSchedules();
   };
 
   const handleResetAll = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { error } = await supabase.from("weekly_schedules").delete().eq("user_id", user.id);
+    const { error } = await supabase
+      .from('weekly_schedules')
+      .delete()
+      .eq('user_id', user.id);
 
     if (error) {
       toast({
@@ -213,7 +209,7 @@ const WeeklyWorkoutAssignment = () => {
       return;
     }
 
-    toast({ title: t("allWorkoutsDeleted") });
+    toast({ title: t('allWorkoutsDeleted') });
     setSchedules([]);
     setSelectedDay(null);
     setSelectedMuscles([]);
@@ -221,11 +217,13 @@ const WeeklyWorkoutAssignment = () => {
   };
 
   const getDayLabel = (dayKey: string) => {
-    return DAYS_OF_WEEK.find((d) => d.key === dayKey)?.label || dayKey;
+    return DAYS_OF_WEEK.find(d => d.key === dayKey)?.label || dayKey;
   };
 
   const getMuscleLabels = (muscleKeys: string[]) => {
-    return muscleKeys.map((key) => MUSCLE_GROUPS.find((m) => m.key === key)?.label || key).join(", ");
+    return muscleKeys
+      .map(key => MUSCLE_GROUPS.find(m => m.key === key)?.label || key)
+      .join(', ');
   };
 
   const BackIcon = isRtl ? ArrowLeft : ArrowRight;
@@ -239,7 +237,7 @@ const WeeklyWorkoutAssignment = () => {
   }
 
   return (
-    <div className="min-h-screen gradient-barca p-4 overflow-auto" dir={isRtl ? "rtl" : "ltr"}>
+    <div className="min-h-screen gradient-barca p-4 overflow-auto" dir={isRtl ? 'rtl' : 'ltr'}>
       <div className="max-w-2xl mx-auto py-6">
         {/* Header with Back Button */}
         <div className="flex items-center justify-between mb-8 animate-slide-up">
@@ -248,11 +246,11 @@ const WeeklyWorkoutAssignment = () => {
             <LanguageSelector />
             <Button
               variant="ghost"
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate('/dashboard')}
               className="text-white/70 hover:text-white hover:bg-white/10"
             >
               <BackIcon className="h-5 w-5 mx-2" />
-              {t("back")}
+              {t('back')}
             </Button>
           </div>
         </div>
@@ -261,7 +259,7 @@ const WeeklyWorkoutAssignment = () => {
         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-2xl animate-slide-up-delay-1">
           {/* Day Selector */}
           <div className="mb-6">
-            <h2 className="text-white text-lg font-semibold mb-4">{t("Build your training plan")}</h2>
+            <h2 className="text-white text-lg font-semibold mb-4">{t('selectDayOfWeek')}</h2>
             <div className="flex flex-wrap gap-2 justify-center">
               {DAYS_OF_WEEK.map((day) => (
                 <button
@@ -269,10 +267,9 @@ const WeeklyWorkoutAssignment = () => {
                   onClick={() => handleDaySelect(day.key)}
                   className={`
                     w-12 h-12 rounded-xl font-bold text-lg transition-all duration-200
-                    ${
-                      selectedDay === day.key
-                        ? "bg-[hsl(45,100%,50%)] text-[hsl(213,100%,20%)] scale-110 shadow-lg"
-                        : "bg-white/20 text-white hover:bg-white/30"
+                    ${selectedDay === day.key
+                      ? 'bg-[hsl(45,100%,50%)] text-[hsl(213,100%,20%)] scale-110 shadow-lg'
+                      : 'bg-white/20 text-white hover:bg-white/30'
                     }
                   `}
                 >
@@ -284,7 +281,7 @@ const WeeklyWorkoutAssignment = () => {
 
           {/* Muscle Selector */}
           <div className="mb-6">
-            <h2 className="text-white text-lg font-semibold mb-4">{t("selectMuscleGroups")}</h2>
+            <h2 className="text-white text-lg font-semibold mb-4">{t('selectMuscleGroups')}</h2>
             <div className="flex flex-wrap gap-3 justify-center">
               {MUSCLE_GROUPS.map((muscle) => (
                 <button
@@ -292,10 +289,9 @@ const WeeklyWorkoutAssignment = () => {
                   onClick={() => handleMuscleToggle(muscle.key)}
                   className={`
                     px-4 py-2 rounded-xl font-medium transition-all duration-200
-                    ${
-                      selectedMuscles.includes(muscle.key)
-                        ? "bg-[hsl(213,100%,50%)] text-white shadow-lg scale-105"
-                        : "bg-white/20 text-white hover:bg-white/30"
+                    ${selectedMuscles.includes(muscle.key)
+                      ? 'bg-[hsl(213,100%,50%)] text-white shadow-lg scale-105'
+                      : 'bg-white/20 text-white hover:bg-white/30'
                     }
                   `}
                 >
@@ -317,7 +313,7 @@ const WeeklyWorkoutAssignment = () => {
               ) : (
                 <>
                   <Plus className="h-5 w-5 mx-2" />
-                  {editingId ? t("updateWorkout") : t("addToMyWorkouts")}
+                  {editingId ? t('updateWorkout') : t('addToMyWorkouts')}
                 </>
               )}
             </Button>
@@ -332,7 +328,7 @@ const WeeklyWorkoutAssignment = () => {
                 className="text-white hover:bg-white/20"
               >
                 <X className="h-5 w-5 mx-1" />
-                {t("cancelEdit")}
+                {t('cancelEdit')}
               </Button>
             )}
           </div>
@@ -341,7 +337,7 @@ const WeeklyWorkoutAssignment = () => {
         {/* Schedule Display */}
         <div className="mt-8 animate-slide-up-delay-2">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-white text-xl font-bold">{t("myPlan")}</h2>
+            <h2 className="text-white text-xl font-bold">{t('myPlan')}</h2>
             {schedules.length > 0 && (
               <Button
                 onClick={handleResetAll}
@@ -350,14 +346,14 @@ const WeeklyWorkoutAssignment = () => {
                 size="sm"
               >
                 <RotateCcw className="h-4 w-4 mx-1" />
-                {t("resetAll")}
+                {t('resetAll')}
               </Button>
             )}
           </div>
 
           {schedules.length === 0 ? (
             <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 text-center border border-white/10">
-              <p className="text-white/60">{t("noWorkoutsYet")}</p>
+              <p className="text-white/60">{t('noWorkoutsYet')}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -367,9 +363,7 @@ const WeeklyWorkoutAssignment = () => {
                   className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 flex items-center justify-between"
                 >
                   <div>
-                    <h3 className="text-white font-bold text-lg">
-                      {t("day")} {getDayLabel(schedule.day_of_week)}
-                    </h3>
+                    <h3 className="text-white font-bold text-lg">{t('day')} {getDayLabel(schedule.day_of_week)}</h3>
                     <p className="text-white/80 mt-1">• {getMuscleLabels(schedule.workout_types)}</p>
                   </div>
                   <div className="flex gap-2">
@@ -396,17 +390,17 @@ const WeeklyWorkoutAssignment = () => {
         {schedules.length > 0 && (
           <div className="mt-8 text-center animate-slide-up-delay-2">
             <Button
-              onClick={() => navigate("/workout-log")}
+              onClick={() => navigate('/workout-log')}
               className="bg-[hsl(213,100%,30%)] hover:bg-[hsl(213,100%,40%)] text-white px-12 py-6 text-lg font-bold rounded-xl shadow-lg"
             >
-              {t("continueToNextStep")}
+              {t('continueToNextStep')}
             </Button>
           </div>
         )}
 
         {/* Step Indicator */}
         <div className="text-center mt-8">
-          <p className="text-white/60 text-sm">{t("stepOf").replace("{0}", "2").replace("{1}", "3")}</p>
+          <p className="text-white/60 text-sm">{t('stepOf').replace('{0}', '2').replace('{1}', '3')}</p>
         </div>
       </div>
     </div>
