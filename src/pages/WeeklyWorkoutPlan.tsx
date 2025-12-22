@@ -5,6 +5,8 @@ import FitBarcaLogo from "@/components/FitBarcaLogo";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Edit2, Trash2, Plus, RotateCcw, ArrowRight } from "lucide-react";
+import MuscleRecommendation from "@/components/workout/MuscleRecommendation";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const DAYS_OF_WEEK = [
   { key: "sunday", label: "ראשון", short: "א'" },
@@ -36,6 +38,7 @@ interface Schedule {
 
 const WeeklyWorkoutPlan = () => {
   const navigate = useNavigate();
+  const { t, isRtl } = useLanguage();
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedMuscles, setSelectedMuscles] = useState<string[]>([]);
@@ -217,7 +220,7 @@ const WeeklyWorkoutPlan = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#004D98] via-[#003366] to-[#A50044] p-4 pb-8" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-[#004D98] via-[#003366] to-[#A50044] p-4 pb-8" dir={isRtl ? 'rtl' : 'ltr'}>
       {/* Header with Back Button */}
       <div className="flex items-center justify-between pt-6 pb-4 max-w-2xl mx-auto">
         <FitBarcaLogo size="lg" />
@@ -226,8 +229,8 @@ const WeeklyWorkoutPlan = () => {
           onClick={() => navigate('/dashboard')}
           className="text-white/70 hover:text-white hover:bg-white/10"
         >
-          <ArrowRight className="h-5 w-5 ml-2" />
-          חזרה
+          <ArrowRight className={`h-5 w-5 ${isRtl ? 'ml-2' : 'mr-2 rotate-180'}`} />
+          {t('back')}
         </Button>
       </div>
 
@@ -236,7 +239,7 @@ const WeeklyWorkoutPlan = () => {
         <div className="bg-white/15 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/20 mb-6">
           {/* Day Selector */}
           <div className="mb-6">
-            <h3 className="text-white text-lg font-semibold mb-3">בחר יום בשבוע:</h3>
+            <h3 className="text-white text-lg font-semibold mb-3">{t('selectDayOfWeek')}</h3>
             <div className="flex flex-wrap gap-2 justify-center">
               {DAYS_OF_WEEK.map((day) => (
                 <button
@@ -255,8 +258,8 @@ const WeeklyWorkoutPlan = () => {
           </div>
 
           {/* Muscle Selector */}
-          <div className="mb-6">
-            <h3 className="text-white text-lg font-semibold mb-3">בחר שרירים לאימון:</h3>
+          <div className="mb-4">
+            <h3 className="text-white text-lg font-semibold mb-3">{t('selectMuscleGroups')}</h3>
             <div className="flex flex-wrap gap-2 justify-center">
               {MUSCLE_GROUPS.map((muscle) => (
                 <button
@@ -274,14 +277,19 @@ const WeeklyWorkoutPlan = () => {
             </div>
           </div>
 
+          {/* Smart Muscle Recommendation */}
+          <div className="mb-6">
+            <MuscleRecommendation selectedMuscles={selectedMuscles} />
+          </div>
+
           {/* Add Button */}
           <Button
             onClick={handleAddToSchedule}
             disabled={saving || !selectedDay || selectedMuscles.length === 0}
             className="w-full bg-[#A50044] hover:bg-[#8A0039] text-white font-bold py-3 rounded-xl shadow-lg transition-all duration-200 disabled:opacity-50"
           >
-            <Plus className="h-5 w-5 ml-2" />
-            {editingId ? 'עדכן אימון' : 'הוסף ללו"ז'}
+            <Plus className="h-5 w-5 mx-2" />
+            {editingId ? t('updateWorkout') : t('addToMyWorkouts')}
           </Button>
 
           {editingId && (
@@ -294,7 +302,7 @@ const WeeklyWorkoutPlan = () => {
               variant="ghost"
               className="w-full mt-2 text-white hover:bg-white/10"
             >
-              בטל עריכה
+              {t('cancelEdit')}
             </Button>
           )}
         </div>
@@ -302,7 +310,7 @@ const WeeklyWorkoutPlan = () => {
         {/* Schedule Display Section */}
         <div className="bg-white/15 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/20">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-white text-xl font-bold">התוכנית שלי:</h3>
+            <h3 className="text-white text-xl font-bold">{t('myPlan')}</h3>
             {schedules.length > 0 && (
               <Button
                 onClick={handleResetAll}
@@ -310,16 +318,15 @@ const WeeklyWorkoutPlan = () => {
                 size="sm"
                 className="text-white/80 hover:text-white hover:bg-white/10"
               >
-                <RotateCcw className="h-4 w-4 ml-1" />
-                איפוס הכל
+                <RotateCcw className="h-4 w-4 mx-1" />
+                {t('resetAll')}
               </Button>
             )}
           </div>
 
           {schedules.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-white/70">עדיין לא הוספת אימונים לתוכנית</p>
-              <p className="text-white/50 text-sm mt-1">בחר יום ושרירים למעלה כדי להתחיל</p>
+              <p className="text-white/70">{t('noWorkoutsYet')}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -330,7 +337,7 @@ const WeeklyWorkoutPlan = () => {
                 >
                   <div>
                     <h4 className="font-bold text-[#004D98] text-lg">
-                      יום {getDayLabel(schedule.day_of_week)}
+                      {t('day')} {getDayLabel(schedule.day_of_week)}
                     </h4>
                     <p className="text-gray-600 mt-1">
                       {getMuscleLabels(schedule.workout_types)}
