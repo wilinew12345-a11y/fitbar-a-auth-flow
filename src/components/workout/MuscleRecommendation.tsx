@@ -74,6 +74,9 @@ const defaultTip: Record<Language, string> = {
 const MuscleRecommendation = ({ selectedMuscles }: MuscleRecommendationProps) => {
   const { language, isRtl } = useLanguage();
 
+  // Debug logging to verify component renders with correct data
+  console.log('Muscle Recommendations Rendered:', { selectedMuscles, language });
+
   // Get the first selected muscle's recommendation
   const getRecommendation = (): string => {
     if (selectedMuscles.length === 0) {
@@ -93,13 +96,13 @@ const MuscleRecommendation = ({ selectedMuscles }: MuscleRecommendationProps) =>
 
   return (
     <div 
-      className="flex items-start gap-3 p-3 rounded-xl bg-amber-500/20 border border-amber-500/30 backdrop-blur-sm"
+      className="flex items-start gap-3 p-4 rounded-xl bg-amber-500/30 border-2 border-amber-400/50 backdrop-blur-sm shadow-lg"
       dir={isRtl ? 'rtl' : 'ltr'}
     >
       <div className="flex-shrink-0 mt-0.5">
-        <Lightbulb className="h-5 w-5 text-amber-400" />
+        <Lightbulb className="h-6 w-6 text-amber-300" />
       </div>
-      <p className="text-sm text-amber-100 leading-relaxed">
+      <p className="text-base font-medium text-amber-100 leading-relaxed">
         {getRecommendation()}
       </p>
     </div>
