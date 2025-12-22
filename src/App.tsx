@@ -11,7 +11,6 @@ import Dashboard from "./pages/Dashboard";
 import WorkoutLog from "./pages/WorkoutLog";
 import WeeklyWorkoutAssignment from "./pages/WeeklyWorkoutAssignment";
 import WorkoutPlanning from "./pages/WorkoutPlanning";
-import WeeklyWorkoutPlan from "./pages/WeeklyWorkoutPlan";
 import ProgressGraph from "./pages/ProgressGraph";
 import ChallengeTracker from "./pages/ChallengeTracker";
 import SharedChallengeView from "./pages/SharedChallengeView";
@@ -35,7 +34,6 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/workout-log" element={<WorkoutLog />} />
             <Route path="/weekly-setup" element={<WeeklyWorkoutAssignment />} />
-            <Route path="/weekly-plan" element={<WeeklyWorkoutPlan />} />
             <Route path="/workout-planning" element={<WorkoutPlanning />} />
             <Route path="/progress" element={<ProgressGraph />} />
             <Route path="/challenges" element={<ChallengeTracker />} />

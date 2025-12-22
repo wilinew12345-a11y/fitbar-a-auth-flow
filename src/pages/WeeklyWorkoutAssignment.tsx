@@ -7,6 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import FitBarcaLogo from "@/components/FitBarcaLogo";
 import LanguageSelector from "@/components/LanguageSelector";
 import { Plus, Trash2, Pencil, X, Loader2, RotateCcw, ArrowRight, ArrowLeft } from "lucide-react";
+import MuscleRecommendation from "@/components/workout/MuscleRecommendation";
 
 interface Schedule {
   id: string;
@@ -299,6 +300,11 @@ const WeeklyWorkoutAssignment = () => {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Smart Muscle Recommendation */}
+          <div className="mb-6">
+            <MuscleRecommendation selectedMuscles={selectedMuscles} />
           </div>
 
           {/* Add Button */}
