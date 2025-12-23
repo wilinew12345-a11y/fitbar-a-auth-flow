@@ -16,14 +16,16 @@ import {
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  TooltipProps,
 } from 'recharts';
+import { ValueType, NameType } from 'recharts/types/component/DefaultTooltipContent';
 
 interface WorkoutHistory {
   id: string;
@@ -66,22 +68,31 @@ const containsCardioKeyword = (text: string): boolean => {
   return CARDIO_KEYWORDS.some(keyword => lowerText.includes(keyword.toLowerCase()));
 };
 
-// Custom dot component with traffic light colors
-const CustomDot = (props: any) => {
-  const { cx, cy, payload } = props;
-  if (!payload) return null;
+// Custom Tooltip component with premium styling
+const CustomChartTooltip = ({ 
+  active, 
+  payload, 
+  label,
+  formatter 
+}: TooltipProps<ValueType, NameType> & { formatter: (value: number) => [string, string] }) => {
+  if (!active || !payload || payload.length === 0) return null;
   
-  const color = payload.color || '#fbbf24';
+  const value = payload[0].value as number;
+  const [formattedValue, metricLabel] = formatter(value);
+  const color = payload[0].payload.color;
   
   return (
-    <circle
-      cx={cx}
-      cy={cy}
-      r={6}
-      fill={color}
-      stroke="#fff"
-      strokeWidth={2}
-    />
+    <div className="bg-slate-900/90 backdrop-blur-md border border-slate-700 rounded-lg p-3 shadow-xl">
+      <p className="text-slate-400 text-xs mb-1">{label}</p>
+      <div className="flex items-center gap-2">
+        <div 
+          className="w-2.5 h-2.5 rounded-full" 
+          style={{ backgroundColor: color }}
+        />
+        <span className="text-white font-semibold text-lg">{formattedValue}</span>
+        <span className="text-slate-400 text-sm">{metricLabel}</span>
+      </div>
+    </div>
   );
 };
 
@@ -287,24 +298,24 @@ const ProgressGraph = () => {
   }, [selectedMetric, t]);
 
   // Get the appropriate tooltip formatter
-  const tooltipFormatter = useMemo(() => {
+  const tooltipFormatter = useMemo((): ((value: number) => [string, string]) => {
     switch (selectedMetric) {
       // Cardio
       case 'speed':
-        return (value: number) => [`${value} km/h`, t('speed')];
+        return (value: number): [string, string] => [`${value} km/h`, t('speed')];
       case 'incline':
-        return (value: number) => [`${value}%`, t('incline')];
+        return (value: number): [string, string] => [`${value}%`, t('incline')];
       case 'duration':
-        return (value: number) => [`${value} min`, t('time')];
+        return (value: number): [string, string] => [`${value} min`, t('time')];
       // Strength
       case 'weight':
-        return (value: number) => [`${value} kg`, t('weight')];
+        return (value: number): [string, string] => [`${value} kg`, t('weight')];
       case 'reps':
-        return (value: number) => [`${value}`, t('reps')];
+        return (value: number): [string, string] => [`${value}`, t('reps')];
       case 'sets':
-        return (value: number) => [`${value}`, t('sets')];
+        return (value: number): [string, string] => [`${value}`, t('sets')];
       default:
-        return (value: number) => [`${value}`, ''];
+        return (value: number): [string, string] => [`${value}`, ''];
     }
   }, [selectedMetric, t]);
 
@@ -462,42 +473,55 @@ const ProgressGraph = () => {
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={350}>
-              <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <AreaChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
+                <defs>
+                  <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#818cf8" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#818cf8" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid 
+                  strokeDasharray="3 3" 
+                  stroke="rgba(255,255,255,0.08)" 
+                  vertical={false}
+                />
                 <XAxis 
                   dataKey="date" 
-                  stroke="rgba(255,255,255,0.6)"
-                  tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 12 }}
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11 }}
                 />
                 <YAxis 
-                  stroke="rgba(255,255,255,0.6)"
-                  tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 12 }}
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11 }}
                   label={{ 
                     value: yAxisLabel, 
                     angle: -90, 
                     position: 'insideLeft',
-                    fill: 'rgba(255,255,255,0.6)',
-                    style: { textAnchor: 'middle' }
+                    fill: 'rgba(255,255,255,0.5)',
+                    style: { textAnchor: 'middle', fontSize: 11 }
                   }}
                 />
                 <Tooltip 
-                  contentStyle={{
-                    backgroundColor: 'rgba(26, 42, 74, 0.95)',
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    borderRadius: '8px',
-                    color: 'white',
-                  }}
-                  formatter={tooltipFormatter}
+                  content={<CustomChartTooltip formatter={tooltipFormatter} />}
+                  cursor={{ stroke: 'rgba(255,255,255,0.2)', strokeWidth: 1 }}
                 />
-                <Line 
+                <Area 
                   type="monotone" 
                   dataKey="value" 
-                  stroke="#60a5fa"
-                  strokeWidth={2}
-                  dot={<CustomDot />}
-                  activeDot={{ r: 8, strokeWidth: 2 }}
+                  stroke="#818cf8"
+                  strokeWidth={3}
+                  fill="url(#colorGradient)"
+                  dot={false}
+                  activeDot={{ 
+                    r: 6, 
+                    strokeWidth: 0, 
+                    fill: '#a78bfa',
+                    filter: 'drop-shadow(0 0 6px rgba(167, 139, 250, 0.6))'
+                  }}
                 />
-              </LineChart>
+              </AreaChart>
             </ResponsiveContainer>
           )}
         </div>
