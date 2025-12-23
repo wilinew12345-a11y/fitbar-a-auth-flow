@@ -31,17 +31,17 @@ const muscleRecommendations: Record<string, Record<Language, string>> = {
     es: "Consejo: Los hombros combinan muy bien con abdominales o tríceps.",
     ar: "نصيحة: الأكتاف تتناسب جيدًا مع البطن أو العضلة ثلاثية الرؤوس."
   },
-  front_arms: {
-    he: "טיפ: יד קדמית עובדת מצוין אחרי אימון גב.",
-    en: "Tip: Biceps work great after a Back workout.",
-    es: "Consejo: Los bíceps funcionan muy bien después de entrenar espalda.",
-    ar: "نصيحة: العضلة ثنائية الرؤوس تعمل بشكل ممتاز بعد تمرين الظهر."
+  biceps: {
+    he: "טיפ: יד קדמית היא שריר משיכה. משתלב מעולה בסוף אימון גב, או כאימון ידיים מלא עם יד אחורית.",
+    en: "Tip: Biceps are pull muscles. Best paired with Back workouts or with Triceps for an arm day.",
+    es: "Consejo: Los bíceps son músculos de tracción. Combínalos con Espalda o Tríceps.",
+    ar: "نصيحة: العضلة ذات الرأسين هي عضلة سحب. يفضل دمجها مع تمارين الظهر أو مع العضلة ثلاثية الرؤوس."
   },
-  back_arms: {
-    he: "טיפ: יד אחורית נהדרת בשילוב עם חזה או כתפיים.",
-    en: "Tip: Triceps are great with Chest or Shoulders.",
-    es: "Consejo: Los tríceps son geniales con pecho u hombros.",
-    ar: "نصيحة: العضلة ثلاثية الرؤوس رائعة مع الصدر أو الأكتاف."
+  triceps: {
+    he: "טיפ: יד אחורית היא שריר דחיפה. עובדת חזק בתרגילי חזה וכתפיים, ולכן מומלץ לשלב אותה איתם.",
+    en: "Tip: Triceps are push muscles. They work hard during Chest and Shoulder presses, so pair them together.",
+    es: "Consejo: Los tríceps son músculos de empuje. Combínalos con Pecho u Hombros.",
+    ar: "نصيحة: العضلة ثلاثية الرؤوس هي عضلة دفع. تعمل بقوة أثناء تمارين الصدر والأكتاف."
   },
   abs: {
     he: "טיפ: בטן ניתן לשלב עם כל אימון - מומלץ בסוף.",
