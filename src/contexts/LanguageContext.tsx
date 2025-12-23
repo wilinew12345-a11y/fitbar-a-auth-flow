@@ -162,7 +162,10 @@ export const translations = {
     aiCoachPlaceholder: "הקלד הודעה...",
     aiCoachSend: "שלח",
     aiCoachError: "מצטער, משהו השתבש. נסה שוב.",
-    cardAiCoach: "מאמן אישי AI"
+    cardAiCoach: "מאמן אישי AI",
+    dailyLimitReached: "הגעת למגבלה היומית",
+    dailyLimitMessage: "הגעת למגבלה של 20 הודעות ביום. נסה שוב מחר!",
+    dailyLimit: "מגבלה יומית"
   },
   en: {
     dir: "ltr",
@@ -313,7 +316,10 @@ export const translations = {
     aiCoachPlaceholder: "Type a message...",
     aiCoachSend: "Send",
     aiCoachError: "Sorry, something went wrong. Please try again.",
-    cardAiCoach: "AI Personal Coach"
+    cardAiCoach: "AI Personal Coach",
+    dailyLimitReached: "Daily Limit Reached",
+    dailyLimitMessage: "You have reached your daily limit of 20 messages. Try again tomorrow!",
+    dailyLimit: "Daily Limit"
   },
   es: {
     dir: "ltr",
@@ -464,7 +470,10 @@ export const translations = {
     aiCoachPlaceholder: "Escribe un mensaje...",
     aiCoachSend: "Enviar",
     aiCoachError: "Lo siento, algo salió mal. Por favor, inténtalo de nuevo.",
-    cardAiCoach: "Entrenador IA"
+    cardAiCoach: "Entrenador IA",
+    dailyLimitReached: "Límite Diario Alcanzado",
+    dailyLimitMessage: "Has alcanzado tu límite de 20 mensajes diarios. ¡Inténtalo mañana!",
+    dailyLimit: "Límite Diario"
   },
   ar: {
     dir: "rtl",
@@ -615,7 +624,10 @@ export const translations = {
     aiCoachPlaceholder: "اكتب رسالة...",
     aiCoachSend: "إرسال",
     aiCoachError: "عذراً، حدث خطأ ما. يرجى المحاولة مرة أخرى.",
-    cardAiCoach: "مدرب الذكاء الاصطناعي"
+    cardAiCoach: "مدرب الذكاء الاصطناعي",
+    dailyLimitReached: "تم الوصول للحد اليومي",
+    dailyLimitMessage: "لقد وصلت إلى حد 20 رسالة يوميًا. حاول مرة أخرى غدًا!",
+    dailyLimit: "الحد اليومي"
   }
 } as const;
 

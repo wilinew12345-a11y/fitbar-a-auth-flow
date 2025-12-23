@@ -5,10 +5,15 @@ import { useAuth } from '@/hooks/useAuth';
 import { sendMessageToAI, ChatMessage } from '@/services/geminiService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, ArrowRight, Send, Bot, User, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Send, Bot, User, Loader2, MessageSquare } from 'lucide-react';
 import FitBarcaLogo from '@/components/FitBarcaLogo';
 import LanguageSelector from '@/components/LanguageSelector';
 import { toast } from '@/hooks/use-toast';
+
+// Daily limit constants
+const MAX_DAILY_MESSAGES = 20;
+const STORAGE_KEY_COUNT = 'gym_ai_chat_count';
+const STORAGE_KEY_DATE = 'gym_ai_chat_date';
 
 interface DisplayMessage {
   id: string;
@@ -25,9 +30,32 @@ const AICoach = () => {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+  const [dailyMessageCount, setDailyMessageCount] = useState(0);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Get current date string in YYYY-MM-DD format
+  const getCurrentDateString = () => {
+    return new Date().toISOString().split('T')[0];
+  };
+
+  // Initialize daily limit from localStorage
+  useEffect(() => {
+    const currentDate = getCurrentDateString();
+    const savedDate = localStorage.getItem(STORAGE_KEY_DATE);
+    const savedCount = localStorage.getItem(STORAGE_KEY_COUNT);
+
+    if (savedDate === currentDate && savedCount) {
+      // Same day - restore previous count
+      setDailyMessageCount(parseInt(savedCount, 10));
+    } else {
+      // New day - reset counter
+      setDailyMessageCount(0);
+      localStorage.setItem(STORAGE_KEY_DATE, currentDate);
+      localStorage.setItem(STORAGE_KEY_COUNT, '0');
+    }
+  }, []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -40,9 +68,20 @@ const AICoach = () => {
   }, [messages]);
 
   const BackIcon = isRtl ? ArrowRight : ArrowLeft;
+  const isLimitReached = dailyMessageCount >= MAX_DAILY_MESSAGES;
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
+
+    // Check daily limit
+    if (isLimitReached) {
+      toast({
+        title: t('dailyLimitReached') || "Daily Limit Reached",
+        description: t('dailyLimitMessage') || `You have reached your daily limit of ${MAX_DAILY_MESSAGES} messages. Try again tomorrow!`,
+        variant: "destructive",
+      });
+      return;
+    }
 
     const userMessage = inputValue.trim();
     setInputValue('');
@@ -55,6 +94,12 @@ const AICoach = () => {
     };
     setMessages(prev => [...prev, userDisplayMessage]);
     setIsLoading(true);
+
+    // Increment and save daily count immediately
+    const newCount = dailyMessageCount + 1;
+    setDailyMessageCount(newCount);
+    localStorage.setItem(STORAGE_KEY_COUNT, newCount.toString());
+    localStorage.setItem(STORAGE_KEY_DATE, getCurrentDateString());
 
     try {
       const response = await sendMessageToAI(userMessage, chatHistory, language);
@@ -183,24 +228,48 @@ const AICoach = () => {
 
       {/* Input Area */}
       <div className="p-4 border-t border-white/10 backdrop-blur-sm bg-black/20">
-        <div className="max-w-4xl mx-auto flex gap-3">
-          <Input
-            ref={inputRef}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder={t('aiCoachPlaceholder')}
-            disabled={isLoading}
-            className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-white/40"
-          />
-          <Button
-            onClick={handleSendMessage}
-            disabled={!inputValue.trim() || isLoading}
-            className="bg-[#a50044] hover:bg-[#cc0055] text-white px-6"
-          >
-            <Send className="h-4 w-4" />
-            <span className="hidden sm:inline ml-2">{t('aiCoachSend')}</span>
-          </Button>
+        <div className="max-w-4xl mx-auto space-y-2">
+          {/* Daily Limit Counter */}
+          <div className="flex items-center justify-between text-sm">
+            <div className={`flex items-center gap-2 ${isLimitReached ? 'text-red-400' : 'text-white/60'}`}>
+              <MessageSquare className="h-4 w-4" />
+              <span>
+                {t('dailyLimit')}: {dailyMessageCount}/{MAX_DAILY_MESSAGES}
+              </span>
+            </div>
+            {isLimitReached && (
+              <span className="text-red-400 text-xs">
+                {t('dailyLimitReached')}
+              </span>
+            )}
+          </div>
+          
+          {/* Input Row */}
+          <div className="flex gap-3">
+            <Input
+              ref={inputRef}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder={isLimitReached ? t('dailyLimitReached') : t('aiCoachPlaceholder')}
+              disabled={isLoading || isLimitReached}
+              className={`flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-white/40 ${
+                isLimitReached ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            />
+            <Button
+              onClick={handleSendMessage}
+              disabled={!inputValue.trim() || isLoading || isLimitReached}
+              className={`px-6 ${
+                isLimitReached 
+                  ? 'bg-gray-500 cursor-not-allowed opacity-50' 
+                  : 'bg-[#a50044] hover:bg-[#cc0055]'
+              } text-white`}
+            >
+              <Send className="h-4 w-4" />
+              <span className="hidden sm:inline ml-2">{t('aiCoachSend')}</span>
+            </Button>
+          </div>
         </div>
       </div>
     </div>
