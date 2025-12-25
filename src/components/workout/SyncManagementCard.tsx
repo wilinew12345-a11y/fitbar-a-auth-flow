@@ -171,10 +171,10 @@ const SyncManagementCard = ({
   const [deviceType, setDeviceType] = useState<DeviceType>('desktop');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load persisted states from DB on mount
+  // Load persisted states from DB on mount or when user changes
   useEffect(() => {
     const loadPersistedState = async () => {
-      if (!user) {
+      if (!user?.id) {
         setIsLoading(false);
         return;
       }
@@ -201,7 +201,7 @@ const SyncManagementCard = ({
 
     loadPersistedState();
     setDeviceType(detectDeviceType());
-  }, [user]);
+  }, [user?.id]);
 
   const text = translations[language as keyof typeof translations] || translations.he;
   const isLocked = schedules.length === 0;
@@ -252,11 +252,11 @@ const SyncManagementCard = ({
       if (success) {
         setCalendarSynced(true);
         toast({
-          title: text.calendarSynced,
-          description: deviceType === 'ios' 
-            ? 'בחר "הירשם" בחלונית שתיפתח'
-            : 'אשר את ההוספה לחשבון Google',
-        });
+        title: text.calendarSynced,
+        description: deviceType === 'ios' 
+          ? 'בחר "הירשם" בחלונית שתיפתח. אם יש כפילויות, כבה והפעל מחדש.'
+          : 'אשר את ההוספה לחשבון Google. אם יש כפילויות, כבה והפעל מחדש.',
+      });
       }
     } catch (error) {
       console.error('Calendar sync error:', error);

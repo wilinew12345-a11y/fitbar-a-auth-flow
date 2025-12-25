@@ -60,8 +60,13 @@ function formatDateToICS(date: Date): string {
   const day = String(date.getDate()).padStart(2, '0');
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
   
-  return `${year}${month}${day}T${hours}${minutes}00`;
+  return `${year}${month}${day}T${hours}${minutes}${seconds}`;
+}
+
+function getSequenceNumber(updatedAt: string): number {
+  return Math.floor(new Date(updatedAt).getTime() / 1000);
 }
 
 function generateUID(userId: string, dayKey: string): string {
@@ -148,18 +153,28 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch user's weekly schedules
-    const { data: schedules, error } = await supabase
+    // Fetch user's weekly schedules with ordering for deduplication
+    const { data: rawSchedules, error } = await supabase
       .from('weekly_schedules')
       .select('*')
-      .eq('user_id', userId);
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching schedules:', error);
       return new Response('Error fetching schedules', { status: 500, headers: corsHeaders });
     }
 
-    console.log(`Found ${schedules?.length || 0} schedules for user`);
+    // Deduplicate by day_of_week (keep most recent) - safety net
+    const scheduleMap = new Map<string, typeof rawSchedules[0]>();
+    for (const schedule of rawSchedules || []) {
+      if (!scheduleMap.has(schedule.day_of_week)) {
+        scheduleMap.set(schedule.day_of_week, schedule);
+      }
+    }
+    const schedules = Array.from(scheduleMap.values());
+
+    console.log(`Found ${rawSchedules?.length || 0} raw schedules, ${schedules.length} unique days for user`);
 
     // Generate ICS content with UTF-8 BOM for Hebrew support
     const bom = '\uFEFF';
@@ -173,13 +188,15 @@ Deno.serve(async (req) => {
       'X-WR-TIMEZONE:Asia/Jerusalem',
     ];
 
-    for (const schedule of schedules || []) {
+    for (const schedule of schedules) {
       const time = schedule.workout_time || '09:00';
       const startDate = getNextDayDate(schedule.day_of_week, time);
       const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // 1 hour duration
       const rruleDay = DAY_TO_RRULE[schedule.day_of_week] || 'MO';
       const muscleLabels = getMuscleLabels(schedule.workout_types || []);
       const title = `אימון FITBARÇA: ${muscleLabels}`;
+      const sequenceNum = getSequenceNumber(schedule.updated_at);
+      const lastModified = formatDateToICS(new Date(schedule.updated_at));
       
       lines.push(
         'BEGIN:VEVENT',
@@ -188,6 +205,8 @@ Deno.serve(async (req) => {
         `DTSTART:${formatDateToICS(startDate)}`,
         `DTEND:${formatDateToICS(endDate)}`,
         `RRULE:FREQ=WEEKLY;BYDAY=${rruleDay}`,
+        `SEQUENCE:${sequenceNum}`,
+        `LAST-MODIFIED:${lastModified}`,
         `SUMMARY:${escapeICSText(title)}`,
         `DESCRIPTION:${escapeICSText(`אימון שרירים: ${muscleLabels}`)}`,
         'BEGIN:VALARM',
