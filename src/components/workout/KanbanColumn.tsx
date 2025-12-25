@@ -10,6 +10,7 @@ interface KanbanColumnProps {
   onUpdate: (id: string, updates: Partial<Exercise>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onImageUpload: (id: string, file: File) => Promise<void>;
+  onMediaDelete: (id: string, mediaUrl: string) => Promise<void>;
   savingId: string | null;
   uploadingId: string | null;
   isMobile: boolean;
@@ -22,6 +23,7 @@ export const KanbanColumn = ({
   onUpdate,
   onDelete,
   onImageUpload,
+  onMediaDelete,
   savingId,
   uploadingId,
 }: KanbanColumnProps) => {
@@ -50,6 +52,7 @@ export const KanbanColumn = ({
               onUpdate={onUpdate}
               onDelete={onDelete}
               onImageUpload={onImageUpload}
+              onMediaDelete={onMediaDelete}
               isSaving={savingId === exercise.id}
               isUploading={uploadingId === exercise.id}
             />

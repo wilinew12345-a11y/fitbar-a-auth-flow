@@ -208,26 +208,58 @@ const WorkoutLog = () => {
   const handleImageUpload = async (id: string, file: File) => {
     if (!user) return;
     
+    // Check file size (50MB limit)
+    const MAX_SIZE = 50 * 1024 * 1024; // 50MB
+    if (file.size > MAX_SIZE) {
+      toast({ title: 'File too large (max 50MB)', variant: 'destructive' });
+      return;
+    }
+    
     setUploadingId(id);
     const fileExt = file.name.split('.').pop();
-    const fileName = `${user.id}/${id}.${fileExt}`;
+    const fileName = `${user.id}/${Date.now()}_${file.name}`;
 
     const { error: uploadError } = await supabase.storage
-      .from('exercise_images')
+      .from('exercise-attachments')
       .upload(fileName, file, { upsert: true });
 
     if (uploadError) {
-      toast({ title: 'Error uploading image', variant: 'destructive' });
+      toast({ title: 'Error uploading file', variant: 'destructive' });
       setUploadingId(null);
       return;
     }
 
     const { data: urlData } = supabase.storage
-      .from('exercise_images')
+      .from('exercise-attachments')
       .getPublicUrl(fileName);
 
     await handleUpdateExercise(id, { image_url: urlData.publicUrl });
     setUploadingId(null);
+    toast({ title: 'File uploaded successfully' });
+  };
+
+  const handleMediaDelete = async (id: string, mediaUrl: string) => {
+    if (!user) return;
+    
+    try {
+      // Extract file path from URL
+      const bucketUrl = supabase.storage.from('exercise-attachments').getPublicUrl('').data.publicUrl;
+      const filePath = mediaUrl.replace(bucketUrl, '');
+      
+      // Delete from storage
+      if (filePath) {
+        await supabase.storage
+          .from('exercise-attachments')
+          .remove([filePath]);
+      }
+      
+      // Update exercise to remove image_url
+      await handleUpdateExercise(id, { image_url: null });
+      toast({ title: 'Media deleted' });
+    } catch (error) {
+      console.error('Error deleting media:', error);
+      toast({ title: 'Error deleting media', variant: 'destructive' });
+    }
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -452,6 +484,7 @@ const WorkoutLog = () => {
                 onUpdate={handleUpdateExercise}
                 onDelete={handleDeleteExercise}
                 onImageUpload={handleImageUpload}
+                onMediaDelete={handleMediaDelete}
                 savingId={savingId}
                 uploadingId={uploadingId}
                 isMobile={isMobile}
@@ -467,6 +500,7 @@ const WorkoutLog = () => {
                   onUpdate={async () => {}}
                   onDelete={async () => {}}
                   onImageUpload={async () => {}}
+                  onMediaDelete={async () => {}}
                   isSaving={false}
                   isUploading={false}
                 />
