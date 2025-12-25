@@ -6,26 +6,32 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import FitBarcaLogo from "@/components/FitBarcaLogo";
 import LanguageSelector from "@/components/LanguageSelector";
-import { Plus, Trash2, Pencil, X, Loader2, RotateCcw, ArrowRight, ArrowLeft, Home } from "lucide-react";
+import TimePicker from "@/components/workout/TimePicker";
+import PlanSuccessModal from "@/components/workout/PlanSuccessModal";
+import { Plus, Trash2, Pencil, X, Loader2, RotateCcw, ArrowRight, ArrowLeft } from "lucide-react";
 import MuscleRecommendation from "@/components/workout/MuscleRecommendation";
+import { generateAndDownloadCalendar } from "@/utils/calendarUtils";
 
 interface Schedule {
   id: string;
   day_of_week: string;
   workout_types: string[];
+  workout_time: string | null;
 }
 
 const WeeklyWorkoutAssignment = () => {
   const navigate = useNavigate();
-  const { t, isRtl } = useLanguage();
+  const { t, isRtl, language } = useLanguage();
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedMuscles, setSelectedMuscles] = useState<string[]>([]);
+  const [selectedTime, setSelectedTime] = useState<string>("09:00");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isFirstTimeSetup, setIsFirstTimeSetup] = useState(true);
   const [initialScheduleCount, setInitialScheduleCount] = useState(0);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Days of week with translations
   const DAYS_OF_WEEK = useMemo(() => [
@@ -126,6 +132,7 @@ const WeeklyWorkoutAssignment = () => {
           .update({
             day_of_week: selectedDay,
             workout_types: selectedMuscles,
+            workout_time: selectedTime,
           })
           .eq('id', editingId);
 
@@ -143,6 +150,7 @@ const WeeklyWorkoutAssignment = () => {
             .from('weekly_schedules')
             .update({
               workout_types: selectedMuscles,
+              workout_time: selectedTime,
             })
             .eq('id', existingSchedule.id);
 
@@ -156,6 +164,7 @@ const WeeklyWorkoutAssignment = () => {
               user_id: user.id,
               day_of_week: selectedDay,
               workout_types: selectedMuscles,
+              workout_time: selectedTime,
             });
 
           if (error) throw error;
@@ -166,6 +175,7 @@ const WeeklyWorkoutAssignment = () => {
       await fetchSchedules();
       setSelectedDay(null);
       setSelectedMuscles([]);
+      setSelectedTime("09:00");
     } catch (error) {
       console.error('Error saving schedule:', error);
       toast({
@@ -180,6 +190,7 @@ const WeeklyWorkoutAssignment = () => {
   const handleEdit = (schedule: Schedule) => {
     setSelectedDay(schedule.day_of_week);
     setSelectedMuscles(schedule.workout_types);
+    setSelectedTime(schedule.workout_time || "09:00");
     setEditingId(schedule.id);
   };
 
@@ -222,6 +233,7 @@ const WeeklyWorkoutAssignment = () => {
     setSchedules([]);
     setSelectedDay(null);
     setSelectedMuscles([]);
+    setSelectedTime("09:00");
     setEditingId(null);
   };
 
@@ -235,7 +247,48 @@ const WeeklyWorkoutAssignment = () => {
       .join(', ');
   };
 
+  const formatTime = (time: string | null) => {
+    if (!time) return '';
+    return time.substring(0, 5); // HH:MM format
+  };
+
+  const handleContinue = () => {
+    if (initialScheduleCount === 0) {
+      // First time setup - show success modal
+      setShowSuccessModal(true);
+    } else {
+      navigate('/workout-log');
+    }
+  };
+
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    sessionStorage.setItem('firstPlanCreated', 'true');
+    navigate('/dashboard');
+  };
+
+  const handleDownloadCalendar = () => {
+    const events = schedules
+      .filter(s => s.workout_time)
+      .map(s => ({
+        dayOfWeek: s.day_of_week,
+        muscles: s.workout_types,
+        time: formatTime(s.workout_time) || "09:00",
+        muscleLabels: getMuscleLabels(s.workout_types),
+      }));
+    
+    generateAndDownloadCalendar(events);
+  };
+
   const BackIcon = isRtl ? ArrowLeft : ArrowRight;
+
+  // Time picker translations
+  const timePickerLabel = {
+    he: 'שעת אימון:',
+    en: 'Workout time:',
+    es: 'Hora del entrenamiento:',
+    ar: 'وقت التمرين:',
+  }[language] || 'שעת אימון:';
 
   if (loading) {
     return (
@@ -296,6 +349,18 @@ const WeeklyWorkoutAssignment = () => {
             </div>
           </div>
 
+          {/* Time Picker */}
+          <div className="mb-6">
+            <h2 className="text-white text-lg font-semibold mb-4">{timePickerLabel}</h2>
+            <div className="flex justify-center">
+              <TimePicker
+                value={selectedTime}
+                onChange={setSelectedTime}
+                disabled={!selectedDay}
+              />
+            </div>
+          </div>
+
           {/* Muscle Selector */}
           <div className="mb-6">
             <h2 className="text-white text-lg font-semibold mb-4">{t('selectMuscleGroups')}</h2>
@@ -345,6 +410,7 @@ const WeeklyWorkoutAssignment = () => {
                   setEditingId(null);
                   setSelectedDay(null);
                   setSelectedMuscles([]);
+                  setSelectedTime("09:00");
                 }}
                 variant="ghost"
                 className="text-white hover:bg-white/20"
@@ -385,7 +451,14 @@ const WeeklyWorkoutAssignment = () => {
                   className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 flex items-center justify-between"
                 >
                   <div>
-                    <h3 className="text-white font-bold text-lg">{t('day')} {getDayLabel(schedule.day_of_week)}</h3>
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-white font-bold text-lg">{t('day')} {getDayLabel(schedule.day_of_week)}</h3>
+                      {schedule.workout_time && (
+                        <span className="text-[#FFED02] text-sm font-medium bg-white/10 px-2 py-1 rounded-lg">
+                          {formatTime(schedule.workout_time)}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-white/80 mt-1">• {getMuscleLabels(schedule.workout_types)}</p>
                   </div>
                   <div className="flex gap-2">
@@ -412,15 +485,7 @@ const WeeklyWorkoutAssignment = () => {
         {schedules.length > 0 && (
           <div className="mt-8 text-center animate-slide-up-delay-2">
             <Button
-              onClick={() => {
-                // If this was first-time setup, set flag for confetti
-                if (initialScheduleCount === 0) {
-                  sessionStorage.setItem('firstPlanCreated', 'true');
-                  navigate('/dashboard');
-                } else {
-                  navigate('/workout-log');
-                }
-              }}
+              onClick={handleContinue}
               className="bg-[hsl(213,100%,30%)] hover:bg-[hsl(213,100%,40%)] text-white px-12 py-6 text-lg font-bold rounded-xl shadow-lg"
             >
               {initialScheduleCount === 0 ? t('goHome') : t('continueToNextStep')}
@@ -433,6 +498,15 @@ const WeeklyWorkoutAssignment = () => {
           <p className="text-white/60 text-sm">{t('stepOf').replace('{0}', '2').replace('{1}', '3')}</p>
         </div>
       </div>
+
+      {/* Success Modal */}
+      <PlanSuccessModal
+        isOpen={showSuccessModal}
+        onClose={handleSuccessModalClose}
+        schedules={schedules}
+        onDownloadCalendar={handleDownloadCalendar}
+        getMuscleLabels={getMuscleLabels}
+      />
     </div>
   );
 };
