@@ -34,6 +34,7 @@ const translations = {
     aiInfoTooltip: 'ההודעות מותאמות אישית לקבוצות השרירים שבחרת',
     calendarDownloaded: 'לוח השנה הורד!',
     enabling: 'מפעיל...',
+    blockedMessage: 'ההתראות חסומות. כדי לקבל מוטיבציה, לחץ על סמל המנעול 🔒 בשורת הכתובת למעלה ואשר את ההתראות לאתר.',
   },
   en: {
     title: 'Reminders & Sync Management',
@@ -48,6 +49,7 @@ const translations = {
     aiInfoTooltip: 'Messages are personalized based on your selected muscle groups',
     calendarDownloaded: 'Calendar downloaded!',
     enabling: 'Enabling...',
+    blockedMessage: 'Notifications are blocked. To receive motivation, click the lock icon 🔒 in the address bar above and allow notifications for this site.',
   },
   es: {
     title: 'Gestión de Recordatorios',
@@ -62,6 +64,7 @@ const translations = {
     aiInfoTooltip: 'Los mensajes están personalizados según los grupos musculares seleccionados',
     calendarDownloaded: '¡Calendario descargado!',
     enabling: 'Activando...',
+    blockedMessage: 'Las notificaciones están bloqueadas. Para recibir motivación, haz clic en el icono del candado 🔒 en la barra de direcciones y permite las notificaciones para este sitio.',
   },
   ar: {
     title: 'إدارة التذكيرات والمزامنة',
@@ -76,6 +79,7 @@ const translations = {
     aiInfoTooltip: 'الرسائل مخصصة بناءً على مجموعات العضلات المختارة',
     calendarDownloaded: 'تم تحميل التقويم!',
     enabling: 'جاري التفعيل...',
+    blockedMessage: 'الإشعارات محظورة. لتلقي التحفيز، انقر على أيقونة القفل 🔒 في شريط العناوين أعلاه واسمح بالإشعارات لهذا الموقع.',
   },
 };
 
@@ -87,20 +91,23 @@ const SyncManagementCard = ({
   const { language, isRtl } = useLanguage();
   const {
     isSupported,
+    permission,
     isEnabled,
     isSubscribed,
     requestPermission,
     subscribeToPush,
+    toggleNotifications,
     showTestNotification,
   } = usePushNotifications();
 
   const [calendarDownloaded, setCalendarDownloaded] = useState(false);
   const [isEnablingNotifications, setIsEnablingNotifications] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [showHelpGuide, setShowHelpGuide] = useState(false);
 
   const text = translations[language as keyof typeof translations] || translations.he;
   const isLocked = schedules.length === 0;
-  const isNotificationActive = isEnabled || isSubscribed;
+  const isNotificationActive = isEnabled && isSubscribed;
 
   const handleCalendarToggle = (checked: boolean) => {
     if (checked && !calendarDownloaded) {
@@ -110,12 +117,41 @@ const SyncManagementCard = ({
   };
 
   const handleNotificationsToggle = async (checked: boolean) => {
-    if (!checked || isNotificationActive) return;
+    // If turning off
+    if (!checked) {
+      toggleNotifications(false);
+      setShowHelpGuide(false);
+      return;
+    }
 
-    setIsEnablingNotifications(true);
-    try {
-      const granted = await requestPermission();
-      if (granted) {
+    // If turning on - check permission status
+    if ('Notification' in window) {
+      const currentPermission = Notification.permission;
+      
+      // Permission is denied - show help guide
+      if (currentPermission === 'denied') {
+        setShowHelpGuide(true);
+        return;
+      }
+
+      setIsEnablingNotifications(true);
+      setShowHelpGuide(false);
+      
+      try {
+        // Permission is default - request it
+        if (currentPermission === 'default') {
+          const granted = await requestPermission();
+          if (!granted) {
+            // User denied - check if now denied
+            if (Notification.permission === 'denied') {
+              setShowHelpGuide(true);
+            }
+            setIsEnablingNotifications(false);
+            return;
+          }
+        }
+
+        // Permission is granted - subscribe to push
         const subscribed = await subscribeToPush();
         if (subscribed && schedules.length > 0) {
           const muscles = getMuscleLabels(schedules[0].workout_types);
@@ -123,11 +159,11 @@ const SyncManagementCard = ({
             showTestNotification(muscles, language as Language);
           }, 500);
         }
+      } catch (error) {
+        console.error('Error enabling notifications:', error);
+      } finally {
+        setIsEnablingNotifications(false);
       }
-    } catch (error) {
-      console.error('Error enabling notifications:', error);
-    } finally {
-      setIsEnablingNotifications(false);
     }
   };
 
@@ -189,58 +225,74 @@ const SyncManagementCard = ({
           </Tooltip>
 
           {/* AI Notifications Toggle */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div
-                className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-200 ${
-                  isLocked
-                    ? 'bg-white/5 border-white/10 opacity-50 cursor-not-allowed'
-                    : isNotificationActive
-                    ? 'bg-green-500/20 border-green-500/30'
-                    : 'bg-white/10 border-white/20 hover:bg-white/15'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  {isNotificationActive ? (
-                    <CheckCircle2 className="h-5 w-5 text-green-400" />
-                  ) : isEnablingNotifications ? (
-                    <Loader2 className="h-5 w-5 text-white/80 animate-spin" />
-                  ) : (
-                    <Bell className="h-5 w-5 text-white/80" />
-                  )}
-                  <div className="flex items-center gap-2">
-                    <div>
-                      <p className="text-white font-medium">{text.aiNotifications}</p>
-                      <p className="text-white/60 text-sm">
-                        {isEnablingNotifications ? text.enabling : text.aiNotificationsDesc}
-                      </p>
+          <div className="space-y-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-200 ${
+                    isLocked
+                      ? 'bg-white/5 border-white/10 opacity-50 cursor-not-allowed'
+                      : isNotificationActive
+                      ? 'bg-green-500/20 border-green-500/30'
+                      : 'bg-white/10 border-white/20 hover:bg-white/15'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {isNotificationActive ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-400" />
+                    ) : isEnablingNotifications ? (
+                      <Loader2 className="h-5 w-5 text-white/80 animate-spin" />
+                    ) : (
+                      <Bell className="h-5 w-5 text-white/80" />
+                    )}
+                    <div className="flex items-center gap-2">
+                      <div>
+                        <p className="text-white font-medium">{text.aiNotifications}</p>
+                        <p className="text-white/60 text-sm">
+                          {isEnablingNotifications ? text.enabling : text.aiNotificationsDesc}
+                        </p>
+                      </div>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button className="p-1 hover:bg-white/10 rounded-full transition-colors">
+                            <Info className="h-4 w-4 text-white/60" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <p>{text.aiInfoTooltip}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button className="p-1 hover:bg-white/10 rounded-full transition-colors">
-                          <Info className="h-4 w-4 text-white/60" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-xs">
-                        <p>{text.aiInfoTooltip}</p>
-                      </TooltipContent>
-                    </Tooltip>
                   </div>
+                  <Switch
+                    checked={isNotificationActive}
+                    onCheckedChange={handleNotificationsToggle}
+                    disabled={isLocked || !isSupported || isEnablingNotifications}
+                    className="data-[state=checked]:bg-[hsl(45,100%,50%)]"
+                  />
                 </div>
-                <Switch
-                  checked={isNotificationActive}
-                  onCheckedChange={handleNotificationsToggle}
-                  disabled={isLocked || !isSupported || isNotificationActive || isEnablingNotifications}
-                  className="data-[state=checked]:bg-[hsl(45,100%,50%)]"
+              </TooltipTrigger>
+              {isLocked && (
+                <TooltipContent side={isRtl ? 'left' : 'right'} className="max-w-xs">
+                  <p>{text.lockedTooltip}</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+
+            {/* Permission Blocked Help Guide */}
+            {showHelpGuide && (
+              <div className="p-4 rounded-xl bg-red-500/10 border-2 border-red-500/50 space-y-3 animate-in slide-in-from-top-2 duration-300">
+                <p className="text-white/90 text-sm leading-relaxed" dir={isRtl ? 'rtl' : 'ltr'}>
+                  {text.blockedMessage}
+                </p>
+                <img
+                  src="https://placehold.co/400x200/1a1a1a/ffffff?text=Browser+Lock+Illustration+Here"
+                  alt="Browser permission guide"
+                  className="w-full rounded-lg border-2 border-red-400"
                 />
               </div>
-            </TooltipTrigger>
-            {isLocked && (
-              <TooltipContent side={isRtl ? 'left' : 'right'} className="max-w-xs">
-                <p>{text.lockedTooltip}</p>
-              </TooltipContent>
             )}
-          </Tooltip>
+          </div>
 
           {/* See Example Button */}
           <div className="flex justify-center pt-2">
