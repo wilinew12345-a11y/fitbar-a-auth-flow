@@ -126,23 +126,29 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ai_chat_count: number
           created_at: string
           first_name: string
           id: string
+          last_ai_usage_date: string | null
           last_name: string
           updated_at: string
         }
         Insert: {
+          ai_chat_count?: number
           created_at?: string
           first_name: string
           id: string
+          last_ai_usage_date?: string | null
           last_name: string
           updated_at?: string
         }
         Update: {
+          ai_chat_count?: number
           created_at?: string
           first_name?: string
           id?: string
+          last_ai_usage_date?: string | null
           last_name?: string
           updated_at?: string
         }
@@ -270,7 +276,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_and_increment_ai_usage: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
+      get_ai_usage: { Args: { p_user_id: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never
