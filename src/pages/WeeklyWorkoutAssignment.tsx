@@ -11,7 +11,7 @@ import PlanSuccessModal from "@/components/workout/PlanSuccessModal";
 import SyncManagementCard from "@/components/workout/SyncManagementCard";
 import { Plus, Trash2, Pencil, X, Loader2, RotateCcw, ArrowRight, ArrowLeft } from "lucide-react";
 import MuscleRecommendation from "@/components/workout/MuscleRecommendation";
-import { generateAndDownloadCalendar } from "@/utils/calendarUtils";
+
 
 interface Schedule {
   id: string;
@@ -268,17 +268,10 @@ const WeeklyWorkoutAssignment = () => {
     navigate('/dashboard');
   };
 
+  // Calendar sync is now handled automatically by SyncManagementCard
   const handleDownloadCalendar = () => {
-    const events = schedules
-      .filter(s => s.workout_time)
-      .map(s => ({
-        dayOfWeek: s.day_of_week,
-        muscles: s.workout_types,
-        time: formatTime(s.workout_time) || "09:00",
-        muscleLabels: getMuscleLabels(s.workout_types),
-      }));
-    
-    generateAndDownloadCalendar(events);
+    // This function is now deprecated - calendar sync happens via edge function
+    console.log('Calendar sync triggered');
   };
 
   const BackIcon = isRtl ? ArrowLeft : ArrowRight;
