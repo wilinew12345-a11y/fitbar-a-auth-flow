@@ -266,12 +266,12 @@ const Auth = () => {
       {/* Back Button */}
       <Button
         variant="ghost"
-        size="sm"
+        size="icon"
         onClick={() => navigate("/")}
-        className="absolute top-4 left-4 gap-2 text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/20"
+        className="absolute top-4 left-4 min-w-[40px] min-h-[40px] text-sidebar-foreground hover:text-[#A50044] hover:bg-sidebar-accent/20 transition-all duration-200 rounded-full"
+        aria-label={t('back')}
       >
-        <BackIcon className="h-4 w-4" />
-        {t('back')}
+        <BackIcon className="h-5 w-5" />
       </Button>
       
       <div className="w-full max-w-md">

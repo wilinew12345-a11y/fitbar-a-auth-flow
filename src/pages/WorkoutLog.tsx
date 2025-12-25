@@ -407,11 +407,12 @@ const WorkoutLog = () => {
           <LanguageSelector />
           <Button
             variant="ghost"
+            size="icon"
             onClick={() => navigate('/dashboard')}
-            className="text-white/70 hover:text-white hover:bg-white/10"
+            className="min-w-[40px] min-h-[40px] text-white/70 hover:text-[#A50044] hover:bg-white/10 transition-all duration-200 rounded-full"
+            aria-label={t('back')}
           >
-            <BackIcon className="h-5 w-5 mx-2" />
-            {t('back')}
+            <BackIcon className="h-5 w-5" />
           </Button>
         </div>
       </header>
