@@ -2,18 +2,15 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
+import { useAIQuota } from '@/hooks/useAIQuota';
 import { sendMessageToAI, ChatMessage } from '@/services/geminiService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, ArrowRight, Send, Bot, User, Loader2, MessageSquare } from 'lucide-react';
 import FitBarcaLogo from '@/components/FitBarcaLogo';
 import LanguageSelector from '@/components/LanguageSelector';
+import QuotaLimitModal from '@/components/ai/QuotaLimitModal';
 import { toast } from '@/hooks/use-toast';
-
-// Daily limit constants
-const MAX_DAILY_MESSAGES = 20;
-const STORAGE_KEY_COUNT = 'gym_ai_chat_count';
-const STORAGE_KEY_DATE = 'gym_ai_chat_date';
 
 interface DisplayMessage {
   id: string;
@@ -25,37 +22,16 @@ const AICoach = () => {
   const { t, isRtl, language } = useLanguage();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const { currentCount, limit, isLimitReached, checkAndIncrement, isLoading: quotaLoading } = useAIQuota();
   
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
-  const [dailyMessageCount, setDailyMessageCount] = useState(0);
+  const [showQuotaModal, setShowQuotaModal] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Get current date string in YYYY-MM-DD format
-  const getCurrentDateString = () => {
-    return new Date().toISOString().split('T')[0];
-  };
-
-  // Initialize daily limit from localStorage
-  useEffect(() => {
-    const currentDate = getCurrentDateString();
-    const savedDate = localStorage.getItem(STORAGE_KEY_DATE);
-    const savedCount = localStorage.getItem(STORAGE_KEY_COUNT);
-
-    if (savedDate === currentDate && savedCount) {
-      // Same day - restore previous count
-      setDailyMessageCount(parseInt(savedCount, 10));
-    } else {
-      // New day - reset counter
-      setDailyMessageCount(0);
-      localStorage.setItem(STORAGE_KEY_DATE, currentDate);
-      localStorage.setItem(STORAGE_KEY_COUNT, '0');
-    }
-  }, []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -68,18 +44,13 @@ const AICoach = () => {
   }, [messages]);
 
   const BackIcon = isRtl ? ArrowRight : ArrowLeft;
-  const isLimitReached = dailyMessageCount >= MAX_DAILY_MESSAGES;
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
 
-    // Check daily limit
+    // Check quota first - show modal if limit reached
     if (isLimitReached) {
-      toast({
-        title: t('dailyLimitReached') || "Daily Limit Reached",
-        description: t('dailyLimitMessage') || `You have reached your daily limit of ${MAX_DAILY_MESSAGES} messages. Try again tomorrow!`,
-        variant: "destructive",
-      });
+      setShowQuotaModal(true);
       return;
     }
 
@@ -95,11 +66,16 @@ const AICoach = () => {
     setMessages(prev => [...prev, userDisplayMessage]);
     setIsLoading(true);
 
-    // Increment and save daily count immediately
-    const newCount = dailyMessageCount + 1;
-    setDailyMessageCount(newCount);
-    localStorage.setItem(STORAGE_KEY_COUNT, newCount.toString());
-    localStorage.setItem(STORAGE_KEY_DATE, getCurrentDateString());
+    // Check and increment quota atomically in database
+    const quotaResult = await checkAndIncrement();
+    
+    if (!quotaResult.success) {
+      // Quota exceeded - show modal and remove user message
+      setMessages(prev => prev.filter(m => m.id !== userDisplayMessage.id));
+      setShowQuotaModal(true);
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const response = await sendMessageToAI(userMessage, chatHistory, language);
@@ -147,7 +123,7 @@ const AICoach = () => {
     }
   };
 
-  if (loading) {
+  if (loading || quotaLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#004d98] via-[#0a1628] to-[#a50044] flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
@@ -157,6 +133,12 @@ const AICoach = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#004d98] via-[#0a1628] to-[#a50044] flex flex-col" dir={isRtl ? 'rtl' : 'ltr'}>
+      {/* Quota Modal */}
+      <QuotaLimitModal 
+        isOpen={showQuotaModal} 
+        onClose={() => setShowQuotaModal(false)} 
+      />
+
       {/* Header */}
       <header className="p-4 flex items-center justify-between border-b border-white/10 backdrop-blur-sm bg-black/20">
         <div className="flex items-center gap-4">
@@ -234,13 +216,16 @@ const AICoach = () => {
             <div className={`flex items-center gap-2 ${isLimitReached ? 'text-red-400' : 'text-white/60'}`}>
               <MessageSquare className="h-4 w-4" />
               <span>
-                {t('dailyLimit')}: {dailyMessageCount}/{MAX_DAILY_MESSAGES}
+                {t('dailyLimit')}: {currentCount}/{limit}
               </span>
             </div>
             {isLimitReached && (
-              <span className="text-red-400 text-xs">
+              <button 
+                onClick={() => setShowQuotaModal(true)}
+                className="text-red-400 text-xs hover:text-red-300 transition-colors underline"
+              >
                 {t('dailyLimitReached')}
-              </span>
+              </button>
             )}
           </div>
           
