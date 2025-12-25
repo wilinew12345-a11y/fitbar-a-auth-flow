@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import FitBarcaLogo from "@/components/FitBarcaLogo";
 import LanguageSelector from "@/components/LanguageSelector";
-import { Plus, Trash2, Pencil, X, Loader2, RotateCcw, ArrowRight, ArrowLeft } from "lucide-react";
+import { Plus, Trash2, Pencil, X, Loader2, RotateCcw, ArrowRight, ArrowLeft, Home } from "lucide-react";
 import MuscleRecommendation from "@/components/workout/MuscleRecommendation";
 
 interface Schedule {
@@ -24,6 +24,8 @@ const WeeklyWorkoutAssignment = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isFirstTimeSetup, setIsFirstTimeSetup] = useState(true);
+  const [initialScheduleCount, setInitialScheduleCount] = useState(0);
 
   // Days of week with translations
   const DAYS_OF_WEEK = useMemo(() => [
@@ -58,13 +60,13 @@ const WeeklyWorkoutAssignment = () => {
         navigate('/auth');
         return;
       }
-      await fetchSchedules();
+      await fetchSchedules(true);
       setLoading(false);
     };
     checkAuthAndFetch();
   }, [navigate]);
 
-  const fetchSchedules = async () => {
+  const fetchSchedules = async (isInitial: boolean = false) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
@@ -79,7 +81,13 @@ const WeeklyWorkoutAssignment = () => {
       return;
     }
 
+    const count = data?.length || 0;
     setSchedules(data || []);
+    
+    if (isInitial) {
+      setInitialScheduleCount(count);
+      setIsFirstTimeSetup(count === 0);
+    }
   };
 
   const handleDaySelect = (dayKey: string) => {
@@ -257,6 +265,13 @@ const WeeklyWorkoutAssignment = () => {
           </div>
         </div>
 
+        {/* Guidance Header for first-time setup */}
+        {isFirstTimeSetup && (
+          <div className="bg-gradient-to-r from-[#004d98]/30 to-[#a50044]/30 backdrop-blur-md rounded-xl p-4 mb-6 border border-white/20 animate-slide-up">
+            <p className="text-white text-center font-medium">{t('buildPlanGuidance')}</p>
+          </div>
+        )}
+
         {/* Builder Card */}
         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-2xl animate-slide-up-delay-1">
           {/* Day Selector */}
@@ -397,10 +412,18 @@ const WeeklyWorkoutAssignment = () => {
         {schedules.length > 0 && (
           <div className="mt-8 text-center animate-slide-up-delay-2">
             <Button
-              onClick={() => navigate('/workout-log')}
+              onClick={() => {
+                // If this was first-time setup, set flag for confetti
+                if (initialScheduleCount === 0) {
+                  sessionStorage.setItem('firstPlanCreated', 'true');
+                  navigate('/dashboard');
+                } else {
+                  navigate('/workout-log');
+                }
+              }}
               className="bg-[hsl(213,100%,30%)] hover:bg-[hsl(213,100%,40%)] text-white px-12 py-6 text-lg font-bold rounded-xl shadow-lg"
             >
-              {t('continueToNextStep')}
+              {initialScheduleCount === 0 ? t('goHome') : t('continueToNextStep')}
             </Button>
           </div>
         )}
