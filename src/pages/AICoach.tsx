@@ -162,12 +162,12 @@ const AICoach = () => {
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={() => navigate('/dashboard')}
-            className="gap-2 text-white/80 hover:text-white hover:bg-white/10"
+            className="min-w-[40px] min-h-[40px] text-white/80 hover:text-[#A50044] hover:bg-white/10 transition-all duration-200 rounded-full"
+            aria-label={t('back')}
           >
-            <BackIcon className="h-4 w-4" />
-            {t('back')}
+            <BackIcon className="h-5 w-5" />
           </Button>
           <FitBarcaLogo />
         </div>

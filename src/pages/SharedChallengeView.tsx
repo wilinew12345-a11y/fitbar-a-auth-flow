@@ -470,7 +470,8 @@ ${t('completed')} ${progress.completed} / ${progress.total} ${t('workouts')}!`;
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={() => navigate('/challenges')}
-              className="p-2 rounded-lg bg-blue-800/50 hover:bg-blue-700/50 transition-colors"
+              className="min-w-[40px] min-h-[40px] p-2 rounded-full bg-blue-800/50 hover:bg-[#A50044]/50 hover:text-white transition-all duration-200 flex items-center justify-center"
+              aria-label={t('back')}
             >
               <BackIcon className="w-5 h-5" />
             </button>

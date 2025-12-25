@@ -26,11 +26,12 @@ const WorkoutPlanning = () => {
       {/* Back Button */}
       <Button
         variant="ghost"
+        size="icon"
         onClick={() => navigate('/dashboard')}
-        className="absolute top-4 left-4 text-white/70 hover:text-white hover:bg-white/10"
+        className="absolute top-4 left-4 min-w-[40px] min-h-[40px] text-white/70 hover:text-[#A50044] hover:bg-white/10 transition-all duration-200 rounded-full"
+        aria-label="חזרה"
       >
-        <ArrowRight className="h-5 w-5 ml-2" />
-        חזרה
+        <ArrowRight className="h-5 w-5" />
       </Button>
       
       <div className="w-full max-w-lg relative z-10 text-center">
