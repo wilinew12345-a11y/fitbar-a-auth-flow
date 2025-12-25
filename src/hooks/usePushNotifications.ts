@@ -22,6 +22,7 @@ interface UsePushNotificationsReturn {
   scheduleNotifications: (workouts: ScheduledWorkout[], language: Language) => void;
   showTestNotification: (muscles: string, language: Language) => void;
   subscribeToPush: () => Promise<boolean>;
+  unsubscribeFromPush: () => Promise<boolean>;
 }
 
 const STORAGE_KEY = 'fitbarca-notifications-enabled';
@@ -160,6 +161,40 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     }
   }, [isSupported, user]);
 
+  // Unsubscribe from push notifications
+  const unsubscribeFromPush = useCallback(async (): Promise<boolean> => {
+    if (!user) return false;
+    
+    try {
+      // Clear subscription from service worker
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+        if (subscription) {
+          await subscription.unsubscribe();
+        }
+      }
+      
+      // Clear subscription from Supabase
+      const { error } = await supabase
+        .from('profiles')
+        .update({ push_subscription: null })
+        .eq('id', user.id);
+      
+      if (error) {
+        console.error('Error clearing subscription:', error);
+        return false;
+      }
+      
+      setIsSubscribed(false);
+      console.log('Push subscription removed');
+      return true;
+    } catch (error) {
+      console.error('Error unsubscribing from push:', error);
+      return false;
+    }
+  }, [user]);
+
   const toggleNotifications = useCallback((enabled: boolean) => {
     if (enabled && permission !== 'granted') {
       requestPermission();
@@ -273,5 +308,6 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     scheduleNotifications,
     showTestNotification,
     subscribeToPush,
+    unsubscribeFromPush,
   };
 }

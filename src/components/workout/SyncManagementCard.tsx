@@ -3,11 +3,22 @@ import { Calendar, Bell, Info, Eye, CheckCircle2, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useLanguage, Language } from '@/contexts/LanguageContext';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { detectDeviceType, DeviceType, openCalendarSubscription } from '@/utils/calendarUtils';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import NotificationPreview from './NotificationPreview';
 import browserPermissionGuide from '@/assets/browser-permission-guide.png';
 
@@ -22,6 +33,7 @@ interface SyncManagementCardProps {
   schedules: Schedule[];
   getMuscleLabels: (muscleKeys: string[]) => string;
   onDownloadCalendar: () => void;
+  onResetAll?: () => Promise<void>;
 }
 
 const translations = {
@@ -42,6 +54,13 @@ const translations = {
     blockedMessage: 'ההתראות חסומות. כדי לקבל מוטיבציה, לחץ על סמל המנעול 🔒 בשורת הכתובת למעלה ואשר את ההתראות לאתר.',
     installPWA: 'להפעלת התראות, יש להתקין את האפליקציה על מסך הבית',
     installPWATitle: 'התקן את האפליקציה',
+    resetWarningTitle: 'האם אתה בטוח?',
+    resetWarningMessage: 'פעולה זו תמחק את התוכנית, תסיר את האימונים מלוח השנה ותבטל את התראות המוטיבציה.',
+    resetConfirm: 'אפס הכל',
+    resetCancel: 'ביטול',
+    syncDisabled: 'הסנכרון בוטל',
+    notificationsDisabled: 'ההתראות בוטלו',
+    saveFailed: 'שמירה נכשלה',
   },
   en: {
     title: 'Reminders & Sync Management',
@@ -60,6 +79,13 @@ const translations = {
     blockedMessage: 'Notifications are blocked. To receive motivation, click the lock icon 🔒 in the address bar above and allow notifications for this site.',
     installPWA: 'To enable notifications, install the app to your home screen',
     installPWATitle: 'Install the app',
+    resetWarningTitle: 'Are you sure?',
+    resetWarningMessage: 'This action will delete your plan, remove workouts from your calendar, and disable motivation alerts.',
+    resetConfirm: 'Reset All',
+    resetCancel: 'Cancel',
+    syncDisabled: 'Sync disabled',
+    notificationsDisabled: 'Notifications disabled',
+    saveFailed: 'Save failed',
   },
   es: {
     title: 'Gestión de Recordatorios',
@@ -78,6 +104,13 @@ const translations = {
     blockedMessage: 'Las notificaciones están bloqueadas. Para recibir motivación, haz clic en el icono del candado 🔒 en la barra de direcciones y permite las notificaciones para este sitio.',
     installPWA: 'Para activar notificaciones, instala la app en tu pantalla de inicio',
     installPWATitle: 'Instalar la app',
+    resetWarningTitle: '¿Estás seguro?',
+    resetWarningMessage: 'Esta acción eliminará tu plan, quitará los entrenamientos del calendario y desactivará las alertas de motivación.',
+    resetConfirm: 'Restablecer todo',
+    resetCancel: 'Cancelar',
+    syncDisabled: 'Sincronización desactivada',
+    notificationsDisabled: 'Notificaciones desactivadas',
+    saveFailed: 'Error al guardar',
   },
   ar: {
     title: 'إدارة التذكيرات والمزامنة',
@@ -96,12 +129,20 @@ const translations = {
     blockedMessage: 'الإشعارات محظورة. لتلقي التحفيز، انقر على أيقونة القفل 🔒 في شريط العناوين أعلاه واسمح بالإشعارات لهذا الموقع.',
     installPWA: 'لتفعيل الإشعارات، قم بتثبيت التطبيق على الشاشة الرئيسية',
     installPWATitle: 'تثبيت التطبيق',
+    resetWarningTitle: 'هل أنت متأكد؟',
+    resetWarningMessage: 'سيؤدي هذا الإجراء إلى حذف خطتك وإزالة التدريبات من التقويم وإلغاء تنبيهات التحفيز.',
+    resetConfirm: 'إعادة تعيين الكل',
+    resetCancel: 'إلغاء',
+    syncDisabled: 'تم تعطيل المزامنة',
+    notificationsDisabled: 'تم تعطيل الإشعارات',
+    saveFailed: 'فشل الحفظ',
   },
 };
 
 const SyncManagementCard = ({
   schedules,
   getMuscleLabels,
+  onResetAll,
 }: SyncManagementCardProps) => {
   const { language, isRtl } = useLanguage();
   const { user } = useAuth();
@@ -116,39 +157,107 @@ const SyncManagementCard = ({
     subscribeToPush,
     toggleNotifications,
     showTestNotification,
+    unsubscribeFromPush,
   } = usePushNotifications();
 
   const [calendarSynced, setCalendarSynced] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [isCalendarSyncing, setIsCalendarSyncing] = useState(false);
   const [isEnablingNotifications, setIsEnablingNotifications] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showHelpGuide, setShowHelpGuide] = useState(false);
+  const [showResetDialog, setShowResetDialog] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [deviceType, setDeviceType] = useState<DeviceType>('desktop');
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Load persisted states from DB on mount
   useEffect(() => {
+    const loadPersistedState = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('calendar_sync_enabled, notifications_enabled')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error loading sync state:', error);
+        } else if (data) {
+          setCalendarSynced(data.calendar_sync_enabled || false);
+          setNotificationsEnabled(data.notifications_enabled || false);
+        }
+      } catch (err) {
+        console.error('Failed to load sync state:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadPersistedState();
     setDeviceType(detectDeviceType());
-  }, []);
+  }, [user]);
 
   const text = translations[language as keyof typeof translations] || translations.he;
   const isLocked = schedules.length === 0;
-  const isNotificationActive = isEnabled && isSubscribed;
+  const isNotificationActive = notificationsEnabled && isEnabled && isSubscribed;
+
+  // Update DB helper
+  const updateProfileSettings = async (updates: { calendar_sync_enabled?: boolean; notifications_enabled?: boolean }) => {
+    if (!user) return false;
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update(updates)
+      .eq('id', user.id);
+
+    if (error) {
+      console.error('Error updating profile:', error);
+      toast({
+        title: text.saveFailed,
+        variant: 'destructive',
+      });
+      return false;
+    }
+    return true;
+  };
 
   const handleCalendarToggle = async (checked: boolean) => {
-    if (!checked || calendarSynced || !user) return;
+    if (!user) return;
 
+    // Turning OFF calendar sync
+    if (!checked) {
+      const success = await updateProfileSettings({ calendar_sync_enabled: false });
+      if (success) {
+        setCalendarSynced(false);
+        toast({
+          title: text.syncDisabled,
+        });
+      }
+      return;
+    }
+
+    // Turning ON - open calendar subscription
     setIsCalendarSyncing(true);
     
     try {
-      // Open the appropriate calendar subscription based on device
       openCalendarSubscription(user.id, deviceType);
-      setCalendarSynced(true);
       
-      toast({
-        title: text.calendarSynced,
-        description: deviceType === 'ios' 
-          ? 'בחר "הירשם" בחלונית שתיפתח'
-          : 'אשר את ההוספה לחשבון Google',
-      });
+      const success = await updateProfileSettings({ calendar_sync_enabled: true });
+      if (success) {
+        setCalendarSynced(true);
+        toast({
+          title: text.calendarSynced,
+          description: deviceType === 'ios' 
+            ? 'בחר "הירשם" בחלונית שתיפתח'
+            : 'אשר את ההוספה לחשבון Google',
+        });
+      }
     } catch (error) {
       console.error('Calendar sync error:', error);
     } finally {
@@ -157,10 +266,21 @@ const SyncManagementCard = ({
   };
 
   const handleNotificationsToggle = async (checked: boolean) => {
+    if (!user) return;
+
     // If turning off
     if (!checked) {
+      await unsubscribeFromPush?.();
       toggleNotifications(false);
       setShowHelpGuide(false);
+      
+      const success = await updateProfileSettings({ notifications_enabled: false });
+      if (success) {
+        setNotificationsEnabled(false);
+        toast({
+          title: text.notificationsDisabled,
+        });
+      }
       return;
     }
 
@@ -202,17 +322,57 @@ const SyncManagementCard = ({
 
         // Permission is granted - subscribe to push
         const subscribed = await subscribeToPush();
-        if (subscribed && schedules.length > 0) {
-          const muscles = getMuscleLabels(schedules[0].workout_types);
-          setTimeout(() => {
-            showTestNotification(muscles, language as Language);
-          }, 500);
+        if (subscribed) {
+          const success = await updateProfileSettings({ notifications_enabled: true });
+          if (success) {
+            setNotificationsEnabled(true);
+            
+            if (schedules.length > 0) {
+              const muscles = getMuscleLabels(schedules[0].workout_types);
+              setTimeout(() => {
+                showTestNotification(muscles, language as Language);
+              }, 500);
+            }
+          }
         }
       } catch (error) {
         console.error('Error enabling notifications:', error);
       } finally {
         setIsEnablingNotifications(false);
       }
+    }
+  };
+
+  const handleResetAllRequest = () => {
+    setShowResetDialog(true);
+  };
+
+  const handleResetConfirm = async () => {
+    if (!user || !onResetAll) return;
+
+    setIsResetting(true);
+    try {
+      // First disable integrations in DB
+      await updateProfileSettings({ 
+        calendar_sync_enabled: false, 
+        notifications_enabled: false 
+      });
+
+      // Unsubscribe from push
+      await unsubscribeFromPush?.();
+      toggleNotifications(false);
+
+      // Reset local state
+      setCalendarSynced(false);
+      setNotificationsEnabled(false);
+
+      // Call parent reset function
+      await onResetAll();
+    } catch (error) {
+      console.error('Reset error:', error);
+    } finally {
+      setIsResetting(false);
+      setShowResetDialog(false);
     }
   };
 
@@ -226,6 +386,16 @@ const SyncManagementCard = ({
     }
     return text.aiNotifications;
   };
+
+  if (isLoading) {
+    return (
+      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-2xl">
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 text-white/60 animate-spin" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <TooltipProvider>
@@ -268,7 +438,7 @@ const SyncManagementCard = ({
                   <Switch
                     checked={calendarSynced}
                     onCheckedChange={handleCalendarToggle}
-                    disabled={isLocked || calendarSynced || isCalendarSyncing}
+                    disabled={isLocked || isCalendarSyncing}
                     className="data-[state=checked]:bg-[hsl(45,100%,50%)]"
                   />
                 </div>
@@ -381,9 +551,38 @@ const SyncManagementCard = ({
           onClose={() => setShowPreview(false)}
           muscles={getPreviewMuscles()}
         />
+
+        {/* Reset Confirmation Dialog */}
+        <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+          <AlertDialogContent className="bg-background border-border">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-foreground">{text.resetWarningTitle}</AlertDialogTitle>
+              <AlertDialogDescription className="text-muted-foreground">
+                {text.resetWarningMessage}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className={isRtl ? 'flex-row-reverse' : ''}>
+              <AlertDialogCancel disabled={isResetting}>
+                {text.resetCancel}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleResetConfirm}
+                disabled={isResetting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isResetting ? (
+                  <Loader2 className="h-4 w-4 animate-spin mx-2" />
+                ) : null}
+                {text.resetConfirm}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </TooltipProvider>
   );
 };
 
+// Export the reset trigger for parent components
+export { SyncManagementCard };
 export default SyncManagementCard;

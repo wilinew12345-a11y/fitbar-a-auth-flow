@@ -80,6 +80,22 @@ function getMuscleLabels(muscleKeys: string[]): string {
   return muscleKeys.map(key => MUSCLE_LABELS_HE[key] || key).join(', ');
 }
 
+// Generate an empty ICS calendar (used when calendar sync is disabled)
+function generateEmptyICS(): string {
+  const bom = '\uFEFF';
+  const lines: string[] = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//FitBarça//Training//HE',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'X-WR-CALNAME:FitBarça Training',
+    'X-WR-TIMEZONE:Asia/Jerusalem',
+    'END:VCALENDAR',
+  ];
+  return bom + lines.join('\r\n');
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -100,6 +116,37 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Check if calendar sync is enabled for this user
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('calendar_sync_enabled')
+      .eq('id', userId)
+      .single();
+
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+      // Return empty calendar on error
+      return new Response(generateEmptyICS(), {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          'Content-Disposition': 'attachment; filename="fitbarca-schedule.ics"',
+        },
+      });
+    }
+
+    // If calendar sync is disabled, return empty ICS to wipe events from device
+    if (!profile?.calendar_sync_enabled) {
+      console.log(`Calendar sync disabled for user ${userId}, returning empty ICS`);
+      return new Response(generateEmptyICS(), {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          'Content-Disposition': 'attachment; filename="fitbarca-schedule.ics"',
+        },
+      });
+    }
 
     // Fetch user's weekly schedules
     const { data: schedules, error } = await supabase

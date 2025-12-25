@@ -127,33 +127,39 @@ export type Database = {
       profiles: {
         Row: {
           ai_chat_count: number
+          calendar_sync_enabled: boolean
           created_at: string
           first_name: string
           id: string
           last_ai_usage_date: string | null
           last_name: string
+          notifications_enabled: boolean
           preferred_language: string | null
           push_subscription: Json | null
           updated_at: string
         }
         Insert: {
           ai_chat_count?: number
+          calendar_sync_enabled?: boolean
           created_at?: string
           first_name: string
           id: string
           last_ai_usage_date?: string | null
           last_name: string
+          notifications_enabled?: boolean
           preferred_language?: string | null
           push_subscription?: Json | null
           updated_at?: string
         }
         Update: {
           ai_chat_count?: number
+          calendar_sync_enabled?: boolean
           created_at?: string
           first_name?: string
           id?: string
           last_ai_usage_date?: string | null
           last_name?: string
+          notifications_enabled?: boolean
           preferred_language?: string | null
           push_subscription?: Json | null
           updated_at?: string
