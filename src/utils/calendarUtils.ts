@@ -7,6 +7,8 @@ interface WorkoutEvent {
   muscleLabels: string; // Translated muscle labels for display
 }
 
+export type DeviceType = 'ios' | 'android' | 'desktop';
+
 const DAY_TO_RRULE: Record<string, string> = {
   sunday: 'SU',
   monday: 'MO',
@@ -66,6 +68,24 @@ function escapeICSText(text: string): string {
     .replace(/\n/g, '\\n');
 }
 
+// Detect user's device type
+export function detectDeviceType(): DeviceType {
+  const userAgent = navigator.userAgent || navigator.vendor || '';
+  
+  // iOS detection
+  if (/iPad|iPhone|iPod/.test(userAgent) || 
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+    return 'ios';
+  }
+  
+  // Android detection
+  if (/android/i.test(userAgent)) {
+    return 'android';
+  }
+  
+  return 'desktop';
+}
+
 export function generateWorkoutICS(events: WorkoutEvent[]): string {
   const lines: string[] = [
     'BEGIN:VCALENDAR',
@@ -120,7 +140,32 @@ export function downloadICSFile(icsContent: string, filename: string = 'fitbarca
   URL.revokeObjectURL(url);
 }
 
-export function generateAndDownloadCalendar(events: WorkoutEvent[]): void {
+// Create a data URL for the ICS content (for webcal and Google Calendar)
+export function createICSDataUrl(icsContent: string): string {
+  const bom = '\uFEFF';
+  const blob = new Blob([bom + icsContent], { type: 'text/calendar;charset=utf-8' });
+  return URL.createObjectURL(blob);
+}
+
+// Open calendar based on device type
+export function openCalendarForDevice(events: WorkoutEvent[], deviceType: DeviceType): void {
   const icsContent = generateWorkoutICS(events);
-  downloadICSFile(icsContent);
+  
+  if (deviceType === 'ios') {
+    // For iOS, download the ICS file which will trigger the native calendar
+    downloadICSFile(icsContent);
+  } else if (deviceType === 'android') {
+    // For Android, download the ICS file which opens in Google Calendar
+    downloadICSFile(icsContent);
+    // Note: The Google Calendar URL subscription requires a publicly hosted ICS file
+    // For now, we download the file which Android will offer to open with Google Calendar
+  } else {
+    // For desktop, download the ICS file
+    downloadICSFile(icsContent);
+  }
+}
+
+export function generateAndDownloadCalendar(events: WorkoutEvent[]): void {
+  const deviceType = detectDeviceType();
+  openCalendarForDevice(events, deviceType);
 }
