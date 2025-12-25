@@ -167,31 +167,35 @@ export const ExerciseCard = ({
             <NumberInput
               label="מהירות"
               value={localValues.speed}
-              onChange={(val) => setLocalValues({ ...localValues, speed: val })}
+              onChange={(val) => setLocalValues(prev => ({ ...prev, speed: val }))}
               onBlur={() => handleBlur('speed')}
               onPointerDown={stopDragPropagation}
               onMouseDown={stopDragPropagation}
               onKeyDown={stopDragPropagation}
+              min={0}
               step={0.5}
             />
             <NumberInput
               label="שיפוע"
               value={localValues.incline}
-              onChange={(val) => setLocalValues({ ...localValues, incline: val })}
+              onChange={(val) => setLocalValues(prev => ({ ...prev, incline: val }))}
               onBlur={() => handleBlur('incline')}
               onPointerDown={stopDragPropagation}
               onMouseDown={stopDragPropagation}
               onKeyDown={stopDragPropagation}
+              min={0}
               step={0.5}
             />
             <NumberInput
               label="זמן"
               value={localValues.duration}
-              onChange={(val) => setLocalValues({ ...localValues, duration: val })}
+              onChange={(val) => setLocalValues(prev => ({ ...prev, duration: val }))}
               onBlur={() => handleBlur('duration')}
               onPointerDown={stopDragPropagation}
               onMouseDown={stopDragPropagation}
               onKeyDown={stopDragPropagation}
+              min={0}
+              step={1}
             />
           </>
         ) : (
@@ -199,30 +203,35 @@ export const ExerciseCard = ({
             <NumberInput
               label="משקל"
               value={localValues.weight}
-              onChange={(val) => setLocalValues({ ...localValues, weight: val })}
+              onChange={(val) => setLocalValues(prev => ({ ...prev, weight: val }))}
               onBlur={() => handleBlur('weight')}
               onPointerDown={stopDragPropagation}
               onMouseDown={stopDragPropagation}
               onKeyDown={stopDragPropagation}
+              min={0}
               step={2.5}
             />
             <NumberInput
               label="סטים"
               value={localValues.sets}
-              onChange={(val) => setLocalValues({ ...localValues, sets: val })}
+              onChange={(val) => setLocalValues(prev => ({ ...prev, sets: val }))}
               onBlur={() => handleBlur('sets')}
               onPointerDown={stopDragPropagation}
               onMouseDown={stopDragPropagation}
               onKeyDown={stopDragPropagation}
+              min={1}
+              step={1}
             />
             <NumberInput
               label="חזרות"
               value={localValues.reps}
-              onChange={(val) => setLocalValues({ ...localValues, reps: val })}
+              onChange={(val) => setLocalValues(prev => ({ ...prev, reps: val }))}
               onBlur={() => handleBlur('reps')}
               onPointerDown={stopDragPropagation}
               onMouseDown={stopDragPropagation}
               onKeyDown={stopDragPropagation}
+              min={1}
+              step={1}
             />
           </>
         )}
