@@ -7,6 +7,7 @@ import { useLanguage, Language } from '@/contexts/LanguageContext';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { detectDeviceType, DeviceType } from '@/utils/calendarUtils';
 import NotificationPreview from './NotificationPreview';
+import browserPermissionGuide from '@/assets/browser-permission-guide.png';
 
 interface Schedule {
   id: string;
@@ -421,7 +422,7 @@ const SyncManagementCard = ({
                   {text.blockedMessage}
                 </p>
                 <img
-                  src="https://placehold.co/400x200/1a1a1a/ffffff?text=Browser+Lock+Illustration+Here"
+                  src={browserPermissionGuide}
                   alt="Browser permission guide"
                   className="w-full rounded-lg border-2 border-red-400"
                 />
