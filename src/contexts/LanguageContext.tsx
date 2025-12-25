@@ -165,7 +165,10 @@ export const translations = {
     cardAiCoach: "מאמן אישי AI",
     dailyLimitReached: "הגעת למגבלה היומית",
     dailyLimitMessage: "הגעת למגבלה של 20 הודעות ביום. נסה שוב מחר!",
-    dailyLimit: "מגבלה יומית"
+    dailyLimit: "מגבלה יומית",
+    buildPlanFirst: "יש לבנות תוכנית אימונים תחילה",
+    buildPlanGuidance: "בנה את תוכנית האימונים שלך לצפייה בשאר הקטגוריות",
+    goHome: "לעמוד הבית"
   },
   en: {
     dir: "ltr",
@@ -319,7 +322,10 @@ export const translations = {
     cardAiCoach: "AI Personal Coach",
     dailyLimitReached: "Daily Limit Reached",
     dailyLimitMessage: "You have reached your daily limit of 20 messages. Try again tomorrow!",
-    dailyLimit: "Daily Limit"
+    dailyLimit: "Daily Limit",
+    buildPlanFirst: "Please build a training plan first",
+    buildPlanGuidance: "Build your training plan to access the other categories",
+    goHome: "Go Home"
   },
   es: {
     dir: "ltr",
@@ -473,7 +479,10 @@ export const translations = {
     cardAiCoach: "Entrenador IA",
     dailyLimitReached: "Límite Diario Alcanzado",
     dailyLimitMessage: "Has alcanzado tu límite de 20 mensajes diarios. ¡Inténtalo mañana!",
-    dailyLimit: "Límite Diario"
+    dailyLimit: "Límite Diario",
+    buildPlanFirst: "Por favor, crea un plan de entrenamiento primero",
+    buildPlanGuidance: "Crea tu plan de entrenamiento para acceder a otras categorías",
+    goHome: "Ir al Inicio"
   },
   ar: {
     dir: "rtl",
@@ -627,7 +636,10 @@ export const translations = {
     cardAiCoach: "مدرب الذكاء الاصطناعي",
     dailyLimitReached: "تم الوصول للحد اليومي",
     dailyLimitMessage: "لقد وصلت إلى حد 20 رسالة يوميًا. حاول مرة أخرى غدًا!",
-    dailyLimit: "الحد اليومي"
+    dailyLimit: "الحد اليومي",
+    buildPlanFirst: "يرجى إنشاء خطة تدريب أولاً",
+    buildPlanGuidance: "أنشئ خطة التدريب الخاصة بك للوصول إلى الفئات الأخرى",
+    goHome: "الصفحة الرئيسية"
   }
 } as const;
 
