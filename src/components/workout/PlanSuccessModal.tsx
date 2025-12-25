@@ -1,46 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Calendar, Bell, CheckCircle2, Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { usePushNotifications } from '@/hooks/usePushNotifications';
 import confetti from 'canvas-confetti';
-
-interface Schedule {
-  id: string;
-  day_of_week: string;
-  workout_types: string[];
-  workout_time: string | null;
-}
 
 interface PlanSuccessModalProps {
   isOpen: boolean;
   onClose: () => void;
-  schedules: Schedule[];
-  onDownloadCalendar: () => void;
-  getMuscleLabels: (muscleKeys: string[]) => string;
 }
 
 const PlanSuccessModal = ({
   isOpen,
   onClose,
-  schedules,
-  onDownloadCalendar,
-  getMuscleLabels,
 }: PlanSuccessModalProps) => {
   const { language } = useLanguage();
-  const { 
-    isSupported, 
-    isEnabled, 
-    isSubscribed,
-    requestPermission, 
-    showTestNotification,
-    subscribeToPush,
-  } = usePushNotifications();
-  
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [calendarDownloaded, setCalendarDownloaded] = useState(false);
-  const [isEnabling, setIsEnabling] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -77,99 +51,31 @@ const PlanSuccessModal = ({
     }
   }, [isOpen]);
 
-  // Reset state when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setNotificationsEnabled(isEnabled || isSubscribed);
-      setCalendarDownloaded(false);
-    }
-  }, [isOpen, isEnabled, isSubscribed]);
-
-  const handleEnableNotifications = async () => {
-    setIsEnabling(true);
-    
-    try {
-      // First request permission
-      const granted = await requestPermission();
-      
-      if (granted) {
-        // Then subscribe to push and save to Supabase
-        const subscribed = await subscribeToPush();
-        
-        if (subscribed) {
-          setNotificationsEnabled(true);
-          
-          // Show a test notification with first workout's muscles
-          if (schedules.length > 0) {
-            const muscles = getMuscleLabels(schedules[0].workout_types);
-            setTimeout(() => {
-              showTestNotification(muscles, language as 'he' | 'en' | 'es' | 'ar');
-            }, 500);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error enabling notifications:', error);
-    } finally {
-      setIsEnabling(false);
-    }
-  };
-
-  const handleDownloadCalendar = () => {
-    onDownloadCalendar();
-    setCalendarDownloaded(true);
-  };
-
   const translations = {
     he: {
       title: '🎉 מזל טוב!',
-      subtitle: 'התוכנית שלך נשמרה בהצלחה',
-      syncCalendar: 'סנכרן ללוח השנה',
-      enableReminders: 'הפעל תזכורות מוטיבציה',
+      subtitle: 'התוכנית שלך נשמרה בהצלחה. תוכל לנהל תזכורות וסנכרון בעמוד זה.',
       done: 'סיימתי',
-      calendarSynced: 'לוח השנה הורד!',
-      remindersEnabled: 'התראות פעילות ✅',
-      notSupported: 'התראות לא נתמכות בדפדפן זה',
-      enabling: 'מפעיל...',
     },
     en: {
       title: '🎉 Congratulations!',
-      subtitle: 'Your plan has been saved successfully',
-      syncCalendar: 'Sync to Calendar',
-      enableReminders: 'Enable Motivation Reminders',
+      subtitle: 'Your plan has been saved successfully. You can manage reminders and sync on this page.',
       done: 'Done',
-      calendarSynced: 'Calendar downloaded!',
-      remindersEnabled: 'Notifications Active ✅',
-      notSupported: 'Notifications not supported in this browser',
-      enabling: 'Enabling...',
     },
     es: {
       title: '🎉 ¡Felicidades!',
-      subtitle: 'Tu plan se ha guardado correctamente',
-      syncCalendar: 'Sincronizar con Calendario',
-      enableReminders: 'Activar Recordatorios de Motivación',
+      subtitle: 'Tu plan se ha guardado correctamente. Puedes gestionar recordatorios y sincronización en esta página.',
       done: 'Hecho',
-      calendarSynced: '¡Calendario descargado!',
-      remindersEnabled: 'Notificaciones Activas ✅',
-      notSupported: 'Notificaciones no soportadas en este navegador',
-      enabling: 'Activando...',
     },
     ar: {
       title: '🎉 تهانينا!',
-      subtitle: 'تم حفظ خطتك بنجاح',
-      syncCalendar: 'مزامنة مع التقويم',
-      enableReminders: 'تفعيل تذكيرات التحفيز',
+      subtitle: 'تم حفظ خطتك بنجاح. يمكنك إدارة التذكيرات والمزامنة في هذه الصفحة.',
       done: 'تم',
-      calendarSynced: 'تم تحميل التقويم!',
-      remindersEnabled: 'الإشعارات نشطة ✅',
-      notSupported: 'الإشعارات غير مدعومة في هذا المتصفح',
-      enabling: 'جاري التفعيل...',
     },
   };
 
   const text = translations[language as keyof typeof translations] || translations.he;
   const isRtl = language === 'he' || language === 'ar';
-  const isNotificationActive = notificationsEnabled || isEnabled || isSubscribed;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -187,68 +93,11 @@ const PlanSuccessModal = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 mt-6">
-          {/* Calendar Sync Button */}
-          <Button
-            onClick={handleDownloadCalendar}
-            className={`w-full py-6 text-lg font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 ${
-              calendarDownloaded
-                ? 'bg-green-500/80 hover:bg-green-500/90'
-                : 'bg-white/20 hover:bg-white/30 border border-white/30'
-            }`}
-            disabled={calendarDownloaded}
-          >
-            {calendarDownloaded ? (
-              <>
-                <CheckCircle2 className="w-5 h-5" />
-                {text.calendarSynced}
-              </>
-            ) : (
-              <>
-                <Calendar className="w-5 h-5" />
-                {text.syncCalendar}
-              </>
-            )}
-          </Button>
-
-          {/* Notifications Button */}
-          {isSupported ? (
-            <Button
-              onClick={handleEnableNotifications}
-              className={`w-full py-6 text-lg font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 ${
-                isNotificationActive
-                  ? 'bg-green-500/80 hover:bg-green-500/90'
-                  : 'bg-white/20 hover:bg-white/30 border border-white/30'
-              }`}
-              disabled={isNotificationActive || isEnabling}
-            >
-              {isEnabling ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  {text.enabling}
-                </>
-              ) : isNotificationActive ? (
-                <>
-                  <CheckCircle2 className="w-5 h-5" />
-                  {text.remindersEnabled}
-                </>
-              ) : (
-                <>
-                  <Bell className="w-5 h-5" />
-                  {text.enableReminders}
-                </>
-              )}
-            </Button>
-          ) : (
-            <div className="text-center text-white/60 text-sm py-2">
-              {text.notSupported}
-            </div>
-          )}
-
+        <div className="mt-6">
           {/* Done Button */}
           <Button
             onClick={onClose}
-            className="w-full py-6 text-lg font-bold rounded-xl bg-gradient-to-r from-[#FFED02] to-[#FFC107] text-[#004D98] hover:opacity-90 transition-opacity mt-4"
+            className="w-full py-6 text-lg font-bold rounded-xl bg-gradient-to-r from-[#FFED02] to-[#FFC107] text-[#004D98] hover:opacity-90 transition-opacity"
           >
             {text.done}
           </Button>
