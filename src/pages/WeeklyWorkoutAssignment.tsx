@@ -4,6 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import FitBarcaLogo from "@/components/FitBarcaLogo";
 import LanguageSelector from "@/components/LanguageSelector";
 import TimePicker from "@/components/workout/TimePicker";
@@ -33,6 +43,8 @@ const WeeklyWorkoutAssignment = () => {
   const [isFirstTimeSetup, setIsFirstTimeSetup] = useState(true);
   const [initialScheduleCount, setInitialScheduleCount] = useState(0);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showResetDialog, setShowResetDialog] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   // Days of week with translations
   const DAYS_OF_WEEK = useMemo(() => [
@@ -213,29 +225,50 @@ const WeeklyWorkoutAssignment = () => {
     await fetchSchedules();
   };
 
-  const handleResetAll = async () => {
+  const handleResetRequest = () => {
+    setShowResetDialog(true);
+  };
+
+  const handleResetConfirm = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { error } = await supabase
-      .from('weekly_schedules')
-      .delete()
-      .eq('user_id', user.id);
+    setIsResetting(true);
 
-    if (error) {
-      toast({
-        title: "Error resetting",
-        variant: "destructive",
-      });
-      return;
+    try {
+      // Delete all schedules
+      const { error } = await supabase
+        .from('weekly_schedules')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) {
+        toast({
+          title: "Error resetting",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Also disable integrations in profile
+      await supabase
+        .from('profiles')
+        .update({ 
+          calendar_sync_enabled: false, 
+          notifications_enabled: false 
+        })
+        .eq('id', user.id);
+
+      toast({ title: t('allWorkoutsDeleted') });
+      setSchedules([]);
+      setSelectedDay(null);
+      setSelectedMuscles([]);
+      setSelectedTime("09:00");
+      setEditingId(null);
+    } finally {
+      setIsResetting(false);
+      setShowResetDialog(false);
     }
-
-    toast({ title: t('allWorkoutsDeleted') });
-    setSchedules([]);
-    setSelectedDay(null);
-    setSelectedMuscles([]);
-    setSelectedTime("09:00");
-    setEditingId(null);
   };
 
   const getDayLabel = (dayKey: string) => {
@@ -422,12 +455,13 @@ const WeeklyWorkoutAssignment = () => {
             <h2 className="text-white text-xl font-bold">{t('myPlan')}</h2>
             {schedules.length > 0 && (
               <Button
-                onClick={handleResetAll}
+                onClick={handleResetRequest}
                 variant="ghost"
                 className="text-white/70 hover:text-white hover:bg-white/10"
                 size="sm"
+                disabled={isResetting}
               >
-                <RotateCcw className="h-4 w-4 mx-1" />
+                {isResetting ? <Loader2 className="h-4 w-4 mx-1 animate-spin" /> : <RotateCcw className="h-4 w-4 mx-1" />}
                 {t('resetAll')}
               </Button>
             )}
@@ -507,6 +541,35 @@ const WeeklyWorkoutAssignment = () => {
         isOpen={showSuccessModal}
         onClose={handleSuccessModalClose}
       />
+
+      {/* Reset Confirmation Dialog */}
+      <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+        <AlertDialogContent className="bg-background border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground">
+              {language === 'he' ? 'האם אתה בטוח?' : 'Are you sure?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              {language === 'he' 
+                ? 'פעולה זו תמחק את התוכנית, תסיר את האימונים מלוח השנה ותבטל את התראות המוטיבציה.'
+                : 'This action will delete your plan, remove workouts from your calendar, and disable motivation alerts.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className={isRtl ? 'flex-row-reverse' : ''}>
+            <AlertDialogCancel disabled={isResetting}>
+              {language === 'he' ? 'ביטול' : 'Cancel'}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleResetConfirm}
+              disabled={isResetting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isResetting ? <Loader2 className="h-4 w-4 animate-spin mx-2" /> : null}
+              {language === 'he' ? 'אפס הכל' : 'Reset All'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
