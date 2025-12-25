@@ -23,6 +23,7 @@ interface ExerciseCardProps {
   onUpdate: (id: string, updates: Partial<Exercise>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onImageUpload: (id: string, file: File) => Promise<void>;
+  onMediaDelete: (id: string, mediaUrl: string) => Promise<void>;
   isSaving: boolean;
   isUploading: boolean;
 }
@@ -38,7 +39,8 @@ export const ExerciseCard = ({
   exercise, 
   onUpdate, 
   onDelete, 
-  onImageUpload, 
+  onImageUpload,
+  onMediaDelete,
   isSaving, 
   isUploading 
 }: ExerciseCardProps) => {
@@ -277,23 +279,41 @@ export const ExerciseCard = ({
                   </button>
                 </DialogTrigger>
                 
-                {/* Small overlay button to replace media */}
-                <label className="absolute top-2 right-2 bg-black/70 hover:bg-black/90 p-2 rounded-full cursor-pointer transition-colors z-10">
-                  {isUploading ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
-                  ) : (
-                    <Upload className="h-4 w-4 text-white" />
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*,video/mp4,video/quicktime,video/webm"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) onImageUpload(exercise.id, file);
+                {/* Overlay buttons for replace and delete */}
+                <div className="absolute top-2 right-2 flex gap-2 z-10">
+                  {/* Delete button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      if (exercise.image_url) {
+                        onMediaDelete(exercise.id, exercise.image_url);
+                      }
                     }}
-                  />
-                </label>
+                    className="bg-red-600/80 hover:bg-red-600 p-2 rounded-full cursor-pointer transition-colors"
+                  >
+                    <Trash2 className="h-4 w-4 text-white" />
+                  </button>
+                  
+                  {/* Replace button */}
+                  <label className="bg-black/70 hover:bg-black/90 p-2 rounded-full cursor-pointer transition-colors">
+                    {isUploading ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                    ) : (
+                      <Upload className="h-4 w-4 text-white" />
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*,video/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) onImageUpload(exercise.id, file);
+                      }}
+                    />
+                  </label>
+                </div>
               </div>
 
               {/* Fullscreen Modal Content */}
@@ -337,7 +357,7 @@ export const ExerciseCard = ({
               )}
               <input
                 type="file"
-                accept="image/*,video/mp4,video/quicktime,video/webm"
+                accept="image/*,video/*"
                 className="hidden"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
