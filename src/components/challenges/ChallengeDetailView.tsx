@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
-import { ArrowRight, ArrowLeft, RotateCcw, Share2, Trophy, Sparkles, Pencil, X } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ArrowRight, ArrowLeft, RotateCcw, Share2, Trophy, Sparkles, Pencil, X, Camera } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Challenge } from '@/hooks/useChallengesSupabase';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageSelector from '@/components/LanguageSelector';
 import { ChallengeWorkoutManager } from './ChallengeWorkoutManager';
+import { ChallengeShareCard } from './ChallengeShareCard';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,6 +50,8 @@ export const ChallengeDetailView = ({
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [lastWeekCompleted, setLastWeekCompleted] = useState(-1);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const shareCardRef = useRef<HTMLDivElement>(null);
   
   const BackIcon = isRtl ? ArrowLeft : ArrowRight;
 
@@ -113,6 +117,61 @@ ${t('completed')} ${progress.completed} / ${progress.total} ${t('workouts')}!`;
     }
   };
 
+  const handleShareAsImage = async () => {
+    if (!shareCardRef.current || isCapturing) return;
+
+    setIsCapturing(true);
+    try {
+      const canvas = await html2canvas(shareCardRef.current, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+      });
+
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          toast.error('שגיאה ביצירת התמונה');
+          setIsCapturing(false);
+          return;
+        }
+
+        const file = new File([blob], `${challenge.title}.png`, { type: 'image/png' });
+
+        // Try Web Share API with file
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: challenge.title,
+              text: generateShareText(),
+            });
+          } catch (err) {
+            if ((err as Error).name !== 'AbortError') {
+              // Fallback to download
+              downloadImage(canvas);
+            }
+          }
+        } else {
+          // Fallback to download
+          downloadImage(canvas);
+        }
+        setIsCapturing(false);
+      }, 'image/png');
+    } catch (err) {
+      console.error('Error capturing image:', err);
+      toast.error('שגיאה ביצירת התמונה');
+      setIsCapturing(false);
+    }
+  };
+
+  const downloadImage = (canvas: HTMLCanvasElement) => {
+    const link = document.createElement('a');
+    link.download = `${challenge.title}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    toast.success('התמונה הורדה בהצלחה!');
+  };
+
   const handleReset = () => {
     onReset();
     setShowResetDialog(false);
@@ -150,8 +209,25 @@ ${t('completed')} ${progress.completed} / ${progress.total} ${t('workouts')}!`;
     workoutIndex: i,
   }));
 
+  // Convert workouts for the share card
+  const workoutsForShareCard = challenge.workouts.map(w => ({
+    id: w.id,
+    text: w.text,
+    completed: w.completed,
+  }));
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#004D98] to-[#061E40] text-white" dir={isRtl ? 'rtl' : 'ltr'}>
+      {/* Hidden Share Card for Capture */}
+      <div className="fixed -left-[9999px] top-0 pointer-events-none">
+        <ChallengeShareCard
+          ref={shareCardRef}
+          title={challenge.title}
+          progress={progress}
+          workouts={workoutsForShareCard}
+          targetPerWeek={challenge.targetPerWeek}
+        />
+      </div>
       {/* Confetti Effect */}
       {showConfetti && (
         <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
@@ -206,6 +282,14 @@ ${t('completed')} ${progress.completed} / ${progress.total} ${t('workouts')}!`;
                 title={t('reset')}
               >
                 <RotateCcw className="w-5 h-5" />
+              </button>
+              <button
+                onClick={handleShareAsImage}
+                disabled={isCapturing}
+                className="p-2 rounded-lg bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition-colors disabled:opacity-50"
+                title="שתף כתמונה"
+              >
+                <Camera className="w-5 h-5" />
               </button>
               <button
                 onClick={handleShare}
