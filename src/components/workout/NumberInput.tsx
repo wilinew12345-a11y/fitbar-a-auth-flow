@@ -87,17 +87,18 @@ export const NumberInput = ({
         <button
           type="button"
           onMouseDown={(e) => {
-            onMouseDown(e);
+            e.stopPropagation();
+            e.preventDefault();
             startContinuousChange('increment', value);
           }}
           onMouseUp={stopContinuousChange}
           onMouseLeave={stopContinuousChangeNoSave}
           onTouchStart={(e) => {
+            e.stopPropagation();
             e.preventDefault();
             startContinuousChange('increment', value);
           }}
           onTouchEnd={stopContinuousChange}
-          onPointerDown={onPointerDown}
           className="relative flex items-center justify-center w-5 h-5 text-[#DB0030] hover:text-[#ff1a4d] active:text-[#b8002a] transition-colors select-none cursor-pointer flex-shrink-0
             before:content-[''] before:absolute before:inset-[-6px]"
         >
@@ -122,17 +123,18 @@ export const NumberInput = ({
           type="button"
           disabled={isAtMin}
           onMouseDown={(e) => {
-            onMouseDown(e);
+            e.stopPropagation();
+            e.preventDefault();
             if (!isAtMin) startContinuousChange('decrement', value);
           }}
           onMouseUp={stopContinuousChange}
           onMouseLeave={stopContinuousChangeNoSave}
           onTouchStart={(e) => {
+            e.stopPropagation();
             e.preventDefault();
             if (!isAtMin) startContinuousChange('decrement', value);
           }}
           onTouchEnd={stopContinuousChange}
-          onPointerDown={onPointerDown}
           className={`relative flex items-center justify-center w-5 h-5 transition-colors select-none flex-shrink-0
             before:content-[''] before:absolute before:inset-[-6px]
             ${isAtMin 
