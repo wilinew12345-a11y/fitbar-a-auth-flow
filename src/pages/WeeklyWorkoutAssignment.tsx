@@ -8,6 +8,7 @@ import FitBarcaLogo from "@/components/FitBarcaLogo";
 import LanguageSelector from "@/components/LanguageSelector";
 import TimePicker from "@/components/workout/TimePicker";
 import PlanSuccessModal from "@/components/workout/PlanSuccessModal";
+import SyncManagementCard from "@/components/workout/SyncManagementCard";
 import { Plus, Trash2, Pencil, X, Loader2, RotateCcw, ArrowRight, ArrowLeft } from "lucide-react";
 import MuscleRecommendation from "@/components/workout/MuscleRecommendation";
 import { generateAndDownloadCalendar } from "@/utils/calendarUtils";
@@ -481,6 +482,15 @@ const WeeklyWorkoutAssignment = () => {
           )}
         </div>
 
+        {/* Sync Management Card */}
+        <div className="mt-8 animate-slide-up-delay-2">
+          <SyncManagementCard
+            schedules={schedules}
+            getMuscleLabels={getMuscleLabels}
+            onDownloadCalendar={handleDownloadCalendar}
+          />
+        </div>
+
         {/* Continue Button */}
         {schedules.length > 0 && (
           <div className="mt-8 text-center animate-slide-up-delay-2">
@@ -503,9 +513,6 @@ const WeeklyWorkoutAssignment = () => {
       <PlanSuccessModal
         isOpen={showSuccessModal}
         onClose={handleSuccessModalClose}
-        schedules={schedules}
-        onDownloadCalendar={handleDownloadCalendar}
-        getMuscleLabels={getMuscleLabels}
       />
     </div>
   );
