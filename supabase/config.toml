@@ -2,3 +2,6 @@ project_id = "wdccaqibuxtgktejushz"
 
 [functions.ai-coach]
 verify_jwt = true
+
+[functions.send-workout-reminders]
+verify_jwt = false

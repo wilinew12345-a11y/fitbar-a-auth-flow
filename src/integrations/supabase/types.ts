@@ -132,6 +132,8 @@ export type Database = {
           id: string
           last_ai_usage_date: string | null
           last_name: string
+          preferred_language: string | null
+          push_subscription: Json | null
           updated_at: string
         }
         Insert: {
@@ -141,6 +143,8 @@ export type Database = {
           id: string
           last_ai_usage_date?: string | null
           last_name: string
+          preferred_language?: string | null
+          push_subscription?: Json | null
           updated_at?: string
         }
         Update: {
@@ -150,6 +154,8 @@ export type Database = {
           id?: string
           last_ai_usage_date?: string | null
           last_name?: string
+          preferred_language?: string | null
+          push_subscription?: Json | null
           updated_at?: string
         }
         Relationships: []

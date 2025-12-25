@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { getMotivationalMessage } from '@/services/motivationService';
 
 type Language = 'he' | 'en' | 'es' | 'ar';
@@ -13,22 +15,26 @@ interface UsePushNotificationsReturn {
   isSupported: boolean;
   permission: NotificationPermission | 'unsupported';
   isEnabled: boolean;
+  isSubscribed: boolean;
   requestPermission: () => Promise<boolean>;
   toggleNotifications: (enabled: boolean) => void;
   scheduleNotifications: (workouts: ScheduledWorkout[], language: Language) => void;
   showTestNotification: (muscles: string, language: Language) => void;
+  subscribeToPush: () => Promise<boolean>;
 }
 
 const STORAGE_KEY = 'fitbarca-notifications-enabled';
 const SCHEDULED_KEY = 'fitbarca-scheduled-notifications';
 
 export function usePushNotifications(): UsePushNotificationsReturn {
+  const { user } = useAuth();
   const [isSupported, setIsSupported] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>('unsupported');
   const [isEnabled, setIsEnabled] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
 
   useEffect(() => {
-    const supported = 'Notification' in window;
+    const supported = 'Notification' in window && 'serviceWorker' in navigator;
     setIsSupported(supported);
     
     if (supported) {
@@ -36,7 +42,38 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       const stored = localStorage.getItem(STORAGE_KEY);
       setIsEnabled(stored === 'true' && Notification.permission === 'granted');
     }
+    
+    // Check if already subscribed
+    checkSubscription();
   }, []);
+
+  const checkSubscription = async () => {
+    if (!('serviceWorker' in navigator)) return;
+    
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      setIsSubscribed(!!subscription);
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+    }
+  };
+
+  // Register service worker
+  const registerServiceWorker = async (): Promise<ServiceWorkerRegistration | null> => {
+    if (!('serviceWorker' in navigator)) return null;
+    
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js', {
+        scope: '/',
+      });
+      console.log('Service Worker registered:', registration);
+      return registration;
+    } catch (error) {
+      console.error('Service Worker registration failed:', error);
+      return null;
+    }
+  };
 
   const requestPermission = useCallback(async (): Promise<boolean> => {
     if (!isSupported) return false;
@@ -48,6 +85,10 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       if (result === 'granted') {
         setIsEnabled(true);
         localStorage.setItem(STORAGE_KEY, 'true');
+        
+        // Register service worker
+        await registerServiceWorker();
+        
         return true;
       }
       return false;
@@ -56,6 +97,50 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       return false;
     }
   }, [isSupported]);
+
+  // Subscribe to push notifications and save to Supabase
+  const subscribeToPush = useCallback(async (): Promise<boolean> => {
+    if (!isSupported || !user) return false;
+    
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      
+      // Check for existing subscription
+      let subscription = await registration.pushManager.getSubscription();
+      
+      if (!subscription) {
+        // For now, we'll store a placeholder since VAPID keys need to be set up
+        // In production, you would use actual VAPID keys here
+        console.log('Push subscription would be created here with VAPID keys');
+      }
+      
+      // Save subscription placeholder to Supabase (for the cron job to use)
+      const subscriptionData = subscription ? subscription.toJSON() : {
+        endpoint: 'local-notification',
+        keys: { auth: '', p256dh: '' },
+      };
+      
+      // Cast to unknown first, then to the expected type
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          push_subscription: subscriptionData as unknown as null,
+        })
+        .eq('id', user.id);
+      
+      if (error) {
+        console.error('Error saving subscription:', error);
+        return false;
+      }
+      
+      setIsSubscribed(true);
+      console.log('Push subscription saved to Supabase');
+      return true;
+    } catch (error) {
+      console.error('Error subscribing to push:', error);
+      return false;
+    }
+  }, [isSupported, user]);
 
   const toggleNotifications = useCallback((enabled: boolean) => {
     if (enabled && permission !== 'granted') {
@@ -77,13 +162,37 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 
     const message = getMotivationalMessage(muscles, language);
     
-    new Notification('FitBarça 💪', {
-      body: message,
-      icon: '/pwa-192x192.png',
-      badge: '/pwa-192x192.png',
-      tag: 'fitbarca-test',
-      requireInteraction: false,
-    });
+    // Try to use service worker notification first
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then((registration) => {
+        registration.showNotification('FitBarça 💪', {
+          body: message,
+          icon: '/pwa-192x192.png',
+          badge: '/pwa-192x192.png',
+          tag: 'fitbarca-test',
+          requireInteraction: false,
+          dir: language === 'he' || language === 'ar' ? 'rtl' : 'ltr',
+          lang: language,
+        });
+      }).catch(() => {
+        // Fallback to regular notification
+        new Notification('FitBarça 💪', {
+          body: message,
+          icon: '/pwa-192x192.png',
+          badge: '/pwa-192x192.png',
+          tag: 'fitbarca-test',
+          requireInteraction: false,
+        });
+      });
+    } else {
+      new Notification('FitBarça 💪', {
+        body: message,
+        icon: '/pwa-192x192.png',
+        badge: '/pwa-192x192.png',
+        tag: 'fitbarca-test',
+        requireInteraction: false,
+      });
+    }
   }, [isSupported, permission]);
 
   const scheduleNotifications = useCallback((workouts: ScheduledWorkout[], language: Language) => {
@@ -93,7 +202,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     localStorage.setItem(SCHEDULED_KEY, JSON.stringify({ workouts, language }));
 
     // For now, we'll use a simple approach with setInterval to check
-    // In production, this would be handled by a service worker
+    // In production, this would be handled by the server-side cron job
     const checkAndNotify = () => {
       const now = new Date();
       const currentDay = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()];
@@ -104,30 +213,46 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       if (todayWorkout) {
         const message = getMotivationalMessage(todayWorkout.muscles, language);
         
-        new Notification('FitBarça - זמן לאימון! 💪', {
-          body: message,
-          icon: '/pwa-192x192.png',
-          badge: '/pwa-192x192.png',
-          tag: `fitbarca-workout-${currentDay}`,
-          requireInteraction: true,
-        });
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.ready.then((registration) => {
+            registration.showNotification('FitBarça - זמן לאימון! 💪', {
+              body: message,
+              icon: '/pwa-192x192.png',
+              badge: '/pwa-192x192.png',
+              tag: `fitbarca-workout-${currentDay}`,
+              requireInteraction: true,
+              dir: language === 'he' || language === 'ar' ? 'rtl' : 'ltr',
+              lang: language,
+            });
+          });
+        } else {
+          new Notification('FitBarça - זמן לאימון! 💪', {
+            body: message,
+            icon: '/pwa-192x192.png',
+            badge: '/pwa-192x192.png',
+            tag: `fitbarca-workout-${currentDay}`,
+            requireInteraction: true,
+          });
+        }
       }
     };
 
     // Check every minute
-    const intervalId = setInterval(checkAndNotify, 60000);
+    const intervalId = window.setInterval(checkAndNotify, 60000);
     
     // Store interval ID for cleanup
-    (window as any).__fitbarca_notification_interval = intervalId;
+    (window as unknown as { __fitbarca_notification_interval: number }).__fitbarca_notification_interval = intervalId;
   }, [isSupported, permission, isEnabled]);
 
   return {
     isSupported,
     permission,
     isEnabled,
+    isSubscribed,
     requestPermission,
     toggleNotifications,
     scheduleNotifications,
     showTestNotification,
+    subscribeToPush,
   };
 }
