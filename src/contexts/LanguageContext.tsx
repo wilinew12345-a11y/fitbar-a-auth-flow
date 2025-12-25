@@ -118,7 +118,7 @@ export const translations = {
     aerobic: "אירובי",
     stretch: "מתח",
     // Weekly Setup
-    selectDayOfWeek: "1. בחר יום בשבוע:",
+    selectDayOfWeek: "בנה את תוכנית האימונים שלך",
     selectMuscleGroups: "2. סמן את קבוצות השרירים לאימון:",
     addToMyWorkouts: "הוסף לאימונים שלי",
     updateWorkout: "עדכן אימון",
