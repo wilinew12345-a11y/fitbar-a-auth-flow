@@ -16,6 +16,7 @@ interface UsePushNotificationsReturn {
   permission: NotificationPermission | 'unsupported';
   isEnabled: boolean;
   isSubscribed: boolean;
+  isPWAStandalone: boolean;
   requestPermission: () => Promise<boolean>;
   toggleNotifications: (enabled: boolean) => void;
   scheduleNotifications: (workouts: ScheduledWorkout[], language: Language) => void;
@@ -26,16 +27,33 @@ interface UsePushNotificationsReturn {
 const STORAGE_KEY = 'fitbarca-notifications-enabled';
 const SCHEDULED_KEY = 'fitbarca-scheduled-notifications';
 
+// Check if running as PWA in standalone mode
+function checkIsPWAStandalone(): boolean {
+  // Check display-mode media query (works on most browsers)
+  const displayModeStandalone = window.matchMedia('(display-mode: standalone)').matches;
+  
+  // Check iOS Safari standalone mode
+  const iosStandalone = (window.navigator as unknown as { standalone?: boolean }).standalone === true;
+  
+  // Check if running in Android TWA (Trusted Web Activity)
+  const referrer = document.referrer;
+  const isTWA = referrer.includes('android-app://');
+  
+  return displayModeStandalone || iosStandalone || isTWA;
+}
+
 export function usePushNotifications(): UsePushNotificationsReturn {
   const { user } = useAuth();
   const [isSupported, setIsSupported] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>('unsupported');
   const [isEnabled, setIsEnabled] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isPWAStandalone, setIsPWAStandalone] = useState(false);
 
   useEffect(() => {
     const supported = 'Notification' in window && 'serviceWorker' in navigator;
     setIsSupported(supported);
+    setIsPWAStandalone(checkIsPWAStandalone());
     
     if (supported) {
       setPermission(Notification.permission);
@@ -249,6 +267,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     permission,
     isEnabled,
     isSubscribed,
+    isPWAStandalone,
     requestPermission,
     toggleNotifications,
     scheduleNotifications,
