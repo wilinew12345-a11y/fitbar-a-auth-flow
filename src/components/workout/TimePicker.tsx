@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Clock } from 'lucide-react';
+import { Clock, Sun, Moon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -13,11 +13,12 @@ interface TimePickerProps {
 
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 const MINUTES = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'));
+const QUICK_TIMES = ['07:00', '09:00', '12:00', '17:00', '18:30', '20:00'];
 
 const ITEM_HEIGHT = 44;
 const VISIBLE_ITEMS = 5;
 const CONTAINER_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS;
-const PADDING = ITEM_HEIGHT * 2; // 2 items padding top/bottom
+const PADDING = ITEM_HEIGHT * 2;
 
 const TimePicker = ({ value, onChange, disabled = false, className = '' }: TimePickerProps) => {
   const [open, setOpen] = useState(false);
@@ -56,7 +57,6 @@ const TimePicker = ({ value, onChange, disabled = false, className = '' }: TimeP
     const clampedIndex = Math.max(0, Math.min(items.length - 1, centeredIndex));
     const newValue = items[clampedIndex];
     
-    // Snap to exact position
     ref.current.scrollTo({
       top: clampedIndex * ITEM_HEIGHT,
       behavior: 'smooth'
@@ -83,6 +83,36 @@ const TimePicker = ({ value, onChange, disabled = false, className = '' }: TimeP
     }, 100);
   }, [handleScrollEnd]);
 
+  // Scroll to specific hour
+  const scrollToHour = useCallback((targetHour: string) => {
+    const hourIndex = HOURS.indexOf(targetHour);
+    if (hourScrollRef.current && hourIndex >= 0) {
+      hourScrollRef.current.scrollTo({
+        top: hourIndex * ITEM_HEIGHT,
+        behavior: 'smooth'
+      });
+      onChange(`${targetHour}:${selectedMinute}`);
+    }
+  }, [selectedMinute, onChange]);
+
+  // Scroll to specific minute
+  const scrollToMinute = useCallback((targetMinute: string) => {
+    const minuteIndex = MINUTES.indexOf(targetMinute);
+    if (minuteScrollRef.current && minuteIndex >= 0) {
+      minuteScrollRef.current.scrollTo({
+        top: minuteIndex * ITEM_HEIGHT,
+        behavior: 'smooth'
+      });
+      onChange(`${selectedHour}:${targetMinute}`);
+    }
+  }, [selectedHour, onChange]);
+
+  // Handle quick time selection
+  const handleQuickTimeSelect = useCallback((time: string) => {
+    onChange(time);
+    setOpen(false);
+  }, [onChange]);
+
   const getItemOpacity = (index: number, selectedValue: string, items: string[]) => {
     const selectedIndex = items.indexOf(selectedValue);
     const distance = Math.abs(index - selectedIndex);
@@ -91,6 +121,11 @@ const TimePicker = ({ value, onChange, disabled = false, className = '' }: TimeP
     if (distance === 1) return 'text-white/50 text-base';
     return 'text-white/25 text-sm';
   };
+
+  // Determine if morning or evening is active
+  const hourNum = parseInt(selectedHour, 10);
+  const isMorningActive = hourNum >= 5 && hourNum <= 11;
+  const isEveningActive = hourNum >= 17 && hourNum <= 23;
 
   const displayTime = value || '09:00';
 
@@ -118,15 +153,53 @@ const TimePicker = ({ value, onChange, disabled = false, className = '' }: TimeP
       
       <PopoverContent 
         className={cn(
-          "w-[200px] p-0 overflow-hidden",
+          "w-[240px] p-0 overflow-hidden",
           "bg-zinc-950 border border-white/10",
           "shadow-2xl rounded-xl"
         )}
         align="start"
         sideOffset={8}
       >
+        {/* Day-Part Presets */}
+        <div className="flex gap-2 p-3 border-b border-white/10">
+          <Button
+            type="button"
+            onClick={() => scrollToHour('07')}
+            className={cn(
+              "flex-1 h-9 gap-1.5 text-sm font-medium",
+              "bg-gradient-to-r from-amber-500/20 to-orange-400/10",
+              "border border-amber-400/30 hover:border-amber-400/50",
+              "text-amber-200 hover:text-amber-100",
+              "transition-all duration-200",
+              isMorningActive && "ring-1 ring-amber-400/50 bg-amber-500/30"
+            )}
+            variant="ghost"
+          >
+            <Sun className="w-4 h-4" />
+            בוקר
+          </Button>
+          
+          <Button
+            type="button"
+            onClick={() => scrollToHour('18')}
+            className={cn(
+              "flex-1 h-9 gap-1.5 text-sm font-medium",
+              "bg-gradient-to-r from-purple-500/20 to-indigo-400/10",
+              "border border-purple-400/30 hover:border-purple-400/50",
+              "text-purple-200 hover:text-purple-100",
+              "transition-all duration-200",
+              isEveningActive && "ring-1 ring-purple-400/50 bg-purple-500/30"
+            )}
+            variant="ghost"
+          >
+            <Moon className="w-4 h-4" />
+            ערב
+          </Button>
+        </div>
+
+        {/* Scroll Wheels */}
         <div 
-          className="relative flex"
+          className="relative flex px-2"
           style={{ height: CONTAINER_HEIGHT }}
         >
           {/* Center selection highlighter */}
@@ -173,15 +246,14 @@ const TimePicker = ({ value, onChange, disabled = false, className = '' }: TimeP
               }}
               onScroll={() => handleScroll(hourScrollRef, HOURS, 'hour')}
             >
-              <style dangerouslySetInnerHTML={{ __html: `
-                .hide-scrollbar::-webkit-scrollbar { display: none; }
-              `}} />
               <div style={{ paddingTop: PADDING, paddingBottom: PADDING }}>
                 {HOURS.map((hour, index) => (
                   <div
                     key={hour}
+                    onClick={() => scrollToHour(hour)}
                     className={cn(
-                      "flex items-center justify-center transition-all duration-150",
+                      "flex items-center justify-center transition-all duration-150 cursor-pointer",
+                      "hover:bg-white/10 rounded mx-1",
                       getItemOpacity(index, selectedHour, HOURS)
                     )}
                     style={{ 
@@ -217,8 +289,10 @@ const TimePicker = ({ value, onChange, disabled = false, className = '' }: TimeP
                 {MINUTES.map((minute, index) => (
                   <div
                     key={minute}
+                    onClick={() => scrollToMinute(minute)}
                     className={cn(
-                      "flex items-center justify-center transition-all duration-150",
+                      "flex items-center justify-center transition-all duration-150 cursor-pointer",
+                      "hover:bg-white/10 rounded mx-1",
                       getItemOpacity(index, selectedMinute, MINUTES)
                     )}
                     style={{ 
@@ -232,6 +306,27 @@ const TimePicker = ({ value, onChange, disabled = false, className = '' }: TimeP
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Quick Time Chips */}
+        <div className="flex gap-1.5 p-3 border-t border-white/10 justify-center flex-wrap">
+          {QUICK_TIMES.map((time) => (
+            <button
+              key={time}
+              type="button"
+              onClick={() => handleQuickTimeSelect(time)}
+              className={cn(
+                "px-2.5 py-1 rounded-full text-xs font-medium",
+                "bg-white/5 border border-white/10",
+                "hover:bg-white/10 hover:border-white/20",
+                "text-white/70 hover:text-white",
+                "transition-all duration-150",
+                value === time && "bg-primary/20 border-primary/40 text-primary"
+              )}
+            >
+              {time}
+            </button>
+          ))}
         </div>
       </PopoverContent>
     </Popover>
