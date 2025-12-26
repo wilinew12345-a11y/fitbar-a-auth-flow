@@ -58,8 +58,9 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     
     if (supported) {
       setPermission(Notification.permission);
-      const stored = localStorage.getItem(STORAGE_KEY);
-      setIsEnabled(stored === 'true' && Notification.permission === 'granted');
+      // isEnabled now syncs with database in SyncManagementCard
+      // Only use localStorage as a fallback for permission state
+      setIsEnabled(Notification.permission === 'granted');
     }
     
     // Check if already subscribed
@@ -202,7 +203,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     }
     
     setIsEnabled(enabled);
-    localStorage.setItem(STORAGE_KEY, enabled.toString());
+    // No longer using localStorage as source of truth - DB handles persistence
     
     if (!enabled) {
       // Clear scheduled notifications

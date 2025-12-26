@@ -205,7 +205,8 @@ const SyncManagementCard = ({
 
   const text = translations[language as keyof typeof translations] || translations.he;
   const isLocked = schedules.length === 0;
-  const isNotificationActive = notificationsEnabled && isEnabled && isSubscribed;
+  // Database is the single source of truth for toggle visual state
+  const isNotificationActive = notificationsEnabled;
 
   // Update DB helper
   const updateProfileSettings = async (updates: { calendar_sync_enabled?: boolean; notifications_enabled?: boolean }) => {
