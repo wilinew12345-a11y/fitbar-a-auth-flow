@@ -326,13 +326,12 @@ const SyncManagementCard = ({
           const success = await updateProfileSettings({ notifications_enabled: true });
           if (success) {
             setNotificationsEnabled(true);
-            
-            if (schedules.length > 0) {
-              const muscles = getMuscleLabels(schedules[0].workout_types);
-              setTimeout(() => {
-                showTestNotification(muscles, language as Language);
-              }, 500);
-            }
+            toast({
+              title: language === 'he' ? 'התראות הופעלו' : 'Notifications enabled',
+              description: language === 'he' 
+                ? 'תקבל תזכורת 60 דקות לפני כל אימון' 
+                : 'You will receive a reminder 60 minutes before each workout',
+            });
           }
         }
       } catch (error) {
