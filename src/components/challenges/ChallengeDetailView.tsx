@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowRight, ArrowLeft, RotateCcw, Share2, Trophy, Sparkles, Pencil, X, Camera } from 'lucide-react';
+import { ArrowRight, ArrowLeft, RotateCcw, Share2, Trophy, Sparkles, Pencil, X, Camera, Trash2, Check } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
 import { Challenge } from '@/hooks/useChallengesSupabase';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageSelector from '@/components/LanguageSelector';
@@ -34,6 +35,7 @@ interface ChallengeDetailViewProps {
   onReset: () => void;
   onAddWorkout?: (workoutText: string) => void;
   onRemoveWorkout?: (workoutId: string) => void;
+  onUpdateWorkout?: (workoutId: string, newText: string) => void;
 }
 
 export const ChallengeDetailView = ({
@@ -44,6 +46,7 @@ export const ChallengeDetailView = ({
   onReset,
   onAddWorkout,
   onRemoveWorkout,
+  onUpdateWorkout,
 }: ChallengeDetailViewProps) => {
   const { t, isRtl } = useLanguage();
   const [showResetDialog, setShowResetDialog] = useState(false);
@@ -51,6 +54,9 @@ export const ChallengeDetailView = ({
   const [showConfetti, setShowConfetti] = useState(false);
   const [lastWeekCompleted, setLastWeekCompleted] = useState(-1);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [editingWorkoutId, setEditingWorkoutId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
+  const [deleteWorkoutId, setDeleteWorkoutId] = useState<string | null>(null);
   const shareCardRef = useRef<HTMLDivElement>(null);
   
   const BackIcon = isRtl ? ArrowLeft : ArrowRight;
@@ -191,6 +197,34 @@ ${t('completed')} ${progress.completed} / ${progress.total} ${t('workouts')}!`;
       onRemoveWorkout(workoutId);
       toast.success('אימון הוסר בהצלחה');
     }
+  };
+
+  // Inline edit handlers
+  const handleStartEdit = (workoutId: string, currentText: string) => {
+    setEditingWorkoutId(workoutId);
+    setEditingText(currentText);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingWorkoutId && onUpdateWorkout && editingText.trim()) {
+      onUpdateWorkout(editingWorkoutId, editingText.trim());
+      toast.success('האימון עודכן בהצלחה');
+    }
+    setEditingWorkoutId(null);
+    setEditingText('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingWorkoutId(null);
+    setEditingText('');
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteWorkoutId && onRemoveWorkout) {
+      onRemoveWorkout(deleteWorkoutId);
+      toast.success('האימון נמחק בהצלחה');
+    }
+    setDeleteWorkoutId(null);
   };
 
   // Group workouts by weeks
@@ -343,35 +377,88 @@ ${t('completed')} ${progress.completed} / ${progress.total} ${t('workouts')}!`;
               <div className="space-y-2">
                 {group.workouts.map((workout, workoutIndex) => {
                   const absoluteIndex = groupIndex * challenge.targetPerWeek + workoutIndex + 1;
+                  const isEditing = editingWorkoutId === workout.id;
                   
                   return (
                     <div
                       key={workout.id}
-                      className={`flex items-center gap-4 p-4 rounded-xl transition-all ${
+                      className={`flex items-center gap-3 p-4 rounded-xl transition-all ${
                         workout.completed
                           ? 'bg-green-500/10 border border-green-500/30'
-                          : 'bg-blue-900/40 border border-blue-800 hover:border-blue-700'
+                          : 'bg-blue-900/40 border border-teal-600/50 hover:border-teal-500/70'
                       }`}
                     >
                       <Checkbox
                         id={workout.id}
                         checked={workout.completed}
                         onCheckedChange={() => onToggleWorkout(workout.id)}
-                        className="w-6 h-6 border-2 border-blue-700 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                        className="w-6 h-6 border-2 border-blue-700 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500 shrink-0"
                       />
-                      <span className="text-xs font-mono text-blue-400 w-8">
+                      <span className="text-xs font-mono text-blue-400 w-8 shrink-0">
                         #{absoluteIndex}
                       </span>
-                      <label
-                        htmlFor={workout.id}
-                        className={`flex-1 cursor-pointer transition-all ${
-                          workout.completed
-                            ? 'text-green-400 line-through opacity-70'
-                            : 'text-white'
-                        }`}
-                      >
-                        {workout.text}
-                      </label>
+                      
+                      {isEditing ? (
+                        <div className="flex-1 flex items-center gap-2">
+                          <Input
+                            value={editingText}
+                            onChange={(e) => setEditingText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveEdit();
+                              if (e.key === 'Escape') handleCancelEdit();
+                            }}
+                            className="flex-1 bg-blue-950/50 border-teal-500 text-white text-sm"
+                            autoFocus
+                          />
+                          <button
+                            onClick={handleSaveEdit}
+                            className="p-1.5 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors"
+                            title="שמור"
+                          >
+                            <Check className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={handleCancelEdit}
+                            className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                            title="ביטול"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <label
+                            htmlFor={workout.id}
+                            className={`flex-1 cursor-pointer transition-all ${
+                              workout.completed
+                                ? 'text-green-400 line-through opacity-70'
+                                : 'text-white'
+                            }`}
+                          >
+                            {workout.text}
+                          </label>
+                          
+                          {/* Inline Edit & Delete Actions */}
+                          {onUpdateWorkout && onRemoveWorkout && (
+                            <div className={`flex items-center gap-1 ${isRtl ? 'mr-auto' : 'ml-auto'}`}>
+                              <button
+                                onClick={() => handleStartEdit(workout.id, workout.text)}
+                                className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors opacity-60 hover:opacity-100"
+                                title="ערוך אימון"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => setDeleteWorkoutId(workout.id)}
+                                className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors opacity-60 hover:opacity-100"
+                                title="מחק אימון"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
                   );
                 })}
@@ -413,6 +500,30 @@ ${t('completed')} ${progress.completed} / ${progress.total} ${t('workouts')}!`;
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Workout Confirmation Dialog */}
+      <AlertDialog open={!!deleteWorkoutId} onOpenChange={() => setDeleteWorkoutId(null)}>
+        <AlertDialogContent className="bg-[#061E40] border-blue-800 text-white" dir={isRtl ? 'rtl' : 'ltr'}>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl text-white">מחיקת אימון</AlertDialogTitle>
+            <AlertDialogDescription className="text-blue-200">
+              האם אתה בטוח שברצונך למחוק את האימון הזה? פעולה זו לא ניתנת לביטול.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex gap-3 sm:flex-row-reverse">
+            <AlertDialogCancel className="bg-blue-900/60 border-blue-800 text-white hover:bg-blue-800/60">
+              {t('cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              <Trash2 className={`w-4 h-4 ${isRtl ? 'ml-2' : 'mr-2'}`} />
+              מחק
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Reset Confirmation Dialog */}
       <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
