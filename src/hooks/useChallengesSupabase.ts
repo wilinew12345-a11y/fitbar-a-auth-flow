@@ -447,6 +447,48 @@ export const useChallengesSupabase = () => {
     },
   });
 
+  // Update workout text
+  const updateWorkoutMutation = useMutation({
+    mutationFn: async ({ workoutId, newText }: { workoutId: string; newText: string }) => {
+      const { error } = await supabase
+        .from('challenge_workouts')
+        .update({ workout_text: newText })
+        .eq('id', workoutId);
+
+      if (error) throw error;
+    },
+    onMutate: async ({ workoutId, newText }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['challenges', user?.id] });
+
+      // Snapshot previous value
+      const previousChallenges = queryClient.getQueryData<Challenge[]>(['challenges', user?.id]);
+
+      // Optimistically update
+      queryClient.setQueryData<Challenge[]>(['challenges', user?.id], (old) =>
+        old?.map(challenge => ({
+          ...challenge,
+          workouts: challenge.workouts.map(w =>
+            w.id === workoutId ? { ...w, text: newText } : w
+          ),
+        }))
+      );
+
+      return { previousChallenges };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousChallenges) {
+        queryClient.setQueryData(['challenges', user?.id], context.previousChallenges);
+      }
+      toast({
+        title: 'Error',
+        description: 'Failed to update workout. Please try again.',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const toggleWorkout = (challengeId: string, workoutId: string) => {
     const challenge = challenges.find(c => c.id === challengeId);
     const workout = challenge?.workouts.find(w => w.id === workoutId);
@@ -475,6 +517,10 @@ export const useChallengesSupabase = () => {
     removeWorkoutMutation.mutate(workoutId);
   };
 
+  const updateWorkoutText = (workoutId: string, newText: string) => {
+    updateWorkoutMutation.mutate({ workoutId, newText });
+  };
+
   const getProgress = (challenge: Challenge) => {
     const completed = challenge.workouts.filter(w => w.completed).length;
     const total = challenge.workouts.length;
@@ -492,6 +538,7 @@ export const useChallengesSupabase = () => {
     resetChallenge,
     addWorkoutToChallenge,
     removeWorkoutFromChallenge,
+    updateWorkoutText,
     getProgress,
   };
 };
