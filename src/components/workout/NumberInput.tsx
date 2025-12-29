@@ -8,6 +8,7 @@ interface NumberInputProps {
   onPointerDown: (e: React.PointerEvent) => void;
   onMouseDown: (e: React.MouseEvent) => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
+  onSave?: (newValue: number) => void; // NEW: trigger immediate save with new value
   min?: number;
   step?: number;
 }
@@ -20,6 +21,7 @@ export const NumberInput = ({
   onPointerDown,
   onMouseDown,
   onKeyDown,
+  onSave,
   min = 0,
   step = 1,
 }: NumberInputProps) => {
@@ -28,15 +30,18 @@ export const NumberInput = ({
     e.preventDefault();
     e.stopPropagation();
     const current = Number(value) || 0;
-    onChange(current + step);
+    const newValue = current + step;
+    onChange(newValue);
+    onSave?.(newValue); // Immediately save to DB
   };
 
   const handleDecrement = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const current = Number(value) || 0;
-    const newValue = current - step;
-    onChange(Math.max(min, newValue));
+    const newValue = Math.max(min, current - step);
+    onChange(newValue);
+    onSave?.(newValue); // Immediately save to DB
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

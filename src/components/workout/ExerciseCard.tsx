@@ -171,6 +171,7 @@ export const ExerciseCard = ({
               value={localValues.speed}
               onChange={(val) => setLocalValues(prev => ({ ...prev, speed: val }))}
               onBlur={() => handleBlur('speed')}
+              onSave={(newValue) => onUpdate(exercise.id, { speed: newValue })}
               onPointerDown={stopDragPropagation}
               onMouseDown={stopDragPropagation}
               onKeyDown={stopDragPropagation}
@@ -182,6 +183,7 @@ export const ExerciseCard = ({
               value={localValues.incline}
               onChange={(val) => setLocalValues(prev => ({ ...prev, incline: val }))}
               onBlur={() => handleBlur('incline')}
+              onSave={(newValue) => onUpdate(exercise.id, { incline: newValue })}
               onPointerDown={stopDragPropagation}
               onMouseDown={stopDragPropagation}
               onKeyDown={stopDragPropagation}
@@ -193,6 +195,7 @@ export const ExerciseCard = ({
               value={localValues.duration}
               onChange={(val) => setLocalValues(prev => ({ ...prev, duration: val }))}
               onBlur={() => handleBlur('duration')}
+              onSave={(newValue) => onUpdate(exercise.id, { duration: newValue })}
               onPointerDown={stopDragPropagation}
               onMouseDown={stopDragPropagation}
               onKeyDown={stopDragPropagation}
@@ -207,6 +210,7 @@ export const ExerciseCard = ({
               value={localValues.weight}
               onChange={(val) => setLocalValues(prev => ({ ...prev, weight: val }))}
               onBlur={() => handleBlur('weight')}
+              onSave={(newValue) => onUpdate(exercise.id, { weight: newValue })}
               onPointerDown={stopDragPropagation}
               onMouseDown={stopDragPropagation}
               onKeyDown={stopDragPropagation}
@@ -218,6 +222,7 @@ export const ExerciseCard = ({
               value={localValues.sets}
               onChange={(val) => setLocalValues(prev => ({ ...prev, sets: val }))}
               onBlur={() => handleBlur('sets')}
+              onSave={(newValue) => onUpdate(exercise.id, { sets: newValue })}
               onPointerDown={stopDragPropagation}
               onMouseDown={stopDragPropagation}
               onKeyDown={stopDragPropagation}
@@ -229,6 +234,7 @@ export const ExerciseCard = ({
               value={localValues.reps}
               onChange={(val) => setLocalValues(prev => ({ ...prev, reps: val }))}
               onBlur={() => handleBlur('reps')}
+              onSave={(newValue) => onUpdate(exercise.id, { reps: newValue })}
               onPointerDown={stopDragPropagation}
               onMouseDown={stopDragPropagation}
               onKeyDown={stopDragPropagation}

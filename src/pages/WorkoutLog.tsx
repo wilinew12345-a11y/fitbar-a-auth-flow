@@ -376,7 +376,7 @@ const WorkoutLog = () => {
       // Step 8: Update local state with fresh data
       setExercises(latestExercises);
 
-      toast({ title: t('workoutSaved') });
+      toast({ title: "האימון נשמר בהצלחה! 💪", description: `${historyRecords.length} תרגילים נשמרו להיסטוריה` });
     } catch (error) {
       console.error('Finish workout error:', error);
       toast({ 
