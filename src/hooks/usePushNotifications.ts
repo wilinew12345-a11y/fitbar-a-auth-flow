@@ -30,7 +30,8 @@ const SCHEDULED_KEY = 'fitbarca-scheduled-notifications';
 
 // VAPID public key - this must match the one stored in Supabase secrets
 // Generate new keys with: npx web-push generate-vapid-keys
-const VAPID_PUBLIC_KEY = 'BLBz-YrPiQ1M4ZN3DqLqFNzqHvZqJ8QIzNVhJ4X7YxKjVNmFjX8Y0nJlFhQmV6ZZdZiF3k8N4pZs2Q5JxVoF0v0';
+// Replace this with your actual VAPID public key from: npx web-push generate-vapid-keys
+const VAPID_PUBLIC_KEY = 'YOUR_PUBLIC_VAPID_KEY';
 
 // Convert VAPID key from base64 to Uint8Array
 function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
@@ -144,81 +145,68 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       console.log('Push not supported or no user');
       return false;
     }
-    
+
+    // Validate VAPID key is configured
+    if (VAPID_PUBLIC_KEY === 'YOUR_PUBLIC_VAPID_KEY') {
+      console.error('VAPID public key not configured. Please replace YOUR_PUBLIC_VAPID_KEY with your actual VAPID public key.');
+      return false;
+    }
+
     try {
-      // First, ensure service worker is registered and ready
+      console.log('Starting push subscription process...');
+      
+      // Get existing or register new service worker
       let registration = await navigator.serviceWorker.getRegistration();
+      
       if (!registration) {
+        console.log('No existing service worker, registering new one...');
         registration = await registerServiceWorker();
       }
+      
       if (!registration) {
-        console.error('Failed to register service worker');
+        console.error('Failed to get service worker registration');
         return false;
       }
-      
-      // Wait for service worker to be ready
+
+      console.log('Service worker registration:', registration);
+
+      // Wait for the service worker to be ready
       registration = await navigator.serviceWorker.ready;
-      
+      console.log('Service worker is ready');
+
       // Check for existing subscription
       let subscription = await registration.pushManager.getSubscription();
-      
+      console.log('Existing subscription:', subscription);
+
       if (!subscription) {
         console.log('Creating new push subscription with VAPID key...');
-        try {
-          subscription = await registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-          });
-          console.log('Push subscription created:', subscription.endpoint);
-        } catch (subscribeError) {
-          console.error('Failed to create push subscription:', subscribeError);
-          // Fall back to storing a placeholder if VAPID keys don't match
-          // This allows local notifications to still work
-          const placeholderData = {
-            endpoint: 'local-notification',
-            keys: { auth: '', p256dh: '' },
-          };
-          
-          const { error } = await supabase
-            .from('profiles')
-            .update({ 
-              push_subscription: placeholderData as unknown as null,
-            })
-            .eq('id', user.id);
-          
-          if (error) {
-            console.error('Error saving placeholder subscription:', error);
-            return false;
-          }
-          
-          setIsSubscribed(true);
-          console.log('Fallback: local notifications enabled');
-          return true;
-        }
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        });
+        console.log('Push subscription created:', subscription);
       }
-      
-      // Get the REAL subscription data with endpoint and keys
+
+      // Get the full subscription JSON with endpoint and keys (p256dh, auth)
       const subscriptionJSON = subscription.toJSON();
-      console.log('Saving real subscription to Supabase:', {
-        endpoint: subscriptionJSON.endpoint?.substring(0, 50) + '...',
-        hasKeys: !!subscriptionJSON.keys,
-      });
-      
-      // Save the REAL subscription to Supabase
+      console.log('Subscription JSON:', subscriptionJSON);
+
+      // Save to Supabase - both the subscription AND notifications_enabled flag
       const { error } = await supabase
         .from('profiles')
         .update({ 
           push_subscription: subscriptionJSON as unknown as null,
+          notifications_enabled: true,
         })
         .eq('id', user.id);
-      
+
       if (error) {
-        console.error('Error saving subscription to Supabase:', error);
-        return false;
+        console.error('Failed to save push subscription:', error);
+        throw error;
       }
-      
+
+      console.log('Push subscription saved to Supabase successfully');
       setIsSubscribed(true);
-      console.log('✅ Real push subscription saved to Supabase');
       return true;
     } catch (error) {
       console.error('Error subscribing to push:', error);
