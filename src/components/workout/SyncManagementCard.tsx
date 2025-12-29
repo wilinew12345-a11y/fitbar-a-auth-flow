@@ -397,6 +397,10 @@ const SyncManagementCard = ({
     if (!user) return;
     
     setIsSendingTest(true);
+    
+    // Wait 30 seconds before sending the notification
+    await new Promise(resolve => setTimeout(resolve, 30000));
+    
     try {
       // Call the edge function to send a test notification
       const { data, error } = await supabase.functions.invoke('send-workout-reminders', {
