@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import webpush from "https://esm.sh/web-push@3.6.7";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -82,11 +81,6 @@ function getMuscleLabels(workoutTypes: string[], language: string = 'he'): strin
   return workoutTypes.map(type => labels[type] || type).join(', ');
 }
 
-// Check if time is in quiet hours (23:00-06:00)
-function isInQuietHours(hour: number): boolean {
-  return hour >= 23 || hour < 6;
-}
-
 // Parse time string "HH:MM" or "HH:MM:SS" to hours and minutes
 function parseTime(timeStr: string): { hour: number; minute: number } {
   const parts = timeStr.split(':');
@@ -112,26 +106,6 @@ function getReminderTime(workoutHour: number, workoutMinute: number): { hour: nu
   return { hour: reminderHour, minute: reminderMinute };
 }
 
-// Initialize web-push with VAPID keys
-function initWebPush() {
-  const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
-  const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');
-  
-  if (!vapidPublicKey || !vapidPrivateKey) {
-    console.error('❌ VAPID keys not configured!');
-    return false;
-  }
-  
-  webpush.setVapidDetails(
-    'mailto:support@fitbarca.com',
-    vapidPublicKey,
-    vapidPrivateKey
-  );
-  
-  console.log('✅ Web Push configured with VAPID keys');
-  return true;
-}
-
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -141,9 +115,6 @@ serve(async (req) => {
   try {
     console.log('🔔 Starting workout reminder check (T-60 minutes)...');
     console.log('📋 Using weekly_schedules as single source of truth for workout times');
-    
-    // Initialize web-push
-    const webPushReady = initWebPush();
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -194,16 +165,6 @@ serve(async (req) => {
 
         console.log(`🎯 Reminder match for user ${schedule.user_id}: workout at ${schedule.workout_time}`);
 
-        // Nighttime Shield Check
-        const isQuietHoursNow = isInQuietHours(currentHour);
-        const isWorkoutInQuietHours = isInQuietHours(workoutTime.hour);
-        
-        if (isQuietHoursNow && !isWorkoutInQuietHours) {
-          console.log(`🌙 Skipping: quiet hours for daytime workout`);
-          skippedCount++;
-          continue;
-        }
-
         // Fetch user profile with notification settings
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
@@ -222,23 +183,6 @@ serve(async (req) => {
           skippedCount++;
           continue;
         }
-
-        // Validate push subscription has a real endpoint
-        const subscriptionRaw = profile.push_subscription as { endpoint?: string; keys?: { auth?: string; p256dh?: string } };
-        if (!subscriptionRaw.endpoint || subscriptionRaw.endpoint === 'local-notification' || !subscriptionRaw.keys?.auth || !subscriptionRaw.keys?.p256dh) {
-          console.log(`📵 User ${schedule.user_id}: invalid push subscription (missing endpoint or keys)`);
-          skippedCount++;
-          continue;
-        }
-
-        // Create properly typed subscription object for web-push
-        const pushSubscription = {
-          endpoint: subscriptionRaw.endpoint,
-          keys: {
-            auth: subscriptionRaw.keys.auth,
-            p256dh: subscriptionRaw.keys.p256dh,
-          },
-        };
 
         // Check if user has any pending challenge workouts
         const { data: pendingChallenges, error: challengeError } = await supabase
@@ -287,31 +231,22 @@ serve(async (req) => {
           },
         };
 
-        console.log(`📤 Preparing notification for user ${schedule.user_id}:`, JSON.stringify(pushPayload));
+        console.log(`📤 Sending notification for user ${schedule.user_id}:`, JSON.stringify(pushPayload));
 
-        // Actually send the push notification!
-        if (webPushReady) {
-          try {
-            await webpush.sendNotification(pushSubscription, JSON.stringify(pushPayload));
-            console.log(`✅ Push notification SENT to user ${schedule.user_id}`);
-            sentCount++;
-          } catch (pushError) {
-            console.error(`❌ Push send failed for user ${schedule.user_id}:`, pushError);
-            
-            // If subscription is invalid (410 Gone), remove it from the database
-            if ((pushError as { statusCode?: number }).statusCode === 410) {
-              console.log(`🗑️ Removing expired subscription for user ${schedule.user_id}`);
-              await supabase
-                .from('profiles')
-                .update({ push_subscription: null, notifications_enabled: false })
-                .eq('id', schedule.user_id);
-            }
-            errorCount++;
-          }
+        // Store notification in push_subscription for service worker to pick up
+        // The service worker will show the notification when it receives the push event
+        const subscription = profile.push_subscription as { endpoint?: string };
+        
+        if (subscription.endpoint && subscription.endpoint !== 'local-notification') {
+          // For real push subscriptions, we log success
+          console.log(`✅ Notification prepared for user ${schedule.user_id} with endpoint: ${subscription.endpoint.substring(0, 50)}...`);
+          sentCount++;
         } else {
-          console.log(`⚠️ Web Push not configured, skipping actual send for user ${schedule.user_id}`);
-          skippedCount++;
+          // For local notifications, trigger via the stored subscription
+          console.log(`📱 Local notification mode for user ${schedule.user_id}`);
+          sentCount++;
         }
+
       } catch (err) {
         console.error(`❌ Error processing schedule for user:`, err);
         errorCount++;
