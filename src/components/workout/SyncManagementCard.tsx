@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Bell, Info, Eye, CheckCircle2, Loader2 } from 'lucide-react';
+import { Calendar, Bell, Info, Eye, CheckCircle2, Loader2, Send } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -61,6 +61,9 @@ const translations = {
     syncDisabled: 'הסנכרון בוטל',
     notificationsDisabled: 'ההתראות בוטלו',
     saveFailed: 'שמירה נכשלה',
+    sendTest: 'שלח התראה לבדיקה',
+    testSent: 'התראה נשלחה!',
+    testFailed: 'שליחה נכשלה',
   },
   en: {
     title: 'Reminders & Sync Management',
@@ -86,6 +89,9 @@ const translations = {
     syncDisabled: 'Sync disabled',
     notificationsDisabled: 'Notifications disabled',
     saveFailed: 'Save failed',
+    sendTest: 'Send Test Notification',
+    testSent: 'Test notification sent!',
+    testFailed: 'Failed to send',
   },
   es: {
     title: 'Gestión de Recordatorios',
@@ -111,6 +117,9 @@ const translations = {
     syncDisabled: 'Sincronización desactivada',
     notificationsDisabled: 'Notificaciones desactivadas',
     saveFailed: 'Error al guardar',
+    sendTest: 'Enviar Notificación de Prueba',
+    testSent: '¡Notificación enviada!',
+    testFailed: 'Error al enviar',
   },
   ar: {
     title: 'إدارة التذكيرات والمزامنة',
@@ -136,6 +145,9 @@ const translations = {
     syncDisabled: 'تم تعطيل المزامنة',
     notificationsDisabled: 'تم تعطيل الإشعارات',
     saveFailed: 'فشل الحفظ',
+    sendTest: 'إرسال إشعار تجريبي',
+    testSent: 'تم إرسال الإشعار!',
+    testFailed: 'فشل الإرسال',
   },
 };
 
@@ -164,6 +176,7 @@ const SyncManagementCard = ({
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [isCalendarSyncing, setIsCalendarSyncing] = useState(false);
   const [isEnablingNotifications, setIsEnablingNotifications] = useState(false);
+  const [isSendingTest, setIsSendingTest] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showHelpGuide, setShowHelpGuide] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
@@ -380,6 +393,44 @@ const SyncManagementCard = ({
     setShowPreview(true);
   };
 
+  const handleSendTestNotification = async () => {
+    if (!user) return;
+    
+    setIsSendingTest(true);
+    try {
+      // Call the edge function to send a test notification
+      const { data, error } = await supabase.functions.invoke('send-workout-reminders', {
+        body: { testMode: true, userId: user.id },
+      });
+      
+      if (error) throw error;
+      
+      // Also show a local notification as immediate feedback
+      if ('Notification' in window && Notification.permission === 'granted') {
+        const muscleLabels = getPreviewMuscles();
+        new Notification(language === 'he' ? `היי! FitBarça 💪` : `Hey! FitBarça 💪`, {
+          body: language === 'he' 
+            ? `זוהי התראת בדיקה! אימון ${muscleLabels} מחכה לך 🎯` 
+            : `This is a test notification! ${muscleLabels} workout awaits 🎯`,
+          icon: '/pwa-192x192.png',
+          tag: 'test-notification',
+        });
+      }
+      
+      toast({
+        title: text.testSent,
+      });
+    } catch (error) {
+      console.error('Error sending test notification:', error);
+      toast({
+        title: text.testFailed,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSendingTest(false);
+    }
+  };
+
   const getPreviewMuscles = () => {
     if (schedules.length > 0) {
       return getMuscleLabels(schedules[0].workout_types);
@@ -529,8 +580,8 @@ const SyncManagementCard = ({
             )}
           </div>
 
-          {/* See Example Button */}
-          <div className="flex justify-center pt-2">
+          {/* See Example and Test Notification Buttons */}
+          <div className="flex flex-col sm:flex-row justify-center gap-2 pt-2">
             <Button
               variant="ghost"
               onClick={handleShowPreview}
@@ -542,6 +593,23 @@ const SyncManagementCard = ({
               <Eye className="h-4 w-4 mx-2" />
               {text.seeExample}
             </Button>
+            
+            {/* Send Test Notification Button - only show when notifications are enabled */}
+            {isNotificationActive && (
+              <Button
+                variant="ghost"
+                onClick={handleSendTestNotification}
+                disabled={isSendingTest}
+                className="text-green-400 hover:text-green-300 hover:bg-white/10"
+              >
+                {isSendingTest ? (
+                  <Loader2 className="h-4 w-4 mx-2 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4 mx-2" />
+                )}
+                {text.sendTest}
+              </Button>
+            )}
           </div>
         </div>
 
