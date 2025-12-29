@@ -28,6 +28,26 @@ interface UsePushNotificationsReturn {
 const STORAGE_KEY = 'fitbarca-notifications-enabled';
 const SCHEDULED_KEY = 'fitbarca-scheduled-notifications';
 
+// VAPID public key - this must match the one stored in Supabase secrets
+// Generate new keys with: npx web-push generate-vapid-keys
+const VAPID_PUBLIC_KEY = 'BLBz-YrPiQ1M4ZN3DqLqFNzqHvZqJ8QIzNVhJ4X7YxKjVNmFjX8Y0nJlFhQmV6ZZdZiF3k8N4pZs2Q5JxVoF0v0';
+
+// Convert VAPID key from base64 to Uint8Array
+function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray.buffer;
+}
+
 // Check if running as PWA in standalone mode
 function checkIsPWAStandalone(): boolean {
   // Check display-mode media query (works on most browsers)
@@ -52,7 +72,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
   const [isPWAStandalone, setIsPWAStandalone] = useState(false);
 
   useEffect(() => {
-    const supported = 'Notification' in window && 'serviceWorker' in navigator;
+    const supported = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
     setIsSupported(supported);
     setIsPWAStandalone(checkIsPWAStandalone());
     
@@ -118,43 +138,87 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     }
   }, [isSupported]);
 
-  // Subscribe to push notifications and save to Supabase
+  // Subscribe to push notifications and save REAL subscription to Supabase
   const subscribeToPush = useCallback(async (): Promise<boolean> => {
-    if (!isSupported || !user) return false;
+    if (!isSupported || !user) {
+      console.log('Push not supported or no user');
+      return false;
+    }
     
     try {
-      const registration = await navigator.serviceWorker.ready;
+      // First, ensure service worker is registered and ready
+      let registration = await navigator.serviceWorker.getRegistration();
+      if (!registration) {
+        registration = await registerServiceWorker();
+      }
+      if (!registration) {
+        console.error('Failed to register service worker');
+        return false;
+      }
+      
+      // Wait for service worker to be ready
+      registration = await navigator.serviceWorker.ready;
       
       // Check for existing subscription
       let subscription = await registration.pushManager.getSubscription();
       
       if (!subscription) {
-        // For now, we'll store a placeholder since VAPID keys need to be set up
-        // In production, you would use actual VAPID keys here
-        console.log('Push subscription would be created here with VAPID keys');
+        console.log('Creating new push subscription with VAPID key...');
+        try {
+          subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+          });
+          console.log('Push subscription created:', subscription.endpoint);
+        } catch (subscribeError) {
+          console.error('Failed to create push subscription:', subscribeError);
+          // Fall back to storing a placeholder if VAPID keys don't match
+          // This allows local notifications to still work
+          const placeholderData = {
+            endpoint: 'local-notification',
+            keys: { auth: '', p256dh: '' },
+          };
+          
+          const { error } = await supabase
+            .from('profiles')
+            .update({ 
+              push_subscription: placeholderData as unknown as null,
+            })
+            .eq('id', user.id);
+          
+          if (error) {
+            console.error('Error saving placeholder subscription:', error);
+            return false;
+          }
+          
+          setIsSubscribed(true);
+          console.log('Fallback: local notifications enabled');
+          return true;
+        }
       }
       
-      // Save subscription placeholder to Supabase (for the cron job to use)
-      const subscriptionData = subscription ? subscription.toJSON() : {
-        endpoint: 'local-notification',
-        keys: { auth: '', p256dh: '' },
-      };
+      // Get the REAL subscription data with endpoint and keys
+      const subscriptionJSON = subscription.toJSON();
+      console.log('Saving real subscription to Supabase:', {
+        endpoint: subscriptionJSON.endpoint?.substring(0, 50) + '...',
+        hasKeys: !!subscriptionJSON.keys,
+      });
       
-      // Cast to unknown first, then to the expected type
+      // Save the REAL subscription to Supabase
       const { error } = await supabase
         .from('profiles')
         .update({ 
-          push_subscription: subscriptionData as unknown as null,
+          push_subscription: subscriptionJSON as unknown as null,
         })
         .eq('id', user.id);
       
       if (error) {
-        console.error('Error saving subscription:', error);
+        console.error('Error saving subscription to Supabase:', error);
         return false;
       }
       
       setIsSubscribed(true);
-      console.log('Push subscription saved to Supabase');
+      console.log('✅ Real push subscription saved to Supabase');
       return true;
     } catch (error) {
       console.error('Error subscribing to push:', error);
@@ -173,6 +237,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         const subscription = await registration.pushManager.getSubscription();
         if (subscription) {
           await subscription.unsubscribe();
+          console.log('Unsubscribed from push manager');
         }
       }
       
@@ -188,7 +253,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       }
       
       setIsSubscribed(false);
-      console.log('Push subscription removed');
+      console.log('Push subscription removed from Supabase');
       return true;
     } catch (error) {
       console.error('Error unsubscribing from push:', error);
