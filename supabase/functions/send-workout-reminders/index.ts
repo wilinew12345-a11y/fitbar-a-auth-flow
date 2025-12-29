@@ -119,6 +119,7 @@ serve(async (req) => {
 
   try {
     console.log('🔔 Starting workout reminder check (T-60 minutes)...');
+    console.log('📋 Using weekly_schedules as single source of truth for workout times');
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -138,6 +139,7 @@ serve(async (req) => {
     console.log(`⏰ Israel time: ${currentHour}:${String(currentMinute).padStart(2, '0')}, Day: ${currentDay}`);
 
     // Fetch all schedules for today that have a workout time set
+    // weekly_schedules is the SINGLE SOURCE OF TRUTH for workout times
     const { data: schedules, error: schedulesError } = await supabase
       .from('weekly_schedules')
       .select('user_id, workout_types, workout_time, day_of_week')
@@ -151,32 +153,11 @@ serve(async (req) => {
 
     console.log(`📅 Found ${schedules?.length || 0} weekly schedules for ${currentDay}`);
 
-    // Also fetch challenge workouts with workout_time set
-    const { data: challengeWorkouts, error: challengeError } = await supabase
-      .from('challenge_workouts')
-      .select(`
-        id,
-        workout_text,
-        workout_time,
-        challenge:challenges!inner (
-          user_id,
-          title
-        )
-      `)
-      .eq('is_completed', false)
-      .not('workout_time', 'is', null);
-
-    if (challengeError) {
-      console.error('❌ Error fetching challenge workouts:', challengeError);
-    }
-
-    console.log(`🏆 Found ${challengeWorkouts?.length || 0} pending challenge workouts with time set`);
-
     let sentCount = 0;
     let skippedCount = 0;
     let errorCount = 0;
 
-    // Process weekly schedules
+    // Process weekly schedules - this is the ONLY source of workout times now
     for (const schedule of schedules || []) {
       try {
         const workoutTime = parseTime(schedule.workout_time);
@@ -187,7 +168,7 @@ serve(async (req) => {
           continue; // Not time for this reminder yet
         }
 
-        console.log(`🎯 Weekly reminder match for user ${schedule.user_id}: workout at ${schedule.workout_time}`);
+        console.log(`🎯 Reminder match for user ${schedule.user_id}: workout at ${schedule.workout_time}`);
 
         // Nighttime Shield Check
         const isQuietHoursNow = isInQuietHours(currentHour);
@@ -202,26 +183,56 @@ serve(async (req) => {
         // Fetch user profile with notification settings
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('push_subscription, preferred_language, notifications_enabled')
+          .select('push_subscription, preferred_language, notifications_enabled, first_name')
           .eq('id', schedule.user_id)
           .single();
 
         if (profileError || !profile?.notifications_enabled) {
+          console.log(`🔕 User ${schedule.user_id}: notifications disabled or profile error`);
           skippedCount++;
           continue;
         }
 
         if (!profile?.push_subscription) {
+          console.log(`📵 User ${schedule.user_id}: no push subscription`);
           skippedCount++;
           continue;
         }
 
+        // Check if user has any pending challenge workouts
+        const { data: pendingChallenges, error: challengeError } = await supabase
+          .from('challenge_workouts')
+          .select(`
+            id,
+            workout_text,
+            challenges!inner (
+              user_id,
+              title
+            )
+          `)
+          .eq('is_completed', false)
+          .eq('challenges.user_id', schedule.user_id);
+
+        if (challengeError) {
+          console.log(`⚠️ Error fetching challenges for user ${schedule.user_id}:`, challengeError.message);
+        }
+
+        const hasPendingChallenges = pendingChallenges && pendingChallenges.length > 0;
+        console.log(`🏆 User ${schedule.user_id} has ${pendingChallenges?.length || 0} pending challenge workouts`);
+
         const language = profile.preferred_language || 'he';
         const muscleLabels = getMuscleLabels(schedule.workout_types || [], language);
-        const message = getMotivationalMessage(muscleLabels, language);
+        
+        // Build notification message
+        let message = getMotivationalMessage(muscleLabels, language);
+        if (hasPendingChallenges) {
+          message += language === 'he' ? ' 🏆 יש לך גם אתגר פתוח!' : ' 🏆 You also have an open challenge!';
+        }
 
         const pushPayload = {
-          title: language === 'he' ? 'FitBarça 💪' : 'FitBarça 💪',
+          title: profile.first_name 
+            ? (language === 'he' ? `היי ${profile.first_name}! FitBarça 💪` : `Hey ${profile.first_name}! FitBarça 💪`)
+            : 'FitBarça 💪',
           body: message,
           icon: '/pwa-192x192.png',
           badge: '/pwa-192x192.png',
@@ -231,84 +242,14 @@ serve(async (req) => {
             day: currentDay,
             muscles: muscleLabels,
             workoutTime: schedule.workout_time,
+            hasChallenges: hasPendingChallenges,
           },
         };
 
-        console.log(`📤 Weekly notification for user ${schedule.user_id}:`, JSON.stringify(pushPayload));
+        console.log(`📤 Notification for user ${schedule.user_id}:`, JSON.stringify(pushPayload));
         sentCount++;
       } catch (err) {
-        console.error(`❌ Error processing weekly schedule:`, err);
-        errorCount++;
-      }
-    }
-
-    // Process challenge workouts
-    for (const workout of challengeWorkouts || []) {
-      try {
-        if (!workout.workout_time) continue;
-        
-        const workoutTime = parseTime(workout.workout_time);
-        const reminderTime = getReminderTime(workoutTime.hour, workoutTime.minute);
-        
-        if (currentHour !== reminderTime.hour || currentMinute !== reminderTime.minute) {
-          continue;
-        }
-
-        const userId = (workout.challenge as any)?.user_id;
-        const challengeTitle = (workout.challenge as any)?.title || 'אתגר';
-
-        console.log(`🏆 Challenge reminder match for user ${userId}: "${workout.workout_text}" at ${workout.workout_time}`);
-
-        // Nighttime Shield Check
-        const isQuietHoursNow = isInQuietHours(currentHour);
-        const isWorkoutInQuietHours = isInQuietHours(workoutTime.hour);
-        
-        if (isQuietHoursNow && !isWorkoutInQuietHours) {
-          console.log(`🌙 Skipping challenge: quiet hours for daytime workout`);
-          skippedCount++;
-          continue;
-        }
-
-        // Fetch user profile
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('push_subscription, preferred_language, notifications_enabled')
-          .eq('id', userId)
-          .single();
-
-        if (profileError || !profile?.notifications_enabled) {
-          skippedCount++;
-          continue;
-        }
-
-        if (!profile?.push_subscription) {
-          skippedCount++;
-          continue;
-        }
-
-        const language = profile.preferred_language || 'he';
-
-        const pushPayload = {
-          title: 'FitBarça 💪',
-          body: language === 'he' 
-            ? `האימון שלך (${workout.workout_text}) מתחיל בעוד שעה! יאללה אלוף, תתחיל להתארגן 🏆`
-            : `Your workout (${workout.workout_text}) starts in 1 hour! Let's go champ! 🏆`,
-          icon: '/pwa-192x192.png',
-          badge: '/pwa-192x192.png',
-          tag: `challenge-reminder-${workout.id}`,
-          data: {
-            type: 'challenge-reminder',
-            workoutId: workout.id,
-            challengeTitle,
-            workoutText: workout.workout_text,
-            workoutTime: workout.workout_time,
-          },
-        };
-
-        console.log(`📤 Challenge notification for user ${userId}:`, JSON.stringify(pushPayload));
-        sentCount++;
-      } catch (err) {
-        console.error(`❌ Error processing challenge workout:`, err);
+        console.error(`❌ Error processing schedule for user:`, err);
         errorCount++;
       }
     }

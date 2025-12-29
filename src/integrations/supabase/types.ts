@@ -21,10 +21,8 @@ export type Database = {
           created_at: string
           id: string
           is_completed: boolean
-          scheduled_date: string | null
           workout_index: number
           workout_text: string
-          workout_time: string | null
         }
         Insert: {
           challenge_id: string
@@ -32,10 +30,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_completed?: boolean
-          scheduled_date?: string | null
           workout_index: number
           workout_text: string
-          workout_time?: string | null
         }
         Update: {
           challenge_id?: string
@@ -43,10 +39,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_completed?: boolean
-          scheduled_date?: string | null
           workout_index?: number
           workout_text?: string
-          workout_time?: string | null
         }
         Relationships: [
           {
