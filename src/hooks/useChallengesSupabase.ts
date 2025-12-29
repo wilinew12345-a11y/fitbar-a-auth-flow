@@ -8,6 +8,7 @@ export interface Workout {
   text: string;
   completed: boolean;
   workoutIndex: number;
+  workoutTime?: string | null;
 }
 
 export interface Challenge {
@@ -217,6 +218,7 @@ async function enrichChallengesWithWorkouts(challengesData: any[]): Promise<Chal
         text: w.workout_text,
         completed: w.is_completed,
         workoutIndex: w.workout_index,
+        workoutTime: w.workout_time,
       })),
   }));
 }
@@ -447,17 +449,22 @@ export const useChallengesSupabase = () => {
     },
   });
 
-  // Update workout text
+  // Update workout text and optionally workout_time
   const updateWorkoutMutation = useMutation({
-    mutationFn: async ({ workoutId, newText }: { workoutId: string; newText: string }) => {
+    mutationFn: async ({ workoutId, newText, workoutTime }: { workoutId: string; newText: string; workoutTime?: string | null }) => {
+      const updateData: { workout_text: string; workout_time?: string | null } = { workout_text: newText };
+      if (workoutTime !== undefined) {
+        updateData.workout_time = workoutTime;
+      }
+      
       const { error } = await supabase
         .from('challenge_workouts')
-        .update({ workout_text: newText })
+        .update(updateData)
         .eq('id', workoutId);
 
       if (error) throw error;
     },
-    onMutate: async ({ workoutId, newText }) => {
+    onMutate: async ({ workoutId, newText, workoutTime }) => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['challenges', user?.id] });
 
@@ -469,7 +476,7 @@ export const useChallengesSupabase = () => {
         old?.map(challenge => ({
           ...challenge,
           workouts: challenge.workouts.map(w =>
-            w.id === workoutId ? { ...w, text: newText } : w
+            w.id === workoutId ? { ...w, text: newText, workoutTime: workoutTime !== undefined ? workoutTime : w.workoutTime } : w
           ),
         }))
       );
@@ -517,8 +524,8 @@ export const useChallengesSupabase = () => {
     removeWorkoutMutation.mutate(workoutId);
   };
 
-  const updateWorkoutText = (workoutId: string, newText: string) => {
-    updateWorkoutMutation.mutate({ workoutId, newText });
+  const updateWorkoutText = (workoutId: string, newText: string, workoutTime?: string | null) => {
+    updateWorkoutMutation.mutate({ workoutId, newText, workoutTime });
   };
 
   const getProgress = (challenge: Challenge) => {
