@@ -14,6 +14,7 @@ interface TimePickerProps {
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 const MINUTES = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'));
 const QUICK_TIMES = ['07:00', '09:00', '12:00', '17:00', '18:30', '20:00'];
+const DEFAULT_TIME = '09:00';
 
 const ITEM_HEIGHT = 44;
 const VISIBLE_ITEMS = 5;
@@ -22,28 +23,42 @@ const PADDING = ITEM_HEIGHT * 2;
 
 const TimePicker = ({ value, onChange, disabled = false, className = '' }: TimePickerProps) => {
   const [open, setOpen] = useState(false);
-  const [selectedHour, selectedMinute] = value ? value.split(':') : ['09', '00'];
+  
+  // Default to 09:00 if value is empty
+  const effectiveValue = value || DEFAULT_TIME;
+  const [selectedHour, selectedMinute] = effectiveValue.split(':');
   
   const hourScrollRef = useRef<HTMLDivElement>(null);
   const minuteScrollRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Scroll to selected values when popover opens
+  // Scroll to position helper
+  const scrollToPosition = useCallback((hourValue: string, minuteValue: string, smooth = true) => {
+    const hourIndex = HOURS.indexOf(hourValue);
+    const minuteIndex = MINUTES.indexOf(minuteValue);
+    
+    if (hourScrollRef.current && hourIndex >= 0) {
+      hourScrollRef.current.scrollTo({
+        top: hourIndex * ITEM_HEIGHT,
+        behavior: smooth ? 'smooth' : 'auto'
+      });
+    }
+    if (minuteScrollRef.current && minuteIndex >= 0) {
+      minuteScrollRef.current.scrollTo({
+        top: minuteIndex * ITEM_HEIGHT,
+        behavior: smooth ? 'smooth' : 'auto'
+      });
+    }
+  }, []);
+
+  // Scroll to selected values when popover opens or value changes
   useEffect(() => {
     if (open) {
       setTimeout(() => {
-        const hourIndex = HOURS.indexOf(selectedHour);
-        const minuteIndex = MINUTES.indexOf(selectedMinute);
-        
-        if (hourScrollRef.current && hourIndex >= 0) {
-          hourScrollRef.current.scrollTop = hourIndex * ITEM_HEIGHT;
-        }
-        if (minuteScrollRef.current && minuteIndex >= 0) {
-          minuteScrollRef.current.scrollTop = minuteIndex * ITEM_HEIGHT;
-        }
+        scrollToPosition(selectedHour, selectedMinute, false);
       }, 50);
     }
-  }, [open, selectedHour, selectedMinute]);
+  }, [open, selectedHour, selectedMinute, scrollToPosition]);
 
   const handleScrollEnd = useCallback((
     ref: React.RefObject<HTMLDivElement>,
@@ -109,9 +124,11 @@ const TimePicker = ({ value, onChange, disabled = false, className = '' }: TimeP
 
   // Handle quick time selection
   const handleQuickTimeSelect = useCallback((time: string) => {
+    const [hour, minute] = time.split(':');
     onChange(time);
-    setOpen(false);
-  }, [onChange]);
+    // Animate wheels to the selected time
+    scrollToPosition(hour, minute, true);
+  }, [onChange, scrollToPosition]);
 
   const getItemOpacity = (index: number, selectedValue: string, items: string[]) => {
     const selectedIndex = items.indexOf(selectedValue);
@@ -127,7 +144,7 @@ const TimePicker = ({ value, onChange, disabled = false, className = '' }: TimeP
   const isMorningActive = hourNum >= 5 && hourNum <= 11;
   const isEveningActive = hourNum >= 17 && hourNum <= 23;
 
-  const displayTime = value || '09:00';
+  const displayTime = effectiveValue;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -197,24 +214,21 @@ const TimePicker = ({ value, onChange, disabled = false, className = '' }: TimeP
           </Button>
         </div>
 
-        {/* Scroll Wheels */}
+        {/* Scroll Wheels - dir="ltr" fixes RTL column order */}
         <div 
+          dir="ltr"
           className="relative flex px-2"
           style={{ height: CONTAINER_HEIGHT }}
         >
-          {/* Center selection highlighter */}
+          {/* Center selection highlighter - enhanced iOS-style */}
           <div 
-            className="absolute left-2 right-2 pointer-events-none z-20"
+            className="absolute left-2 right-2 pointer-events-none z-20 border-t border-b border-white/30 bg-white/10 rounded-lg"
             style={{ 
               top: '50%', 
               height: ITEM_HEIGHT,
               transform: 'translateY(-50%)'
             }}
-          >
-            <div className="absolute top-0 left-0 right-0 h-px bg-white/20" />
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-white/20" />
-            <div className="absolute inset-0 bg-white/5 rounded-lg" />
-          </div>
+          />
 
           {/* Top fade gradient */}
           <div 
@@ -242,7 +256,9 @@ const TimePicker = ({ value, onChange, disabled = false, className = '' }: TimeP
               style={{ 
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none',
-                scrollSnapType: 'y mandatory'
+                scrollSnapType: 'y mandatory',
+                touchAction: 'pan-y',
+                WebkitOverflowScrolling: 'touch'
               }}
               onScroll={() => handleScroll(hourScrollRef, HOURS, 'hour')}
             >
@@ -281,7 +297,9 @@ const TimePicker = ({ value, onChange, disabled = false, className = '' }: TimeP
               style={{ 
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none',
-                scrollSnapType: 'y mandatory'
+                scrollSnapType: 'y mandatory',
+                touchAction: 'pan-y',
+                WebkitOverflowScrolling: 'touch'
               }}
               onScroll={() => handleScroll(minuteScrollRef, MINUTES, 'minute')}
             >
@@ -321,7 +339,7 @@ const TimePicker = ({ value, onChange, disabled = false, className = '' }: TimeP
                 "hover:bg-white/10 hover:border-white/20",
                 "text-white/70 hover:text-white",
                 "transition-all duration-150",
-                value === time && "bg-primary/20 border-primary/40 text-primary"
+                effectiveValue === time && "bg-primary/20 border-primary/40 text-primary"
               )}
             >
               {time}
