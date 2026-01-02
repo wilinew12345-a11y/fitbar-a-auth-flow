@@ -46,6 +46,9 @@ const WorkoutLog = () => {
 
   // Track pending save operations to ensure they complete before finishing workout
   const pendingSavesRef = useRef<Map<string, Promise<void>>>(new Map());
+  
+  // Track which exercise IDs have been modified during this session
+  const modifiedExerciseIds = useRef<Set<string>>(new Set());
 
   const [newExercise, setNewExercise] = useState({
     name: '',
@@ -143,6 +146,7 @@ const WorkoutLog = () => {
       toast({ title: 'Error adding exercise', variant: 'destructive' });
     } else {
       setExercises([data, ...exercises]);
+      modifiedExerciseIds.current.add(data.id); // Mark as modified for dirty tracking
       setNewExercise({ name: '', body_part: '' });
       toast({ title: t('exerciseAdded') });
     }
@@ -160,6 +164,8 @@ const WorkoutLog = () => {
     if ('incline' in updates) sanitizedUpdates.incline = Number(updates.incline) || 0;
     if ('duration' in updates) sanitizedUpdates.duration = Number(updates.duration) || 0;
 
+    // Mark this exercise as modified for dirty tracking
+    modifiedExerciseIds.current.add(id);
     console.log('Updating exercise:', id, 'with:', sanitizedUpdates);
     
     // Create the save promise and track it
@@ -306,8 +312,9 @@ const WorkoutLog = () => {
   };
 
   const handleFinishWorkout = async () => {
-    if (exercises.length === 0) {
-      toast({ title: t('noExercisesToSave'), variant: 'destructive' });
+    // Early exit if no modifications were made
+    if (modifiedExerciseIds.current.size === 0) {
+      toast({ title: t('noChangesToSave') });
       return;
     }
 
@@ -332,51 +339,106 @@ const WorkoutLog = () => {
       // Step 4: Additional delay to ensure DB is consistent
       await new Promise(resolve => setTimeout(resolve, 200));
 
-      // Step 5: Fetch the absolute latest data from database
-      const { data: latestExercises, error: fetchError } = await supabase
-        .from('exercises')
-        .select('*')
-        .eq('user_id', user!.id);
+      // Step 5: Filter to only modified exercises
+      const exercisesToSave = exercises.filter(ex => 
+        modifiedExerciseIds.current.has(ex.id)
+      );
 
-      if (fetchError) {
-        console.error('Error fetching exercises:', fetchError);
-        throw new Error('Error loading data');
-      }
-
-      if (!latestExercises || latestExercises.length === 0) {
-        toast({ title: t('noExercisesToSave'), variant: 'destructive' });
+      if (exercisesToSave.length === 0) {
+        toast({ title: t('noChangesToSave') });
         setIsFinishing(false);
         return;
       }
 
-      console.log('Saving workout history with data:', latestExercises);
+      console.log('Saving modified exercises:', exercisesToSave.length);
 
-      // Step 6: Create history records including cardio metrics
-      const historyRecords = latestExercises.map(ex => ({
-        user_id: user!.id,
-        exercise_name: ex.name,
-        weight: Number(ex.weight) || 0,
-        sets: Number(ex.sets) || 0,
-        reps: Number(ex.reps) || 0,
-        speed: Number(ex.speed) || 0,
-        incline: Number(ex.incline) || 0,
-        duration: Number(ex.duration) || 0,
-      }));
+      // Step 6: Query today's existing workout_history
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
 
-      // Step 7: Insert into workout_history
-      const { error: insertError } = await supabase
+      const { data: existingHistory, error: historyFetchError } = await supabase
         .from('workout_history')
-        .insert(historyRecords);
+        .select('id, exercise_name')
+        .eq('user_id', user!.id)
+        .gte('created_at', startOfDay.toISOString());
 
-      if (insertError) {
-        console.error('Error inserting workout history:', insertError);
-        throw new Error('Error saving workout');
+      if (historyFetchError) {
+        console.error('Error fetching existing history:', historyFetchError);
+        throw new Error('Error loading history');
       }
 
-      // Step 8: Update local state with fresh data
-      setExercises(latestExercises);
+      // Create lookup map: exercise_name -> history record id
+      const existingHistoryMap = new Map(
+        (existingHistory || []).map(h => [h.exercise_name, h.id])
+      );
 
-      toast({ title: "האימון נשמר בהצלחה! 💪", description: `${historyRecords.length} תרגילים נשמרו להיסטוריה` });
+      // Step 7: Separate into updates vs inserts
+      const updateOperations: Promise<unknown>[] = [];
+      const insertRecords: {
+        user_id: string;
+        exercise_name: string;
+        weight: number;
+        sets: number;
+        reps: number;
+        speed: number;
+        incline: number;
+        duration: number;
+      }[] = [];
+
+      for (const ex of exercisesToSave) {
+        const historyRecord = {
+          user_id: user!.id,
+          exercise_name: ex.name,
+          weight: Number(ex.weight) || 0,
+          sets: Number(ex.sets) || 0,
+          reps: Number(ex.reps) || 0,
+          speed: Number(ex.speed) || 0,
+          incline: Number(ex.incline) || 0,
+          duration: Number(ex.duration) || 0,
+        };
+
+        const existingId = existingHistoryMap.get(ex.name);
+
+        if (existingId) {
+          // Case A: UPDATE existing record (wrap in async to make it a proper Promise)
+          updateOperations.push(
+            (async () => {
+              await supabase
+                .from('workout_history')
+                .update(historyRecord)
+                .eq('id', existingId);
+            })()
+          );
+        } else {
+          // Case B: INSERT new record
+          insertRecords.push(historyRecord);
+        }
+      }
+
+      // Step 8: Execute all operations
+      if (updateOperations.length > 0) {
+        await Promise.all(updateOperations);
+      }
+
+      if (insertRecords.length > 0) {
+        const { error: insertError } = await supabase
+          .from('workout_history')
+          .insert(insertRecords);
+
+        if (insertError) {
+          console.error('Error inserting workout history:', insertError);
+          throw new Error('Error saving workout');
+        }
+      }
+
+      // Step 9: Clear the dirty tracking set
+      modifiedExerciseIds.current.clear();
+
+      const totalSaved = updateOperations.length + insertRecords.length;
+      toast({ 
+        title: "האימון נשמר בהצלחה! 💪", 
+        description: `${totalSaved} תרגילים נשמרו (${updateOperations.length} עודכנו, ${insertRecords.length} נוספו)` 
+      });
     } catch (error) {
       console.error('Finish workout error:', error);
       toast({ 
