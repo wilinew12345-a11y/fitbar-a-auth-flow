@@ -533,8 +533,7 @@ export const CreateChallengeWizard = ({ open, onOpenChange, onSave }: CreateChal
           {step > 1 && (
             <Button
               onClick={handleBack}
-              variant="outline"
-              className="flex-1 border-blue-700 text-blue-200 hover:bg-blue-800"
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold"
             >
               <ArrowRight className="w-4 h-4 ml-2" />
               הקודם
