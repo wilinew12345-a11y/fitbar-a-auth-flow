@@ -54,24 +54,48 @@ export type Database = {
       }
       challenges: {
         Row: {
+          color_theme: string | null
           created_at: string
+          current_value: number | null
+          duration_days: number | null
+          frequency: string | null
+          icon: string | null
           id: string
+          metric_unit: string | null
           target_per_week: number
+          target_value: number | null
           title: string
+          type: string
           user_id: string
         }
         Insert: {
+          color_theme?: string | null
           created_at?: string
+          current_value?: number | null
+          duration_days?: number | null
+          frequency?: string | null
+          icon?: string | null
           id?: string
+          metric_unit?: string | null
           target_per_week?: number
+          target_value?: number | null
           title: string
+          type?: string
           user_id: string
         }
         Update: {
+          color_theme?: string | null
           created_at?: string
+          current_value?: number | null
+          duration_days?: number | null
+          frequency?: string | null
+          icon?: string | null
           id?: string
+          metric_unit?: string | null
           target_per_week?: number
+          target_value?: number | null
           title?: string
+          type?: string
           user_id?: string
         }
         Relationships: []

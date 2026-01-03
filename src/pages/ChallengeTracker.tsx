@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useChallengesSupabase } from '@/hooks/useChallengesSupabase';
 import { ChallengeCard } from '@/components/challenges/ChallengeCard';
-import { CreateChallengeDialog } from '@/components/challenges/CreateChallengeDialog';
+import { CreateChallengeWizard, ChallengeFormData } from '@/components/challenges/CreateChallengeWizard';
 import { ChallengeDetailView } from '@/components/challenges/ChallengeDetailView';
 import LanguageSelector from '@/components/LanguageSelector';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -42,8 +42,8 @@ const ChallengeTracker = () => {
 
   const selectedChallenge = challenges.find(c => c.id === selectedChallengeId);
 
-  const handleCreateChallenge = (title: string, targetPerWeek: number, workoutsText: string) => {
-    addChallenge(title, targetPerWeek, workoutsText);
+  const handleCreateChallenge = (data: ChallengeFormData) => {
+    addChallenge(data);
     toast.success(t('challengeCreated'));
   };
 
@@ -156,8 +156,8 @@ const ChallengeTracker = () => {
         {t('newChallenge')}
       </button>
 
-      {/* Create Challenge Dialog */}
-      <CreateChallengeDialog
+      {/* Create Challenge Wizard */}
+      <CreateChallengeWizard
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
         onSave={handleCreateChallenge}

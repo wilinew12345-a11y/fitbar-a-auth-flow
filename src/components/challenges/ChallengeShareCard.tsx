@@ -1,7 +1,7 @@
 import { forwardRef } from 'react';
 import FitBarcaLogo from '@/components/FitBarcaLogo';
 import { Progress } from '@/components/ui/progress';
-import { Trophy } from 'lucide-react';
+import { Trophy, Dumbbell, Target, Zap, Heart, Star, Timer, Flame, Droplets } from 'lucide-react';
 
 interface Workout {
   id: string;
@@ -14,10 +14,33 @@ interface ChallengeShareCardProps {
   progress: { completed: number; total: number; percentage: number };
   workouts: Workout[];
   targetPerWeek: number;
+  colorTheme?: string;
+  icon?: string;
 }
 
+const COLOR_GRADIENTS: Record<string, string> = {
+  blue: 'linear-gradient(180deg, #004D98 0%, #061E40 100%)',
+  red: 'linear-gradient(180deg, #A50044 0%, #3D0018 100%)',
+  green: 'linear-gradient(180deg, #059669 0%, #064E3B 100%)',
+  purple: 'linear-gradient(180deg, #7C3AED 0%, #312E81 100%)',
+  orange: 'linear-gradient(180deg, #EA580C 0%, #7C2D12 100%)',
+  pink: 'linear-gradient(180deg, #EC4899 0%, #831843 100%)',
+};
+
+const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  dumbbell: Dumbbell,
+  target: Target,
+  zap: Zap,
+  trophy: Trophy,
+  heart: Heart,
+  star: Star,
+  timer: Timer,
+  flame: Flame,
+  droplets: Droplets,
+};
+
 export const ChallengeShareCard = forwardRef<HTMLDivElement, ChallengeShareCardProps>(
-  ({ title, progress, workouts, targetPerWeek }, ref) => {
+  ({ title, progress, workouts, targetPerWeek, colorTheme = 'blue', icon = 'dumbbell' }, ref) => {
     // Get upcoming (incomplete) workouts for preview
     const upcomingWorkouts = workouts
       .filter(w => !w.completed)
@@ -26,12 +49,15 @@ export const ChallengeShareCard = forwardRef<HTMLDivElement, ChallengeShareCardP
     // Calculate current week
     const currentWeek = Math.floor(progress.completed / targetPerWeek) + 1;
 
+    const gradient = COLOR_GRADIENTS[colorTheme] || COLOR_GRADIENTS.blue;
+    const IconComponent = ICONS[icon] || Dumbbell;
+
     return (
       <div
         ref={ref}
         className="w-[400px] h-[600px] flex flex-col"
         style={{
-          background: 'linear-gradient(180deg, #004D98 0%, #061E40 100%)',
+          background: gradient,
           fontFamily: 'system-ui, -apple-system, sans-serif',
         }}
       >
@@ -40,10 +66,13 @@ export const ChallengeShareCard = forwardRef<HTMLDivElement, ChallengeShareCardP
           <FitBarcaLogo size="md" />
         </div>
 
-        {/* Challenge Title */}
+        {/* Challenge Title with Icon */}
         <div className="flex-shrink-0 px-6 pb-4 text-center">
-          <h2 className="text-2xl font-bold text-white">{title}</h2>
-          <p className="text-blue-300/80 text-sm mt-1">שבוע {currentWeek}</p>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <IconComponent className="w-6 h-6 text-white/80" />
+            <h2 className="text-2xl font-bold text-white">{title}</h2>
+          </div>
+          <p className="text-white/60 text-sm mt-1">שבוע {currentWeek}</p>
         </div>
 
         {/* Progress Section */}

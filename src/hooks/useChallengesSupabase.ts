@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from '@/hooks/use-toast';
 
+export type ChallengeType = 'standard' | 'numeric' | 'habit';
+
 export interface Workout {
   id: string;
   text: string;
@@ -13,9 +15,20 @@ export interface Workout {
 export interface Challenge {
   id: string;
   title: string;
+  type: ChallengeType;
   targetPerWeek: number;
   workouts: Workout[];
   createdAt: string;
+  // Numeric type fields
+  metricUnit?: string;
+  targetValue?: number;
+  currentValue?: number;
+  // Habit type fields
+  durationDays?: number;
+  frequency?: string;
+  // Visuals
+  colorTheme?: string;
+  icon?: string;
 }
 
 // Default challenges to seed for new users
@@ -208,8 +221,16 @@ async function enrichChallengesWithWorkouts(challengesData: any[]): Promise<Chal
   return challengesData.map(challenge => ({
     id: challenge.id,
     title: challenge.title,
+    type: (challenge.type || 'standard') as ChallengeType,
     targetPerWeek: challenge.target_per_week,
     createdAt: challenge.created_at,
+    metricUnit: challenge.metric_unit,
+    targetValue: challenge.target_value,
+    currentValue: challenge.current_value,
+    durationDays: challenge.duration_days,
+    frequency: challenge.frequency,
+    colorTheme: challenge.color_theme,
+    icon: challenge.icon,
     workouts: (workoutsData || [])
       .filter(w => w.challenge_id === challenge.id)
       .map(w => ({
@@ -279,38 +300,54 @@ export const useChallengesSupabase = () => {
 
   // Add new challenge
   const addChallengeMutation = useMutation({
-    mutationFn: async ({ title, targetPerWeek, workoutsText }: { title: string; targetPerWeek: number; workoutsText: string }) => {
-      const workouts = workoutsText
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0);
-
-      // Create challenge
+    mutationFn: async (data: {
+      type: ChallengeType;
+      title: string;
+      targetPerWeek: number;
+      workouts: { text: string; workoutIndex: number }[];
+      targetValue?: number;
+      metricUnit?: string;
+      durationDays?: number;
+      frequency?: string;
+      colorTheme: string;
+      icon: string;
+    }) => {
+      // Create challenge with all new fields
       const { data: challenge, error: challengeError } = await supabase
         .from('challenges')
         .insert({
           user_id: user!.id,
-          title,
-          target_per_week: targetPerWeek,
+          title: data.title,
+          type: data.type,
+          target_per_week: data.targetPerWeek,
+          target_value: data.targetValue,
+          metric_unit: data.metricUnit,
+          duration_days: data.durationDays,
+          frequency: data.frequency,
+          color_theme: data.colorTheme,
+          icon: data.icon,
+          current_value: 0,
         })
         .select()
         .single();
 
       if (challengeError || !challenge) throw challengeError;
 
-      // Create workouts
-      const workoutsToInsert = workouts.map((text, index) => ({
-        challenge_id: challenge.id,
-        workout_index: index,
-        workout_text: text,
-        is_completed: false,
-      }));
+      // Only create workouts for standard type
+      if (data.type === 'standard' && data.workouts.length > 0) {
+        const workoutsToInsert = data.workouts.map((w, index) => ({
+          challenge_id: challenge.id,
+          workout_index: index,
+          workout_text: w.text,
+          is_completed: false,
+        }));
 
-      const { error: workoutsError } = await supabase
-        .from('challenge_workouts')
-        .insert(workoutsToInsert);
+        const { error: workoutsError } = await supabase
+          .from('challenge_workouts')
+          .insert(workoutsToInsert);
 
-      if (workoutsError) throw workoutsError;
+        if (workoutsError) throw workoutsError;
+      }
 
       return challenge;
     },
@@ -497,8 +534,19 @@ export const useChallengesSupabase = () => {
     }
   };
 
-  const addChallenge = (title: string, targetPerWeek: number, workoutsText: string) => {
-    addChallengeMutation.mutate({ title, targetPerWeek, workoutsText });
+  const addChallenge = (data: {
+    type: ChallengeType;
+    title: string;
+    targetPerWeek: number;
+    workouts: { text: string; workoutIndex: number }[];
+    targetValue?: number;
+    metricUnit?: string;
+    durationDays?: number;
+    frequency?: string;
+    colorTheme: string;
+    icon: string;
+  }) => {
+    addChallengeMutation.mutate(data);
   };
 
   const deleteChallenge = (id: string) => {
