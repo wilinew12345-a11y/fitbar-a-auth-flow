@@ -6,8 +6,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTrainingPlan } from '@/hooks/useTrainingPlan';
 import FitBarcaLogo from '@/components/FitBarcaLogo';
 import LanguageSelector from '@/components/LanguageSelector';
-import { User, Dumbbell, LogOut, TrendingUp, Trophy, Bot, Lock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { UserMenu } from '@/components/dashboard/UserMenu';
+import { User, Dumbbell, TrendingUp, Trophy, Bot, Lock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/hooks/use-toast';
 import confetti from 'canvas-confetti';
@@ -127,16 +127,9 @@ const Dashboard = () => {
       {/* Header */}
       <header className="p-6 flex items-center justify-between">
         <FitBarcaLogo />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <LanguageSelector />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleSignOut}
-            className="text-white/70 hover:text-white hover:bg-white/10"
-          >
-            <LogOut className="h-5 w-5" />
-          </Button>
+          <UserMenu onSignOut={handleSignOut} />
         </div>
       </header>
 

@@ -188,6 +188,7 @@ export type Database = {
           ai_chat_count: number
           calendar_sync_enabled: boolean
           created_at: string
+          email: string | null
           first_name: string
           id: string
           last_ai_usage_date: string | null
@@ -201,6 +202,7 @@ export type Database = {
           ai_chat_count?: number
           calendar_sync_enabled?: boolean
           created_at?: string
+          email?: string | null
           first_name: string
           id: string
           last_ai_usage_date?: string | null
@@ -214,6 +216,7 @@ export type Database = {
           ai_chat_count?: number
           calendar_sync_enabled?: boolean
           created_at?: string
+          email?: string | null
           first_name?: string
           id?: string
           last_ai_usage_date?: string | null

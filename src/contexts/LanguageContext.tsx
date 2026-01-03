@@ -172,7 +172,12 @@ export const translations = {
     goHome: "לעמוד הבית",
     placeholder_challenge_standard: "לדוגמה: אתגר ה-30",
     placeholder_challenge_numeric: "לדוגמה: לרוץ 100 ק״מ החודש",
-    placeholder_challenge_habit: "לדוגמה: 30 יום ללא סוכר"
+    placeholder_challenge_habit: "לדוגמה: 30 יום ללא סוכר",
+    userProfile: "פרטי משתמש",
+    profileUpdated: "הפרטים עודכנו בהצלחה",
+    emailReadOnly: "לא ניתן לשנות את האימייל",
+    saving: "שומר...",
+    logout: "התנתקות"
   },
   en: {
     dir: "ltr",
@@ -333,7 +338,12 @@ export const translations = {
     goHome: "Go Home",
     placeholder_challenge_standard: "Example: 30-Day Challenge",
     placeholder_challenge_numeric: "Example: Run 100km this month",
-    placeholder_challenge_habit: "Example: 30 Days No Sugar"
+    placeholder_challenge_habit: "Example: 30 Days No Sugar",
+    userProfile: "User Profile",
+    profileUpdated: "Profile updated successfully",
+    emailReadOnly: "Email cannot be changed",
+    saving: "Saving...",
+    logout: "Logout"
   },
   es: {
     dir: "ltr",
@@ -494,7 +504,12 @@ export const translations = {
     goHome: "Ir al Inicio",
     placeholder_challenge_standard: "Ejemplo: Desafío de 30 días",
     placeholder_challenge_numeric: "Ejemplo: Correr 100km este mes",
-    placeholder_challenge_habit: "Ejemplo: 30 días sin azúcar"
+    placeholder_challenge_habit: "Ejemplo: 30 días sin azúcar",
+    userProfile: "Perfil de Usuario",
+    profileUpdated: "Perfil actualizado exitosamente",
+    emailReadOnly: "El email no puede ser cambiado",
+    saving: "Guardando...",
+    logout: "Cerrar sesión"
   },
   ar: {
     dir: "rtl",
@@ -654,7 +669,12 @@ export const translations = {
     goHome: "الصفحة الرئيسية",
     placeholder_challenge_standard: "مثال: تحدي 30 يوم",
     placeholder_challenge_numeric: "مثال: ركض 100 كم هذا الشهر",
-    placeholder_challenge_habit: "مثال: 30 يوم بدون سكر"
+    placeholder_challenge_habit: "مثال: 30 يوم بدون سكر",
+    userProfile: "الملف الشخصي",
+    profileUpdated: "تم تحديث الملف الشخصي بنجاح",
+    emailReadOnly: "لا يمكن تغيير البريد الإلكتروني",
+    saving: "جاري الحفظ...",
+    logout: "تسجيل الخروج"
   }
 } as const;
 
