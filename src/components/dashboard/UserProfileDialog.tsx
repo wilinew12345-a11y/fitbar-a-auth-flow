@@ -104,7 +104,11 @@ export const UserProfileDialog = ({ open, onOpenChange }: UserProfileDialogProps
 
         {/* Footer */}
         <div className="flex justify-end gap-3 pt-4 border-t border-blue-800/30">
-          <Button onClick={() => onOpenChange(false)} className="bg-red-600 hover:bg-red-700 text-white border-0">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="border-blue-800 text-blue-200 hover:bg-blue-900/30"
+          >
             {t("cancel")}
           </Button>
           <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700 text-white">
@@ -114,7 +118,7 @@ export const UserProfileDialog = ({ open, onOpenChange }: UserProfileDialogProps
                 {t("saving")}
               </>
             ) : (
-              t("saveChallengeBtn").replace("+", "").trim().split(" ")[0]
+              t("save") || "שמור"
             )}
           </Button>
         </div>
