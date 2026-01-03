@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-export type Language = 'he' | 'en' | 'es' | 'ar';
+export type Language = "he" | "en" | "es" | "ar";
 
 export const translations = {
   he: {
@@ -154,7 +154,7 @@ export const translations = {
     features: {
       build: "בנייה אישית",
       track: "מעקב צמוד",
-      share: "שתף והצלח"
+      share: "שתף והצלח",
     },
     ticker: "🔥 יוסי סיים אימון חזה | 🏆 דנה השלימה אתגר | ⚽ עמית הצטרף | 💪 שירה שברה שיא אישי",
     // AI Coach
@@ -177,7 +177,8 @@ export const translations = {
     profileUpdated: "הפרטים עודכנו בהצלחה",
     emailReadOnly: "לא ניתן לשנות את האימייל",
     saving: "שומר...",
-    logout: "התנתקות"
+    logout: "התנתקות",
+    save: "שמור", // <--- הוספתי כאן
   },
   en: {
     dir: "ltr",
@@ -320,7 +321,7 @@ export const translations = {
     features: {
       build: "Custom Build",
       track: "Track Progress",
-      share: "Share Success"
+      share: "Share Success",
     },
     ticker: "🔥 Yossi finished Chest Day | 🏆 Dana completed the challenge | ⚽ Amit joined | 💪 Shira broke a record",
     // AI Coach
@@ -343,7 +344,8 @@ export const translations = {
     profileUpdated: "Profile updated successfully",
     emailReadOnly: "Email cannot be changed",
     saving: "Saving...",
-    logout: "Logout"
+    logout: "Logout",
+    save: "Save", // <--- הוספתי כאן
   },
   es: {
     dir: "ltr",
@@ -486,7 +488,7 @@ export const translations = {
     features: {
       build: "Construcción",
       track: "Seguimiento",
-      share: "Compartir"
+      share: "Compartir",
     },
     ticker: "🔥 Jose terminó Pecho | 🏆 Maria completó el reto | ⚽ Carlos se unió | 💪 Ana rompió récord",
     // AI Coach
@@ -509,7 +511,8 @@ export const translations = {
     profileUpdated: "Perfil actualizado exitosamente",
     emailReadOnly: "El email no puede ser cambiado",
     saving: "Guardando...",
-    logout: "Cerrar sesión"
+    logout: "Cerrar sesión",
+    save: "Guardar", // <--- הוספתי כאן
   },
   ar: {
     dir: "rtl",
@@ -651,7 +654,7 @@ export const translations = {
     features: {
       build: "بناء شخصي",
       track: "تتبع دقيق",
-      share: "شارك ونجح"
+      share: "شارك ونجح",
     },
     ticker: "🔥 يوسف أنهى تمرين الصدر | 🏆 دانا أكملت التحدي | ⚽ أحمد انضم | 💪 سارة حطمت الرقم القياسي",
     // AI Coach
@@ -674,11 +677,12 @@ export const translations = {
     profileUpdated: "تم تحديث الملف الشخصي بنجاح",
     emailReadOnly: "لا يمكن تغيير البريد الإلكتروني",
     saving: "جاري الحفظ...",
-    logout: "تسجيل الخروج"
-  }
+    logout: "تسجيل الخروج",
+    save: "حفظ", // <--- الוספתי כאן
+  },
 } as const;
 
-type TranslationKeys = keyof Omit<typeof translations.he, 'features'>;
+type TranslationKeys = keyof Omit<typeof translations.he, "features">;
 type FeatureKeys = keyof typeof translations.he.features;
 
 interface LanguageContextType {
@@ -694,22 +698,22 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguage] = useState<Language>(() => {
-    const saved = localStorage.getItem('fitbarca-language');
-    return (saved as Language) || 'he';
+    const saved = localStorage.getItem("fitbarca-language");
+    return (saved as Language) || "he";
   });
 
-  const isRtl = language === 'he' || language === 'ar';
+  const isRtl = language === "he" || language === "ar";
 
   useEffect(() => {
-    document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
-    localStorage.setItem('fitbarca-language', language);
+    document.documentElement.dir = isRtl ? "rtl" : "ltr";
+    localStorage.setItem("fitbarca-language", language);
   }, [language, isRtl]);
 
   const t = (key: TranslationKeys): string => {
     const value = translations[language][key];
-    if (typeof value === 'string') return value;
+    if (typeof value === "string") return value;
     const fallback = translations.he[key];
-    return typeof fallback === 'string' ? fallback : key;
+    return typeof fallback === "string" ? fallback : key;
   };
 
   const tf = (key: FeatureKeys): string => {
@@ -726,8 +730,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
 export const useLanguage = () => {
   const context = useContext(LanguageContext);
   if (!context) {
-    throw new Error('useLanguage must be used within a LanguageProvider');
+    throw new Error("useLanguage must be used within a LanguageProvider");
   }
   return context;
 };
-
