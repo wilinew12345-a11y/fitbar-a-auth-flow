@@ -9,6 +9,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageSelector from '@/components/LanguageSelector';
 import { ChallengeWorkoutManager } from './ChallengeWorkoutManager';
 import { ChallengeShareCard } from './ChallengeShareCard';
+import { SmartActivityLogger } from './SmartActivityLogger';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -354,7 +355,7 @@ ${t('completed')} ${progress.completed} / ${progress.total} ${t('workouts')}!`;
         </div>
       </header>
 
-      {/* Workout List */}
+      {/* Workout List / Activity Logger */}
       <main className="max-w-2xl mx-auto p-4 pb-20">
         {progress.percentage === 100 && (
           <div className="mb-6 p-6 rounded-2xl bg-gradient-to-r from-yellow-500/20 to-green-500/20 border border-yellow-500/30 text-center">
@@ -364,7 +365,15 @@ ${t('completed')} ${progress.completed} / ${progress.total} ${t('workouts')}!`;
           </div>
         )}
 
-        {groupedWorkouts.map((group, groupIndex) => {
+        {/* Smart Activity Logger for Numeric and Habit types */}
+        {(challenge.type === 'numeric' || challenge.type === 'habit') && (
+          <div className="mb-6">
+            <SmartActivityLogger challenge={challenge} />
+          </div>
+        )}
+
+        {/* Standard type: Show workout checklist */}
+        {challenge.type === 'standard' && groupedWorkouts.map((group, groupIndex) => {
           const weekCompleted = group.workouts.every(w => w.completed);
           
           return (

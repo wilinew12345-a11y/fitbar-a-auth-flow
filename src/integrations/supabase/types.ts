@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      challenge_logs: {
+        Row: {
+          challenge_id: string
+          created_at: string
+          id: string
+          log_value: number
+          logged_at: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          created_at?: string
+          id?: string
+          log_value?: number
+          logged_at?: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          created_at?: string
+          id?: string
+          log_value?: number
+          logged_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_logs_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       challenge_workouts: {
         Row: {
           challenge_id: string
@@ -320,6 +355,15 @@ export type Database = {
         Returns: Json
       }
       get_ai_usage: { Args: { p_user_id: string }; Returns: Json }
+      get_today_log_sum: {
+        Args: { p_challenge_id: string; p_user_id: string }
+        Returns: number
+      }
+      get_total_log_sum: { Args: { p_challenge_id: string }; Returns: number }
+      has_completed_habit_today: {
+        Args: { p_challenge_id: string; p_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
