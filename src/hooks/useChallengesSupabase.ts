@@ -174,7 +174,7 @@ async function seedDefaultChallenges(userId: string) {
   }
 }
 
-// Fetch challenges with their workouts
+// Fetch challenges with their workouts (no default seeding - new users start with empty state)
 async function fetchChallenges(userId: string): Promise<Challenge[]> {
   const { data: challengesData, error: challengesError } = await supabase
     .from('challenges')
@@ -187,19 +187,7 @@ async function fetchChallenges(userId: string): Promise<Challenge[]> {
   }
 
   if (!challengesData || challengesData.length === 0) {
-    // Seed default challenges for new user
-    await seedDefaultChallenges(userId);
-    // Fetch again after seeding
-    const { data: seededData, error: seededError } = await supabase
-      .from('challenges')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: true });
-
-    if (seededError) throw seededError;
-    if (!seededData) return [];
-    
-    return await enrichChallengesWithWorkouts(seededData);
+    return [];
   }
 
   return await enrichChallengesWithWorkouts(challengesData);
