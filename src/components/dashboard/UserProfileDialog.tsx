@@ -105,9 +105,9 @@ export const UserProfileDialog = ({ open, onOpenChange }: UserProfileDialogProps
         {/* Footer */}
         <div className="flex justify-end gap-3 pt-4 border-t border-blue-800/30">
           <Button
-            variant="outline"
+            // שורה זו שונתה - הסרתי את ה variant="outline" והחלפתי את העיצוב לאדום מלא
             onClick={() => onOpenChange(false)}
-            className="border-blue-800 text-blue-200 hover:bg-blue-900/30"
+            className="bg-red-600 hover:bg-red-700 text-white border-0"
           >
             {t("cancel")}
           </Button>
@@ -118,7 +118,7 @@ export const UserProfileDialog = ({ open, onOpenChange }: UserProfileDialogProps
                 {t("saving")}
               </>
             ) : (
-              t("save") || "שמור"
+              t("saveChallengeBtn").replace("+", "").trim().split(" ")[0]
             )}
           </Button>
         </div>
