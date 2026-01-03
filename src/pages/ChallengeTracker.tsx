@@ -6,6 +6,7 @@ import { useChallengesSupabase } from '@/hooks/useChallengesSupabase';
 import { ChallengeCard } from '@/components/challenges/ChallengeCard';
 import { CreateChallengeWizard, ChallengeFormData } from '@/components/challenges/CreateChallengeWizard';
 import { ChallengeDetailView } from '@/components/challenges/ChallengeDetailView';
+import { ChallengesEmptyState } from '@/components/challenges/ChallengesEmptyState';
 import LanguageSelector from '@/components/LanguageSelector';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -125,13 +126,7 @@ const ChallengeTracker = () => {
       {/* Main Content */}
       <main className="max-w-4xl mx-auto p-4 pb-24">
         {challenges.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="w-20 h-20 rounded-full bg-blue-900/60 flex items-center justify-center mx-auto mb-6">
-              <Dumbbell className="w-10 h-10 text-blue-300" />
-            </div>
-            <h2 className="text-xl font-bold text-blue-200 mb-2">{t('noChallenges')}</h2>
-            <p className="text-blue-300/70 mb-6">{t('createChallengePrompt')}</p>
-          </div>
+          <ChallengesEmptyState onCreateChallenge={() => setShowCreateDialog(true)} />
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {challenges.map(challenge => (
