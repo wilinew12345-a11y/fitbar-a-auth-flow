@@ -22,7 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import {
   Select,
   SelectContent,
@@ -235,8 +235,9 @@ export const CreateChallengeWizard = ({ open, onOpenChange, onSave }: CreateChal
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="bg-[#061E40]/95 backdrop-blur-xl border-blue-800 text-white max-w-2xl max-h-[90vh] overflow-hidden">
-        <DialogHeader>
+      <DialogContent className="bg-[#061E40]/95 backdrop-blur-xl border-blue-800 text-white max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+        {/* Fixed Header */}
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-2xl font-bold text-white flex items-center gap-3">
             <div className="p-2 rounded-xl bg-[#A50044]/30">
               <Dumbbell className="w-6 h-6 text-red-400" />
@@ -273,8 +274,9 @@ export const CreateChallengeWizard = ({ open, onOpenChange, onSave }: CreateChal
           </p>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[calc(90vh-200px)] pr-4">
-          <div className="space-y-5 mt-4" dir="rtl">
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto min-h-0 pr-1">
+          <div className="space-y-5 py-4" dir="rtl">
             {/* Step 1: Choose Type */}
             {step === 1 && (
               <div className="space-y-4">
@@ -526,10 +528,10 @@ export const CreateChallengeWizard = ({ open, onOpenChange, onSave }: CreateChal
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
 
-        {/* Navigation Buttons */}
-        <div className="flex gap-3 pt-4 border-t border-blue-800">
+        {/* Fixed Footer - Navigation Buttons */}
+        <div className="flex-shrink-0 flex gap-3 pt-4 border-t border-blue-800">
           {step > 1 && (
             <Button
               onClick={handleBack}
