@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { 
   CheckSquare, 
   TrendingUp, 
@@ -115,6 +116,7 @@ const ICONS = [
 ];
 
 export const CreateChallengeWizard = ({ open, onOpenChange, onSave }: CreateChallengeWizardProps) => {
+  const { t } = useLanguage();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<ChallengeFormData>({
     type: 'standard',
@@ -130,6 +132,17 @@ export const CreateChallengeWizard = ({ open, onOpenChange, onSave }: CreateChal
   });
 
   const totalSteps = 3;
+
+  const titlePlaceholder = useMemo(() => {
+    switch (formData.type) {
+      case 'numeric':
+        return t('placeholder_challenge_numeric');
+      case 'habit':
+        return t('placeholder_challenge_habit');
+      default:
+        return t('placeholder_challenge_standard');
+    }
+  }, [formData.type, t]);
 
   const resetForm = () => {
     setStep(1);
@@ -336,7 +349,7 @@ export const CreateChallengeWizard = ({ open, onOpenChange, onSave }: CreateChal
                   <Input
                     value={formData.title}
                     onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="לדוגמה: אתגר ה-30"
+                    placeholder={titlePlaceholder}
                     className="bg-[#021024] border-blue-800 text-white placeholder:text-blue-400/50 focus:border-yellow-400 focus:ring-yellow-400"
                   />
                 </div>

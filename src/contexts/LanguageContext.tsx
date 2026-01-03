@@ -169,7 +169,10 @@ export const translations = {
     dailyLimit: "מגבלה יומית",
     buildPlanFirst: "יש לבנות תוכנית אימונים תחילה",
     buildPlanGuidance: "בנה את תוכנית האימונים שלך לצפייה בשאר הקטגוריות",
-    goHome: "לעמוד הבית"
+    goHome: "לעמוד הבית",
+    placeholder_challenge_standard: "לדוגמה: אתגר ה-30",
+    placeholder_challenge_numeric: "לדוגמה: לרוץ 100 ק״מ החודש",
+    placeholder_challenge_habit: "לדוגמה: 30 יום ללא סוכר"
   },
   en: {
     dir: "ltr",
@@ -327,7 +330,10 @@ export const translations = {
     dailyLimit: "Daily Limit",
     buildPlanFirst: "Please build a training plan first",
     buildPlanGuidance: "Build your training plan to access the other categories",
-    goHome: "Go Home"
+    goHome: "Go Home",
+    placeholder_challenge_standard: "Example: 30-Day Challenge",
+    placeholder_challenge_numeric: "Example: Run 100km this month",
+    placeholder_challenge_habit: "Example: 30 Days No Sugar"
   },
   es: {
     dir: "ltr",
@@ -485,7 +491,10 @@ export const translations = {
     dailyLimit: "Límite Diario",
     buildPlanFirst: "Por favor, crea un plan de entrenamiento primero",
     buildPlanGuidance: "Crea tu plan de entrenamiento para acceder a otras categorías",
-    goHome: "Ir al Inicio"
+    goHome: "Ir al Inicio",
+    placeholder_challenge_standard: "Ejemplo: Desafío de 30 días",
+    placeholder_challenge_numeric: "Ejemplo: Correr 100km este mes",
+    placeholder_challenge_habit: "Ejemplo: 30 días sin azúcar"
   },
   ar: {
     dir: "rtl",
@@ -642,7 +651,10 @@ export const translations = {
     dailyLimit: "الحد اليومي",
     buildPlanFirst: "يرجى إنشاء خطة تدريب أولاً",
     buildPlanGuidance: "أنشئ خطة التدريب الخاصة بك للوصول إلى الفئات الأخرى",
-    goHome: "الصفحة الرئيسية"
+    goHome: "الصفحة الرئيسية",
+    placeholder_challenge_standard: "مثال: تحدي 30 يوم",
+    placeholder_challenge_numeric: "مثال: ركض 100 كم هذا الشهر",
+    placeholder_challenge_habit: "مثال: 30 يوم بدون سكر"
   }
 } as const;
 
