@@ -257,9 +257,16 @@ ${t('completed')} ${progress.completed} / ${progress.total} ${t('workouts')}!`;
         <ChallengeShareCard
           ref={shareCardRef}
           title={challenge.title}
+          type={challenge.type}
           progress={progress}
           workouts={workoutsForShareCard}
           targetPerWeek={challenge.targetPerWeek}
+          colorTheme={challenge.colorTheme}
+          icon={challenge.icon}
+          currentValue={challenge.currentValue}
+          targetValue={challenge.targetValue}
+          metricUnit={challenge.metricUnit}
+          durationDays={challenge.durationDays}
         />
       </div>
       {/* Confetti Effect */}

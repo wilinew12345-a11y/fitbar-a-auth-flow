@@ -39,9 +39,19 @@ interface Workout {
 interface Challenge {
   id: string;
   title: string;
+  type: 'standard' | 'numeric' | 'habit';
   targetPerWeek: number;
   userId: string;
   workouts: Workout[];
+  // Numeric type fields
+  metricUnit?: string;
+  targetValue?: number;
+  currentValue?: number;
+  // Habit type fields
+  durationDays?: number;
+  // Visuals
+  colorTheme?: string;
+  icon?: string;
 }
 
 const SharedChallengeView = () => {
@@ -107,9 +117,16 @@ const SharedChallengeView = () => {
         setChallenge({
           id: challengeData.id,
           title: challengeData.title,
+          type: (challengeData.type || 'standard') as 'standard' | 'numeric' | 'habit',
           targetPerWeek: challengeData.target_per_week,
           userId: challengeData.user_id,
           workouts,
+          metricUnit: challengeData.metric_unit,
+          targetValue: challengeData.target_value,
+          currentValue: challengeData.current_value,
+          durationDays: challengeData.duration_days,
+          colorTheme: challengeData.color_theme,
+          icon: challengeData.icon,
         });
       } catch (err) {
         console.error('Error fetching challenge:', err);
@@ -433,9 +450,16 @@ ${t('completed')} ${progress.completed} / ${progress.total} ${t('workouts')}!`;
         <ChallengeShareCard
           ref={shareCardRef}
           title={challenge.title}
+          type={challenge.type}
           progress={progress}
           workouts={workoutsForShareCard}
           targetPerWeek={challenge.targetPerWeek}
+          colorTheme={challenge.colorTheme}
+          icon={challenge.icon}
+          currentValue={challenge.currentValue}
+          targetValue={challenge.targetValue}
+          metricUnit={challenge.metricUnit}
+          durationDays={challenge.durationDays}
         />
       </div>
       {/* Confetti Effect */}
