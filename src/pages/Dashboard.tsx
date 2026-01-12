@@ -8,7 +8,7 @@ import FitBarcaLogo from '@/components/FitBarcaLogo';
 import LanguageSelector from '@/components/LanguageSelector';
 import DailyTipCard from '@/components/dashboard/DailyTipCard';
 import { UserMenu } from '@/components/dashboard/UserMenu';
-import { User, Dumbbell, TrendingUp, Trophy, Bot, Lock, Lightbulb } from 'lucide-react';
+import { User, Dumbbell, TrendingUp, Trophy, Bot, Lock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/hooks/use-toast';
 import confetti from 'canvas-confetti';
@@ -120,14 +120,6 @@ const Dashboard = () => {
       route: '/ai-coach',
       gradient: 'from-[#7c3aed] to-[#a855f7]',
       locked: isPlanMissing,
-    },
-    {
-      id: 'daily-tips',
-      title: t('dailyTips'),
-      icon: Lightbulb,
-      route: '/daily-tips',
-      gradient: 'from-[#7c3aed] to-[#eab308]',
-      locked: false,
     },
   ];
 
