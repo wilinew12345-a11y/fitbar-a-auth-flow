@@ -178,7 +178,9 @@ export const translations = {
     emailReadOnly: "לא ניתן לשנות את האימייל",
     saving: "שומר...",
     logout: "התנתקות",
-    save: "שמור", // <--- הוספתי כאן
+    save: "שמור",
+    dailyMotivation: "טיפ יומי",
+    readFullArticle: "קרא את המאמר המלא",
   },
   en: {
     dir: "ltr",
@@ -345,7 +347,9 @@ export const translations = {
     emailReadOnly: "Email cannot be changed",
     saving: "Saving...",
     logout: "Logout",
-    save: "Save", // <--- הוספתי כאן
+    save: "Save",
+    dailyMotivation: "Daily Tip",
+    readFullArticle: "Read full article",
   },
   es: {
     dir: "ltr",
@@ -512,7 +516,9 @@ export const translations = {
     emailReadOnly: "El email no puede ser cambiado",
     saving: "Guardando...",
     logout: "Cerrar sesión",
-    save: "Guardar", // <--- הוספתי כאן
+    save: "Guardar",
+    dailyMotivation: "Consejo del Día",
+    readFullArticle: "Leer artículo completo",
   },
   ar: {
     dir: "rtl",
@@ -678,7 +684,9 @@ export const translations = {
     emailReadOnly: "لا يمكن تغيير البريد الإلكتروني",
     saving: "جاري الحفظ...",
     logout: "تسجيل الخروج",
-    save: "حفظ", // <--- الוספתי כאן
+    save: "حفظ",
+    dailyMotivation: "نصيحة اليوم",
+    readFullArticle: "اقرأ المقال كاملاً",
   },
 } as const;
 

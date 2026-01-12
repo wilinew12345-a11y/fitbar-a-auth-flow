@@ -6,6 +6,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTrainingPlan } from '@/hooks/useTrainingPlan';
 import FitBarcaLogo from '@/components/FitBarcaLogo';
 import LanguageSelector from '@/components/LanguageSelector';
+import DailyTipCard from '@/components/dashboard/DailyTipCard';
 import { UserMenu } from '@/components/dashboard/UserMenu';
 import { User, Dumbbell, TrendingUp, Trophy, Bot, Lock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -135,11 +136,16 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
             {t('greeting')}{user?.user_metadata?.first_name || ''}! 👋
           </h1>
           <p className="text-white/70 text-lg">{t('whatToDo')}</p>
+        </div>
+
+        {/* Daily Motivation Card */}
+        <div className="max-w-4xl mx-auto mb-8">
+          <DailyTipCard />
         </div>
 
         {/* Tiles Grid */}
