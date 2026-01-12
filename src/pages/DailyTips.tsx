@@ -25,17 +25,25 @@ const DailyTips = () => {
   const { t, isRtl, language } = useLanguage();
 
   const { data: tips, isLoading } = useQuery({
-    queryKey: ['daily-tips-all'],
+    queryKey: ['daily-tips-latest'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('daily_tips')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(20);
 
       if (error) throw error;
       return data;
     },
   });
+
+  // Check if a date is today
+  const isToday = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
+  };
 
   const BackArrow = isRtl ? ArrowRight : ArrowLeft;
 
@@ -107,9 +115,16 @@ const DailyTips = () => {
                   </div>
 
                   {/* Date - Small, uppercase, tracking-wide at top */}
-                  <p className="text-xs uppercase tracking-widest text-white/40 mb-4">
-                    {format(new Date(tip.created_at), 'dd MMM yyyy')}
-                  </p>
+                  <div className="flex items-center gap-2 mb-4">
+                    <p className="text-xs uppercase tracking-widest text-white/40">
+                      {format(new Date(tip.created_at), 'dd MMM yyyy')}
+                    </p>
+                    {isToday(tip.created_at) && (
+                      <span className="px-2 py-0.5 text-[10px] uppercase tracking-wider font-semibold rounded-full bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                        {t('today') || 'Today'}
+                      </span>
+                    )}
+                  </div>
 
                   {/* Title - Gradient text, bold */}
                   <div className="flex items-center gap-3 mb-4">

@@ -184,6 +184,7 @@ export const translations = {
     noTipsAvailable: "אין טיפים זמינים כרגע",
     readFullArticle: "קרא את המאמר המלא",
     readMore: "קרא עוד",
+    today: "היום",
   },
   en: {
     dir: "ltr",
@@ -356,6 +357,7 @@ export const translations = {
     noTipsAvailable: "No tips available at the moment",
     readFullArticle: "Read full article",
     readMore: "Read More",
+    today: "Today",
   },
   es: {
     dir: "ltr",
@@ -528,6 +530,7 @@ export const translations = {
     noTipsAvailable: "No hay consejos disponibles por el momento",
     readFullArticle: "Leer artículo completo",
     readMore: "Leer Más",
+    today: "Hoy",
   },
   ar: {
     dir: "rtl",
@@ -699,6 +702,7 @@ export const translations = {
     noTipsAvailable: "لا توجد نصائح متاحة حالياً",
     readFullArticle: "اقرأ المقال كاملاً",
     readMore: "اقرأ المزيد",
+    today: "اليوم",
   },
 } as const;
 
