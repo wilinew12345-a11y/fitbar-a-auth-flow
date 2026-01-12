@@ -143,11 +143,6 @@ const Dashboard = () => {
           <p className="text-white/70 text-lg">{t('whatToDo')}</p>
         </div>
 
-        {/* Daily Motivation Card */}
-        <div className="max-w-4xl mx-auto mb-8">
-          <DailyTipCard />
-        </div>
-
         {/* Tiles Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {tiles.map((tile) => (
@@ -193,7 +188,11 @@ const Dashboard = () => {
               )}
             </button>
           ))}
+          
+          {/* Daily Tip Tile */}
+          <DailyTipCard isRtl={isRtl} />
         </div>
+
       </main>
     </div>
   );
