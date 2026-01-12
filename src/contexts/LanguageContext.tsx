@@ -180,6 +180,8 @@ export const translations = {
     logout: "התנתקות",
     save: "שמור",
     dailyMotivation: "טיפ יומי",
+    dailyTips: "טיפים יומיים",
+    noTipsAvailable: "אין טיפים זמינים כרגע",
     readFullArticle: "קרא את המאמר המלא",
   },
   en: {
@@ -349,6 +351,8 @@ export const translations = {
     logout: "Logout",
     save: "Save",
     dailyMotivation: "Daily Tip",
+    dailyTips: "Daily Tips",
+    noTipsAvailable: "No tips available at the moment",
     readFullArticle: "Read full article",
   },
   es: {
@@ -518,6 +522,8 @@ export const translations = {
     logout: "Cerrar sesión",
     save: "Guardar",
     dailyMotivation: "Consejo del Día",
+    dailyTips: "Consejos Diarios",
+    noTipsAvailable: "No hay consejos disponibles por el momento",
     readFullArticle: "Leer artículo completo",
   },
   ar: {
@@ -686,6 +692,8 @@ export const translations = {
     logout: "تسجيل الخروج",
     save: "حفظ",
     dailyMotivation: "نصيحة اليوم",
+    dailyTips: "نصائح يومية",
+    noTipsAvailable: "لا توجد نصائح متاحة حالياً",
     readFullArticle: "اقرأ المقال كاملاً",
   },
 } as const;
