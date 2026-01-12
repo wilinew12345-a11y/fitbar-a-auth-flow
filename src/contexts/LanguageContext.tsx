@@ -183,6 +183,7 @@ export const translations = {
     dailyTips: "טיפים יומיים",
     noTipsAvailable: "אין טיפים זמינים כרגע",
     readFullArticle: "קרא את המאמר המלא",
+    readMore: "קרא עוד",
   },
   en: {
     dir: "ltr",
@@ -354,6 +355,7 @@ export const translations = {
     dailyTips: "Daily Tips",
     noTipsAvailable: "No tips available at the moment",
     readFullArticle: "Read full article",
+    readMore: "Read More",
   },
   es: {
     dir: "ltr",
@@ -525,6 +527,7 @@ export const translations = {
     dailyTips: "Consejos Diarios",
     noTipsAvailable: "No hay consejos disponibles por el momento",
     readFullArticle: "Leer artículo completo",
+    readMore: "Leer Más",
   },
   ar: {
     dir: "rtl",
@@ -695,6 +698,7 @@ export const translations = {
     dailyTips: "نصائح يومية",
     noTipsAvailable: "لا توجد نصائح متاحة حالياً",
     readFullArticle: "اقرأ المقال كاملاً",
+    readMore: "اقرأ المزيد",
   },
 } as const;
 

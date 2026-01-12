@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { ArrowLeft, ArrowRight, Lightbulb, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Lightbulb, ExternalLink, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import LanguageSelector from '@/components/LanguageSelector';
@@ -77,13 +77,13 @@ const DailyTips = () => {
       {/* Content */}
       <main className="max-w-4xl mx-auto px-4 py-8">
         {isLoading ? (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-40 rounded-2xl bg-white/10" />
+              <Skeleton key={i} className="h-56 rounded-3xl bg-white/5 backdrop-blur-xl" />
             ))}
           </div>
         ) : tips && tips.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {tips.map((tip) => {
               const localized = getLocalizedContent(tip.content);
               
@@ -91,47 +91,66 @@ const DailyTips = () => {
                 <article
                   key={tip.id}
                   className={`
-                    relative p-6 rounded-2xl
-                    bg-white/5 backdrop-blur-md
+                    relative overflow-hidden p-8 rounded-3xl
+                    bg-white/10 backdrop-blur-xl
                     border border-white/10
-                    hover:bg-white/10 transition-colors
+                    hover:shadow-lg hover:shadow-yellow-500/10
+                    hover:border-white/20
+                    transition-all duration-300
                     ${isRtl ? 'text-right' : 'text-left'}
                   `}
                   dir={isRtl ? 'rtl' : 'ltr'}
                 >
-                  {/* Header: Title + External Link */}
-                  <div className="flex items-start justify-between gap-4 mb-3">
-                    <div className="flex items-center gap-3 flex-1">
-                      <div className="p-2 rounded-lg bg-yellow-500/20 flex-shrink-0">
-                        <Lightbulb className="h-5 w-5 text-yellow-400" />
-                      </div>
-                      <h2 className="text-lg font-semibold text-white">
-                        {localized.title || t('dailyMotivation')}
-                      </h2>
+                  {/* Decorative Background Element */}
+                  <div className={`absolute ${isRtl ? 'left-6' : 'right-6'} top-6 opacity-[0.05] pointer-events-none`}>
+                    <Sparkles className="w-28 h-28 text-yellow-400" />
+                  </div>
+
+                  {/* Date - Small, uppercase, tracking-wide at top */}
+                  <p className="text-xs uppercase tracking-widest text-white/40 mb-4">
+                    {format(new Date(tip.created_at), 'dd MMM yyyy')}
+                  </p>
+
+                  {/* Title - Gradient text, bold */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2.5 rounded-xl bg-gradient-to-br from-yellow-500/20 to-orange-500/20 flex-shrink-0">
+                      <Lightbulb className="h-5 w-5 text-yellow-400" />
                     </div>
-                    
-                    {tip.original_url && (
+                    <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                      {localized.title || t('dailyMotivation')}
+                    </h2>
+                  </div>
+
+                  {/* Content - Light weight, relaxed line height */}
+                  <p className="text-white/90 leading-relaxed font-light whitespace-pre-wrap text-base">
+                    {localized.content}
+                  </p>
+
+                  {/* Footer with External Link Button */}
+                  {tip.original_url && (
+                    <div className={`mt-6 pt-5 border-t border-white/5 flex ${isRtl ? 'justify-start' : 'justify-end'}`}>
                       <a
                         href={tip.original_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-3 rounded-xl bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 hover:text-yellow-300 transition-all flex-shrink-0"
+                        className="
+                          inline-flex items-center gap-2
+                          px-5 py-2.5 rounded-full
+                          bg-yellow-500 text-black
+                          font-semibold text-sm
+                          hover:bg-yellow-400
+                          hover:scale-105
+                          active:scale-95
+                          transition-all duration-200
+                          shadow-lg shadow-yellow-500/25
+                        "
                         title={t('readFullArticle')}
                       >
-                        <ExternalLink className="h-5 w-5" />
+                        <span>{t('readMore') || 'Read Article'}</span>
+                        <ExternalLink className="h-4 w-4" />
                       </a>
-                    )}
-                  </div>
-
-                  {/* Date */}
-                  <p className="text-white/50 text-sm mb-3">
-                    {format(new Date(tip.created_at), 'dd/MM/yyyy')}
-                  </p>
-
-                  {/* Content */}
-                  <p className="text-white/80 leading-relaxed whitespace-pre-wrap">
-                    {localized.content}
-                  </p>
+                    </div>
+                  )}
                 </article>
               );
             })}
