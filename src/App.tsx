@@ -16,6 +16,7 @@ import ChallengeTracker from "./pages/ChallengeTracker";
 import SharedChallengeView from "./pages/SharedChallengeView";
 import AICoach from "./pages/AICoach";
 import UpdatePassword from "./pages/UpdatePassword";
+import DailyTips from "./pages/DailyTips";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/challenges/:id" element={<SharedChallengeView />} />
             <Route path="/ai-coach" element={<AICoach />} />
             <Route path="/update-password" element={<UpdatePassword />} />
+            <Route path="/daily-tips" element={<DailyTips />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
