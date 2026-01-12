@@ -8,9 +8,21 @@ import { Skeleton } from '@/components/ui/skeleton';
 import LanguageSelector from '@/components/LanguageSelector';
 import { format } from 'date-fns';
 
+interface TipTranslation {
+  title?: string;
+  content?: string;
+}
+
+interface TipContent {
+  he?: TipTranslation;
+  en?: TipTranslation;
+  ar?: TipTranslation;
+  es?: TipTranslation;
+}
+
 const DailyTips = () => {
   const navigate = useNavigate();
-  const { t, isRtl } = useLanguage();
+  const { t, isRtl, language } = useLanguage();
 
   const { data: tips, isLoading } = useQuery({
     queryKey: ['daily-tips-all'],
@@ -26,6 +38,18 @@ const DailyTips = () => {
   });
 
   const BackArrow = isRtl ? ArrowRight : ArrowLeft;
+
+  // Parse JSON content and get translation for current language
+  const getLocalizedContent = (contentStr: string): TipTranslation => {
+    try {
+      const parsed: TipContent = JSON.parse(contentStr);
+      // Try current language first, fallback to English
+      return parsed[language] || parsed.en || { title: '', content: contentStr };
+    } catch {
+      // If parsing fails, treat content as plain text (legacy format)
+      return { title: '', content: contentStr };
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a1628] via-[#1a1a2e] to-[#16213e]">
@@ -60,52 +84,57 @@ const DailyTips = () => {
           </div>
         ) : tips && tips.length > 0 ? (
           <div className="space-y-4">
-            {tips.map((tip) => (
-              <article
-                key={tip.id}
-                className={`
-                  relative p-6 rounded-2xl
-                  bg-white/5 backdrop-blur-md
-                  border border-white/10
-                  hover:bg-white/10 transition-colors
-                  ${isRtl ? 'text-right' : 'text-left'}
-                `}
-              >
-                {/* Header: Title + External Link */}
-                <div className="flex items-start justify-between gap-4 mb-3">
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className="p-2 rounded-lg bg-yellow-500/20">
-                      <Lightbulb className="h-5 w-5 text-yellow-400" />
+            {tips.map((tip) => {
+              const localized = getLocalizedContent(tip.content);
+              
+              return (
+                <article
+                  key={tip.id}
+                  className={`
+                    relative p-6 rounded-2xl
+                    bg-white/5 backdrop-blur-md
+                    border border-white/10
+                    hover:bg-white/10 transition-colors
+                    ${isRtl ? 'text-right' : 'text-left'}
+                  `}
+                  dir={isRtl ? 'rtl' : 'ltr'}
+                >
+                  {/* Header: Title + External Link */}
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className="p-2 rounded-lg bg-yellow-500/20 flex-shrink-0">
+                        <Lightbulb className="h-5 w-5 text-yellow-400" />
+                      </div>
+                      <h2 className="text-lg font-semibold text-white">
+                        {localized.title || t('dailyMotivation')}
+                      </h2>
                     </div>
-                    <h2 className="text-lg font-semibold text-white">
-                      {tip.title || t('dailyMotivation')}
-                    </h2>
+                    
+                    {tip.original_url && (
+                      <a
+                        href={tip.original_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-yellow-400 hover:text-yellow-300 transition-colors flex-shrink-0"
+                        title={t('readFullArticle')}
+                      >
+                        <ExternalLink className="h-5 w-5" />
+                      </a>
+                    )}
                   </div>
-                  
-                  {tip.original_url && (
-                    <a
-                      href={tip.original_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-yellow-400 hover:text-yellow-300 transition-colors flex-shrink-0"
-                      title={t('readFullArticle')}
-                    >
-                      <ExternalLink className="h-5 w-5" />
-                    </a>
-                  )}
-                </div>
 
-                {/* Date */}
-                <p className="text-white/50 text-sm mb-3">
-                  {format(new Date(tip.created_at), 'dd/MM/yyyy')}
-                </p>
+                  {/* Date */}
+                  <p className="text-white/50 text-sm mb-3">
+                    {format(new Date(tip.created_at), 'dd/MM/yyyy')}
+                  </p>
 
-                {/* Content */}
-                <p className="text-white/80 leading-relaxed whitespace-pre-wrap">
-                  {tip.content}
-                </p>
-              </article>
-            ))}
+                  {/* Content */}
+                  <p className="text-white/80 leading-relaxed whitespace-pre-wrap">
+                    {localized.content}
+                  </p>
+                </article>
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-16">

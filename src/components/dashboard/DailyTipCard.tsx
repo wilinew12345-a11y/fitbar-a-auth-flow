@@ -9,8 +9,20 @@ interface DailyTipCardProps {
   isRtl?: boolean;
 }
 
+interface TipTranslation {
+  title?: string;
+  content?: string;
+}
+
+interface TipContent {
+  he?: TipTranslation;
+  en?: TipTranslation;
+  ar?: TipTranslation;
+  es?: TipTranslation;
+}
+
 const DailyTipCard = ({ isRtl = false }: DailyTipCardProps) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
 
   const { data: tip, isLoading } = useQuery({
@@ -28,6 +40,20 @@ const DailyTipCard = ({ isRtl = false }: DailyTipCardProps) => {
     },
     staleTime: 1000 * 60 * 30,
   });
+
+  // Parse JSON content and get translation for current language
+  const getLocalizedTitle = (): string => {
+    if (!tip) return t('dailyMotivation');
+    
+    try {
+      const parsed: TipContent = JSON.parse(tip.content);
+      const localized = parsed[language] || parsed.en;
+      return localized?.title || t('dailyMotivation');
+    } catch {
+      // Legacy format - no title available
+      return t('dailyMotivation');
+    }
+  };
 
   if (isLoading) {
     return <Skeleton className="h-40 rounded-2xl bg-white/10" />;
@@ -60,7 +86,7 @@ const DailyTipCard = ({ isRtl = false }: DailyTipCardProps) => {
       </div>
 
       {/* Content */}
-      <h2 className="text-2xl font-bold text-white mb-2">{t('dailyMotivation')}</h2>
+      <h2 className="text-2xl font-bold text-white mb-2">{getLocalizedTitle()}</h2>
 
       {/* Arrow indicator */}
       <div className={`absolute ${isRtl ? 'left-6' : 'right-6'} top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 ${isRtl ? 'group-hover:translate-x-1' : 'group-hover:-translate-x-1'}`}>
