@@ -114,11 +114,7 @@ const DailyTips = () => {
                       <a
                         href={tip.original_url}
                         target="_blank"
-                        rel="noopener noreferrer nofollow"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          window.open(tip.original_url, '_blank', 'noopener,noreferrer');
-                        }}
+                        rel="noopener noreferrer"
                         className="p-3 rounded-xl bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 hover:text-yellow-300 transition-all flex-shrink-0"
                         title={t('readFullArticle')}
                       >
